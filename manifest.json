@@ -1,0 +1,40 @@
+{
+  "name": "DNS Classes - Fee Manager",
+  "short_name": "DNS Classes",
+  "description": "Fee management and attendance system for DNS Classes",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#060d1a",
+  "theme_color": "#0d1f3c",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "categories": ["education", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
