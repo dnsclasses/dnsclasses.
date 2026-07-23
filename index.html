@@ -1373,10 +1373,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="flabel">FROM DATE</label>
-        <input id="prn-hw-from" type="date" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-hw-from" type="date" oninput="updateHwFromTo()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div><label class="flabel">TO DATE</label>
-        <input id="prn-hw-to" type="date" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-hw-to" type="date" oninput="updateHwFromTo()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
     </div>
     <button onclick="generateHwChart()" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,var(--btn),color-mix(in srgb,var(--btn) 80%,#000));color:var(--btntxt);font-weight:bold;font-size:14px;border:none;margin-bottom:14px;cursor:pointer">Generate Chart</button>
@@ -11592,6 +11592,22 @@ function _hwCheckTest(i){
   inp.style.fontWeight=bold?'800':'';
   inp.style.background='transparent';
 }
+var _hwSavedData={};
+function updateHwFromTo(){
+  var preview=document.getElementById('prn-hw-preview');
+  if(!preview||!preview.dataset.count)return;
+  var count=parseInt(preview.dataset.count)||0;
+  if(!count)return;
+  for(var i=0;i<count;i++){
+    var inp=document.getElementById('hw-cell-'+i);
+    var lbl=document.getElementById('hw-date-'+i);
+    if(inp&&inp.value.trim()!==''){
+      var label=lbl?lbl.textContent.trim():('row-'+i);
+      _hwSavedData[label]=inp.value.trim();
+    }
+  }
+  generateHwChart();
+}
 function generateHwChart(){
   var name=(document.getElementById('prn-hw-name').value||'').trim();
   var cls=(document.getElementById('prn-hw-class').value||'').trim();
@@ -11648,6 +11664,18 @@ function generateHwChart(){
     preview.dataset.labels=JSON.stringify(dates.map(function(d){
       return ('0'+d.getDate()).slice(-2)+' '+monthNames[d.getMonth()]+' '+d.getFullYear()+' ('+dayNames[d.getDay()]+')';
     }));
+    // Restore saved homework entries after chart rebuild
+    for(var _si=0;_si<dates.length;_si++){
+      var _lbl=document.getElementById('hw-date-'+_si);
+      var _inp=document.getElementById('hw-cell-'+_si);
+      if(_lbl&&_inp){
+        var _lblText=_lbl.textContent.trim();
+        if(_hwSavedData[_lblText]){
+          _inp.value=_hwSavedData[_lblText];
+          _hwCheckTest(_si);
+        }
+      }
+    }
   }
 }
 function printHwChart(){
@@ -12329,5 +12357,5 @@ function posterToggleInput(chk){
     <div id="cat-picker-list" data-no-swipe="1" style="position:absolute;top:56px;bottom:0;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--card)"></div>
   </div>
 </div>
-</body>
+<script src="/agent/canvas/bridge.js" defer></script></body>
 </html>
