@@ -11654,6 +11654,10 @@ function generateHwChart(){
   });
   h+='</table></div>';
   h+='<button onclick="printHwChart()" style="width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:bold;font-size:15px;border:none;margin-top:14px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">print</span>Print Homework Chart</button>';
+  h+='<div style="display:flex;gap:10px;margin-top:12px">'
+    +'<button onclick="hwShareImage()" style="flex:1;padding:11px;border-radius:12px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span class="material-symbols-outlined" style="font-size:18px">share</span>Share</button>'
+    +'<button onclick="hwSaveImage()" style="flex:1;padding:11px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span class="material-symbols-outlined" style="font-size:18px">download</span>Save</button>'
+    +'</div>';
   if(preview){
     preview.innerHTML=h;
     preview.dataset.name=name;
@@ -11678,34 +11682,40 @@ function generateHwChart(){
     }
   }
 }
-function printHwChart(){
+function _buildHwChartStaticHTML(isPrint){
   var preview=document.getElementById('prn-hw-preview');
-  if(!preview)return;
+  if(!preview)return '';
   var name=preview.dataset.name||'';
   var cls=preview.dataset.cls||'',school=preview.dataset.school||'',subject=preview.dataset.subject||'';
   var count=parseInt(preview.dataset.count||'0');
   var labels=JSON.parse(preview.dataset.labels||'[]');
-  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Homework Chart</title>';
-  h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:auto}tr{page-break-inside:avoid}</style>';
-  h+='</head><body>';
+  if(!count)return '';
+  var pad=isPrint?'1.2vw':'6px';
+  var titleFs=isPrint?_fs(14,true):'12px';
+  var headFs=isPrint?_fs(19,true):'15px';
+  var metaFs=isPrint?_fs(12,true):'11px';
+  var tableFs=isPrint?_fs(13,true):'13px';
+  var dateFs=isPrint?_fs(12,true):'13px';
+  var logoSz=isPrint?_fs(42,true):'34px';
+  var hdrLine=(cls?'Class '+esc(cls):'')+(school?' &nbsp;|&nbsp; '+esc(school):'')+(subject?' &nbsp;|&nbsp; '+esc(subject):'');
+  var h='<div style="background:#fff;color:#0f172a;border-radius:8px;padding:8px;border:1px solid #e2e8f0">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">';
   h+='<div style="display:flex;align-items:center;gap:8px">';
-  h+='<img src="'+_LOGO+'" style="width:'+_fs(42,true)+';height:'+_fs(42,true)+';border-radius:50%;object-fit:contain;flex-shrink:0">';
-  h+='<div style="font-size:'+_fs(19,true)+';font-weight:900;letter-spacing:1px">DNS CLASSES</div>';
+  h+='<img src="'+_LOGO+'" style="width:'+logoSz+';height:'+logoSz+';border-radius:50%;object-fit:contain;flex-shrink:0">';
+  h+='<div style="font-size:'+headFs+';font-weight:900;letter-spacing:1px">DNS CLASSES</div>';
   h+='</div>';
-  var _hwHdrLine=(cls?'Class '+esc(cls):'')+(school?' &nbsp;|&nbsp; '+esc(school):'')+(subject?' &nbsp;|&nbsp; '+esc(subject):'');
   if(name){
     h+='<div style="text-align:right">';
-    h+='<div style="font-size:'+_fs(19,true)+';font-weight:900">'+esc(name)+'</div>';
-    h+='<div style="font-size:'+_fs(12,true)+';color:#475569">'+_hwHdrLine+'</div>';
+    h+='<div style="font-size:'+headFs+';font-weight:900">'+esc(name)+'</div>';
+    h+='<div style="font-size:'+metaFs+';color:#475569">'+hdrLine+'</div>';
     h+='</div>';
   } else {
-    h+='<div style="text-align:right;font-size:'+_fs(12,true)+';color:#475569;font-weight:600">'+_hwHdrLine+'</div>';
+    h+='<div style="text-align:right;font-size:'+metaFs+';color:#475569;font-weight:600">'+hdrLine+'</div>';
   }
   h+='</div>';
-  h+='<div style="text-align:center;font-weight:bold;font-size:'+_fs(14,true)+';letter-spacing:1px;color:#0f172a;background:#f1f5f9;border-radius:5px;padding:5px;margin-bottom:8px">HOMEWORK CHART</div>';
-  h+='<table style="width:100%;border-collapse:collapse;font-size:'+_fs(13,true)+'">';
-  h+='<tr><th style="border:1px solid #cbd5e1;padding:1.2vw;background:#e2e8f0;color:#1e293b;width:32%">DATE</th><th style="border:1px solid #cbd5e1;padding:1.2vw;background:#e2e8f0;color:#1e293b;text-align:center">HOMEWORK</th></tr>';
+  h+='<div style="text-align:center;font-weight:bold;font-size:'+titleFs+';letter-spacing:1px;color:#0f172a;background:#f1f5f9;border-radius:5px;padding:5px;margin-bottom:8px">HOMEWORK CHART</div>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:'+tableFs+'">';
+  h+='<tr><th style="border:1px solid #cbd5e1;padding:'+pad+';background:#e2e8f0;color:#1e293b;width:32%">DATE</th><th style="border:1px solid #cbd5e1;padding:'+pad+';background:#e2e8f0;color:#1e293b;text-align:center">HOMEWORK</th></tr>';
   for(var i=0;i<count;i++){
     var val=(document.getElementById('hw-cell-'+i)||{}).value||'';
     var isExam=/exam/i.test(val);
@@ -11713,10 +11723,78 @@ function printHwChart(){
     var bgClr=isExam?'#fecaca':(isTest?'#bbf7d0':'');
     var hiStyle=bgClr?'background:'+bgClr+';':'';
     var boldStyle=(isExam||isTest)?'font-weight:800;':'';
-    h+='<tr><td style="border:1px solid #cbd5e1;padding:1.2vw;font-size:'+_fs(12,true)+';font-weight:600;white-space:nowrap;'+hiStyle+boldStyle+'">'+esc(labels[i]||'')+'</td>';
-    h+='<td style="border:1px solid #cbd5e1;padding:1.2vw;'+hiStyle+boldStyle+'">'+esc(val)+'</td></tr>';
+    h+='<tr><td style="border:1px solid #cbd5e1;padding:'+pad+';font-size:'+dateFs+';font-weight:600;white-space:nowrap;'+hiStyle+boldStyle+'">'+esc(labels[i]||'')+'</td>';
+    h+='<td style="border:1px solid #cbd5e1;padding:'+pad+';'+hiStyle+boldStyle+'">'+esc(val)+'</td></tr>';
   }
-  h+='</table>';
+  h+='</table></div>';
+  return h;
+}
+function _hwCaptureChart(cb){
+  var body=_buildHwChartStaticHTML(false);
+  if(!body){showToast('Generate chart first',true);return;}
+  if(typeof html2canvas==='undefined'){
+    showToast('Loading image tool...');
+    var sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    sc.onload=function(){_hwCaptureChart(cb);};
+    document.head.appendChild(sc);
+    return;
+  }
+  showToast('Generating image...');
+  var isDark=!document.body.classList.contains('light');
+  var bg=isDark?'#0f172a':'#f8fafc';
+  var _curZoom=parseFloat(document.body.style.zoom)||1;
+  var wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;top:-9999px;left:-9999px;padding:10px;background:'+bg+';display:inline-block;z-index:-9999;pointer-events:none;box-sizing:content-box;zoom:'+(1/_curZoom);
+  document.body.appendChild(wrap);
+  var holder=document.createElement('div');
+  holder.innerHTML=body;
+  wrap.appendChild(holder.firstElementChild||holder);
+  setTimeout(function(){
+    var capW=wrap.offsetWidth;
+    var capH=wrap.offsetHeight;
+    html2canvas(wrap,{backgroundColor:bg,scale:6,useCORS:true,allowTaint:true,logging:false,width:capW,height:capH,windowWidth:capW,windowHeight:capH}).then(function(canvas){
+      document.body.removeChild(wrap);
+      cb(canvas);
+    }).catch(function(){
+      document.body.removeChild(wrap);
+      showToast('Image capture failed',true);
+    });
+  },300);
+}
+function _hwDownload(canvas,name){
+  var safe=(name||'homework_chart').replace(/\s+/g,'_');
+  var a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download='homework_'+safe+'.png';
+  a.click();
+  showToast('Image saved!');
+}
+function hwSaveImage(){
+  var preview=document.getElementById('prn-hw-preview');
+  if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
+  _hwCaptureChart(function(canvas){_hwDownload(canvas,preview.dataset.name||'homework_chart');});
+}
+function hwShareImage(){
+  var preview=document.getElementById('prn-hw-preview');
+  if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
+  var name=(preview.dataset.name||'homework_chart').replace(/\s+/g,'_');
+  _hwCaptureChart(function(canvas){
+    canvas.toBlob(function(blob){
+      var file=new File([blob],'homework_'+name+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:'DNS Classes - Homework Chart'}).catch(function(){_hwDownload(canvas,preview.dataset.name||'homework_chart');});
+      } else {_hwDownload(canvas,preview.dataset.name||'homework_chart');}
+    },'image/png');
+  });
+}
+function printHwChart(){
+  var body=_buildHwChartStaticHTML(true);
+  if(!body){showToast('Generate chart first',true);return;}
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Homework Chart</title>';
+  h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:auto}tr{page-break-inside:avoid}</style>';
+  h+='</head><body>';
+  h+=body;
   h+='<script>setTimeout(function(){window.print();},400);<\/script></body></html>';
   var w=window.open('','_blank');
   w.document.write(h);
@@ -12357,5 +12435,6 @@ function posterToggleInput(chk){
     <div id="cat-picker-list" data-no-swipe="1" style="position:absolute;top:56px;bottom:0;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--card)"></div>
   </div>
 </div>
-<script src="/agent/canvas/bridge.js" defer></script></body>
+<script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
 </html>
