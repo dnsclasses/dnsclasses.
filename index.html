@@ -340,7 +340,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       <div><label class="flabel">SCHOOL NAME</label><input id="f-school" placeholder="Delhi Public School"></div>
       <div><label class="flabel">JOINING DATE *</label><input id="f-date" type="date"></div>
       <div><label class="flabel">DATE OF BIRTH</label><input id="f-dob" type="date" placeholder="Optional"></div>
-      <div><label class="flabel">MONTHLY FEES (₹) *</label><input id="f-fees" type="number" placeholder="1500"></div>
+      <div><label class="flabel">MONTHLY FEES (₹) <span style="color:var(--sub);font-weight:normal">(0 for free / scholarship)</span></label><input id="f-fees" type="number" min="0" placeholder="1500"></div>
       <div><label class="flabel">CLASS</label><select id="f-grade"></select></div>
       <div style="grid-column:span 2"><label class="flabel">SUBJECTS</label><div id="f-subject-boxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--ibdr);border-radius:8px;background:var(--ibg)"></div><input type="hidden" id="f-subject" value="Maths"></div>
       <div><label class="flabel">LOCATION</label><select id="f-loc"><option value="Home">Home</option><option value="City">City</option></select></div><div style="grid-column:span 2"><label class="flabel">ADDRESS (optional)</label><input id="f-addr" placeholder="House no, Street, Area..." style="width:100%;box-sizing:border-box"></div>
@@ -456,6 +456,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
         <option value="City">City</option>
       </select>
     </div>
+  </div>
+  <!-- Bulk PDF: one chart per page, filtered by class + location. -->
+  <div style="display:flex;justify-content:center;margin-bottom:10px">
+    <button id="pr-pdf-bulk-btn" onclick="generateTestRecordsBulkPDF()" style="width:min(100%,340px);padding:10px 16px;border-radius:10px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">picture_as_pdf</span>Progress Chart (All)</button>
   </div>
   <!-- School row (only for class < 9) -->
   <div id="pr-school-row" style="display:none;margin-bottom:10px">
@@ -1354,7 +1358,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     <div style="display:grid;grid-template-columns:minmax(0,160px) 1fr;gap:12px;align-items:end;margin-bottom:12px">
       <div>
         <label class="flabel">EMPTY ROWS</label>
-        <input id="prn-chart-empty-rows" type="number" min="0" max="30" value="8" onchange="renderPrnChart();renderPrnChartBulkTools()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-chart-empty-rows" type="number" min="0" max="30" value="0" onchange="renderPrnChart();renderPrnChartBulkTools()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div id="prn-chart-bulk-tools" style="display:flex;align-items:end">
         <button id="prn-chart-bulk-btn" onclick="printPrnChartBatch()" disabled style="width:100%;min-height:48px;padding:0 18px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:800;font-size:14px;letter-spacing:.8px;border:none;cursor:not-allowed;opacity:.6;display:flex;align-items:center;justify-content:center;box-sizing:border-box">PRINT ALL</button>
@@ -1377,7 +1381,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     </div>
     <div style="margin-bottom:12px;max-width:160px">
       <label class="flabel">EMPTY ROWS</label>
-      <input id="prn-mock-empty-rows" type="number" min="0" max="30" value="8" onchange="renderPrnMock()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+      <input id="prn-mock-empty-rows" type="number" min="0" max="30" value="0" onchange="renderPrnMock()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
     </div>
     <div id="prn-mock-preview"></div>
   </div>
@@ -1386,16 +1390,16 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-hw-panel" class="hidden">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">NAME <span style="font-weight:400;opacity:0.7">(optional)</span></label>
-        <input id="prn-hw-name" placeholder="" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-hw-name" oninput="syncHwChartLive()" placeholder="" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div><label class="flabel">CLASS</label>
-        <input id="prn-hw-class" placeholder="e.g. 9" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-hw-class" oninput="syncHwChartLive()" placeholder="e.g. 9" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div><label class="flabel">SCHOOL <span style="font-weight:400;opacity:0.7">(optional)</span></label>
-        <input id="prn-hw-school" placeholder="e.g. DPS" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-hw-school" oninput="syncHwChartLive()" placeholder="e.g. DPS" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div><label class="flabel">SUBJECT</label>
-        <input id="prn-hw-subject" value="Mathematics" placeholder="e.g. Maths" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="prn-hw-subject" oninput="syncHwChartLive()" value="Mathematics" placeholder="e.g. Maths" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
@@ -2156,6 +2160,10 @@ function getRuns(s){
 
 function getCycles(s){
   if(!s||!s.joiningDate)return[];
+  // Zero-fees students (free / scholarship) have NO monthly fee cycles at all.
+  // Attendance / class lists continue to use _getSessionStudents() which doesn't
+  // depend on fee cycles, so this only affects the Fees section.
+  if(Number(s.fees)===0)return[];
   var now=today0(),opts={day:'numeric',month:'short',year:'numeric'},cycles=[],seen={},excl={};
   (s.excludedMonths||[]).forEach(function(k){excl[k]=true;});
   var runs=getRuns(s);
@@ -5650,7 +5658,8 @@ function saveForm(){
   var name=nameEl?nameEl.value.trim():'';
   if(!name){showToast('Enter student name',true);return;}
   if(!jd){showToast('Enter joining date',true);return;}
-  if(!fees){showToast('Enter monthly fees',true);return;}
+  // Allow zero fees (free/scholarship). Empty still rejected.
+  if(fees===''||isNaN(parseFloat(fees))||parseFloat(fees)<0){showToast('Enter monthly fees (0 allowed for free)',true);return;}
   var ph=[];
   document.querySelectorAll('#phone-rows > div').forEach(function(row){
     var pn=row.querySelector('.pnum'),pt=row.querySelector('.ptag');
@@ -5670,7 +5679,7 @@ function saveForm(){
     if(admNoRaw&&(isNaN(admNoVal)||admNoVal<0)){showToast('Admission number must be 0 or higher',true);return;}
     pushUndo();
     var dobVal=(document.getElementById('f-dob')||{value:''}).value||'';
-    var payload={name:name,joiningDate:jd,fees:fees,grade:grade,subject:subjects[0]||'Maths',subjects:subjects,address:addr,school:school,location:loc,notes:notes,dob:dobVal,phone:ph.map(function(p){return p.number;}).join(', '),phones:ph};
+    var payload={name:name,joiningDate:jd,fees:Number(fees)||0,grade:grade,subject:subjects[0]||'Maths',subjects:subjects,address:addr,school:school,location:loc,notes:notes,dob:dobVal,phone:ph.map(function(p){return p.number;}).join(', '),phones:ph,freeStudent:Number(fees)===0};
     if(editId){
       var _eid=editId;
       if(admNoVal!==null){
@@ -8118,6 +8127,75 @@ function _onMarksInput(inp){
   _updateMarksCounter();
 }
 
+function generateTestRecordsBulkPDF(){
+  var cls=(document.getElementById('pr-class')||{}).value||'';
+  if(!cls){showToast('Select a class first',true);return;}
+  var loc=(document.getElementById('pr-loc')||{}).value||'all';
+  var studs=(db.students||[]).filter(function(s){
+    if((s.status||'active')!=='active')return false;
+    if((s.grade||'')!==cls)return false;
+    if(loc==='all'||!loc)return true;
+    return (s.location||'Home')===loc;
+  }).slice().sort(function(a,b){return (a.name||'').localeCompare(b.name||'');});
+  if(!studs.length){showToast('No active students found for this class/location',true);return;}
+  var locLabel=loc==='all'||!loc?'Together (All)':loc;
+  var today=dkey(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+
+  var _origBodyClass=document.body.className;
+  document.body.className='light';
+
+  try{
+    var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Progress Charts — Class '+esc(cls)+' — '+esc(locLabel)+'</title>';
+    h+='<style>@page{size:A4;margin:8mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}';
+    h+='body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fff;color:#111}';
+    h+='.page{page-break-after:always;break-after:page;padding:0}.page:last-child{page-break-after:auto;break-after:auto}';
+    h+='.letterhead{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:3px solid #111}';
+    h+='.brand{display:flex;align-items:center;gap:12px}.brand img{width:54px;height:54px;border-radius:50%;object-fit:cover}.brand-name{font-size:20px;font-weight:900;letter-spacing:2px;color:#111}.brand-sub{font-size:12px;color:#555;margin-top:2px;letter-spacing:.5px}';
+    h+='.student{text-align:right}.student-name{font-size:24px;font-weight:900;color:#111;margin-bottom:2px}.student-meta{font-size:12px;color:#555;font-weight:600;margin-bottom:4px}.badges{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.badge{color:#fff;border-radius:20px;padding:2px 12px;font-size:12px;font-weight:700}';
+    h+='.progress-card{background:#fff;border-radius:12px;padding:14px;border:1px solid #cbd5e1}';
+    h+='.progress-card-title{font-size:14px;font-weight:800;color:#2563eb;letter-spacing:1px;margin-bottom:12px}';
+    h+='.meta{font-size:11px;color:#64748b;margin-top:10px;text-align:right;font-weight:700;letter-spacing:.3px}';
+    h+='.progress-card [data-no-swipe]{overflow:visible!important}.progress-card table{border-collapse:separate}.progress-card tr{page-break-inside:avoid;break-inside:avoid}';
+    h+='.progress-card td,.progress-card th{word-break:break-word}';
+    h+='@media print{body{padding:0}}';
+    h+='</style></head><body>';
+
+    studs.forEach(function(stu,idx){
+      try{
+        var sess=(db.sessions||[]).find(function(x){return x.id===(stu.sessionId||curSession);});
+        var actCol=(stu.status==='inactive'||stu.status==='discontinued')?'#dc2626':'#16a34a';
+        var actTxt=(stu.status==='inactive'||stu.status==='discontinued')?'Inactive':'Active';
+        var chartHTML=buildChapterProgressChart(stu.id,stu.grade||'Other',false) || '<div style="text-align:center;color:#64748b;padding:20px">No progress chart available.</div>';
+        chartHTML=chartHTML.replace('id="pg-chart-card"','id="bulk-progress-chart-'+idx+'"');
+        h+='<div class="page">';
+        h+='<div class="letterhead">';
+        h+='<div class="brand"><img src="'+_LOGO+'"><div><div class="brand-name">DNS CLASSES</div><div class="brand-sub">Student Progress Report</div></div></div>';
+        h+='<div class="student">';
+        h+='<div class="student-name">'+esc(stu.name||'')+'</div>';
+        if(sess)h+='<div class="student-meta">'+esc(sess.label)+'</div>';
+        h+='<div class="badges">';
+        if(stu.grade)h+='<span class="badge" style="background:#1d4ed8">'+esc(stu.grade)+'</span>';
+        h+='<span class="badge" style="background:'+actCol+'">'+actTxt+'</span>';
+        h+='</div></div></div>';
+        h+='<div class="progress-card">';
+        h+='<div class="progress-card-title">CHAPTER-WISE PROGRESS REPORT</div>';
+        h+=chartHTML;
+        h+='</div>';
+        h+='</div>';
+      }catch(e){console.error('Bulk report chart build failed for',stu&&stu.name,e);}
+    });
+
+    h+='<script>setTimeout(function(){window.print();},500);<\/script></body></html>';
+    var w=window.open('','_blank');
+    if(!w){showToast('Allow pop-ups to generate PDF',true);return;}
+    w.document.write(h);
+    w.document.close();
+    w.focus();
+  } finally {
+    document.body.className=_origBodyClass;
+  }
+}
+
 function posterInit(){
   var sel=document.getElementById('pr-class');
   if(sel&&sel.options.length<=1){
@@ -9684,24 +9762,36 @@ function _showInvLockScreen(){
 }
 
 function _invLockRender(el,entered,showForgot,errorMsg){
+  // Theme-aware colors so the PIN keypad is readable in BOTH dark and light mode.
+  var _light=document.body.classList.contains('light');
+  var _title=_light?'#0f172a':'#e2e8f0';
+  var _sub=_light?'#475569':'#94a3b8';
+  var _dotIdle=_light?'#cbd5e1':'#475569';
+  var _dotOn=_light?'#4f46e5':'#818cf8';
+  var _keyBg=_light?'#ffffff':'rgba(30,58,95,.6)';
+  var _keyBdr=_light?'#cbd5e1':'#1e3a5f';
+  var _keyTxt=_light?'#0f172a':'#e2e8f0';
+  var _goBdr=_light?'#cbd5e1':'#1e3a5f';
+  var _goTxt=_light?'#475569':'#94a3b8';
+  var _iconCol=_light?'#0f172a':'#e2e8f0';
   var dots=[0,1,2,3].map(function(i){
-    return '<div style="width:14px;height:14px;border-radius:50%;border:2px solid '+(i<entered.length?'#818cf8':'#475569')+';background:'+(i<entered.length?'#818cf8':'transparent')+';transition:background .15s"></div>';
+    return '<div style="width:14px;height:14px;border-radius:50%;border:2px solid '+(i<entered.length?_dotOn:_dotIdle)+';background:'+(i<entered.length?_dotOn:'transparent')+';transition:background .15s"></div>';
   }).join('');
-  var forgotBtn=showForgot?'<button onclick="_invLockForgot()" style="margin-top:6px;padding:6px 18px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.1);color:#f87171;font-size:13px;cursor:pointer">Forgot PIN?</button>':'<div style="height:32px"></div>';
+  var forgotBtn=showForgot?'<button onclick="_invLockForgot()" style="margin-top:6px;padding:6px 18px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.1);color:'+(_light?'#b91c1c':'#f87171')+';font-size:13px;cursor:pointer">Forgot PIN?</button>':'<div style="height:32px"></div>';
   el.innerHTML=
-    '<div class="material-symbols-outlined" style="font-size:32px;margin-bottom:8px">lock</div>'+
-    '<div style="font-size:17px;font-weight:bold;color:#e2e8f0;margin-bottom:4px">Investments</div>'+
-    '<div style="font-size:12px;color:#64748b;margin-bottom:28px">Enter PIN to view</div>'+
+    '<div class="material-symbols-outlined" style="font-size:32px;margin-bottom:8px;color:'+_iconCol+'">lock</div>'+
+    '<div style="font-size:17px;font-weight:bold;color:'+_title+';margin-bottom:4px">Investments</div>'+
+    '<div style="font-size:12px;color:'+_sub+';margin-bottom:28px">Enter PIN to view</div>'+
     '<div style="display:flex;gap:16px;margin-bottom:14px">'+dots+'</div>'+
     '<div style="font-size:12px;color:#ef4444;min-height:18px;margin-bottom:4px">'+(errorMsg||'')+'</div>'+
     forgotBtn+
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:260px;width:90%;margin-top:20px">'+
     ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(function(d){
       if(d==='')return '<div></div>';
-      return '<button onclick="_invLockPress(\''+d+'\')" style="padding:18px;border-radius:12px;font-size:22px;font-weight:bold;background:rgba(30,58,95,.6);border:1px solid #1e3a5f;color:#e2e8f0;cursor:pointer;-webkit-tap-highlight-color:transparent">'+d+'</button>';
+      return '<button onclick="_invLockPress(\''+d+'\')" style="padding:18px;border-radius:12px;font-size:22px;font-weight:bold;background:'+_keyBg+';border:1px solid '+_keyBdr+';color:'+_keyTxt+';cursor:pointer;-webkit-tap-highlight-color:transparent">'+d+'</button>';
     }).join('')+
     '</div>'+
-    '<button onclick="_invLockGoBack()" style="margin-top:22px;padding:8px 20px;border-radius:8px;border:1px solid #1e3a5f;background:transparent;color:#64748b;font-size:13px;cursor:pointer">← Go back</button>';
+    '<button onclick="_invLockGoBack()" style="margin-top:22px;padding:8px 20px;border-radius:8px;border:1px solid '+_goBdr+';background:transparent;color:'+_goTxt+';font-size:13px;cursor:pointer">← Go back</button>';
   el._entered=entered;
 }
 
@@ -11419,6 +11509,11 @@ function setPrnMode(mode){
   }
   if(mode==='chart')renderPrnChartBulkTools();
 }
+function _getPrnMockStudents(){
+  var cls=(document.getElementById('prn-mock-class')||{}).value||'';
+  if(!cls)return [];
+  return (db.students||[]).filter(function(s){return (s.grade||'')===cls;});
+}
 function prnMockClassChanged(){
   var cls=document.getElementById('prn-mock-class').value;
   var el=document.getElementById('prn-mock-student');
@@ -11426,11 +11521,14 @@ function prnMockClassChanged(){
   if(preview)preview.innerHTML='';
   if(!el)return;
   if(!cls){el.innerHTML='<option value="">Select class first...</option>';el.disabled=true;_gpSync('prn-mock-student','prn-mock-student-btn');return;}
-  var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
-  studs.sort(function(a,b){return a.name.localeCompare(b.name);});
+  var prev=el.value||'';
+  var studs=_getPrnMockStudents().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
   el.innerHTML='<option value="">Select student...</option>';
+  if(studs.length)el.innerHTML+='<option value="__ALL__">All Students</option>';
   studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
-  el.disabled=false;
+  el.disabled=!studs.length;
+  if(prev==='__ALL__'&&studs.length)el.value='__ALL__';
+  else if(studs.some(function(s){return String(s.id)===String(prev);})){el.value=prev;}
   _gpSync('prn-mock-student','prn-mock-student-btn');
 }
 function prnClassChanged(){
@@ -11489,7 +11587,6 @@ function printPrnChartBatch(){
   studs.forEach(function(stu,idx){
     var data=_buildPrnChartData(stu);
     h+='<div class="page">';
-    h+='<div class="meta">Class '+esc(cls)+' • '+esc(locLabel)+' • Student '+(idx+1)+' of '+studs.length+'</div>';
     h+=_buildPrnChartTableHTML(data,emptyRows,true);
     h+='</div>';
   });
@@ -11738,9 +11835,22 @@ function _buildPrnMockTableHTML(data,emptyRows,isPrint){
   return h;
 }
 function renderPrnMock(){
-  var sid=parseInt(document.getElementById('prn-mock-student').value||'0');
+  var raw=(document.getElementById('prn-mock-student').value||'');
   var preview=document.getElementById('prn-mock-preview');
   if(!preview)return;
+  if(!raw){preview.innerHTML='';return;}
+  if(raw==='__ALL__'){
+    var allStuds=_getPrnMockStudents().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+    if(!allStuds.length){preview.innerHTML='';return;}
+    preview.innerHTML=''
+      +'<div style="background:var(--card);border:1px solid var(--ibdr);border-radius:12px;padding:14px 14px 12px;color:var(--txt)">'
+      +'<div style="font-size:15px;font-weight:800;margin-bottom:6px">All Students Selected</div>'
+      +'<div style="font-size:13px;color:var(--sub);line-height:1.5;margin-bottom:12px">Print one mock record per page for all '+allStuds.length+' student'+(allStuds.length===1?'':'s')+'.</div>'
+      +'<button onclick="printPrnMockBatch()" style="width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:bold;font-size:15px;border:none;cursor:pointer"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">picture_as_pdf</span>Print All Mock Records</button>'
+      +'</div>';
+    return;
+  }
+  var sid=parseInt(raw||'0',10);
   if(!sid){preview.innerHTML='';return;}
   var stu=db.students.find(function(s){return s.id===sid;});
   if(!stu){preview.innerHTML='';return;}
@@ -11749,6 +11859,23 @@ function renderPrnMock(){
   var html=_buildPrnMockTableHTML(data,emptyRows);
   html+='<button onclick="printPrnMock('+sid+')" style="width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:bold;font-size:15px;border:none;margin-top:14px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">print</span>Print Mock Record</button>';
   preview.innerHTML=html;
+}
+function printPrnMockBatch(){
+  var studs=_getPrnMockStudents().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  if(!studs.length){showToast('No students found',true);return;}
+  var emptyRows=parseInt((document.getElementById('prn-mock-empty-rows')||{}).value);
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mock Exam Records</title>';
+  h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}table{page-break-inside:auto}tr{page-break-inside:avoid}</style>';
+  h+='</head><body>';
+  studs.forEach(function(stu){
+    var data=_buildPrnMockData(stu);
+    h+='<div class="page">'+_buildPrnMockTableHTML(data,emptyRows,true)+'</div>';
+  });
+  h+='<script>setTimeout(function(){window.print();},400);<\/script></body></html>';
+  var w=window.open('','_blank');
+  w.document.write(h);
+  w.document.close();
+  w.focus();
 }
 function printPrnMock(sid){
   var stu=db.students.find(function(s){return s.id===sid;});
@@ -11782,19 +11909,29 @@ function _hwCheckTest(i){
   inp.style.background='transparent';
 }
 var _hwSavedData={};
-function updateHwFromTo(){
+function _hwRememberCurrentInputs(){
   var preview=document.getElementById('prn-hw-preview');
-  if(!preview||!preview.dataset.count)return;
+  if(!preview||!preview.dataset.count)return 0;
   var count=parseInt(preview.dataset.count)||0;
-  if(!count)return;
+  if(!count)return 0;
+  var fresh={};
   for(var i=0;i<count;i++){
     var inp=document.getElementById('hw-cell-'+i);
     var lbl=document.getElementById('hw-date-'+i);
-    if(inp&&inp.value.trim()!==''){
-      var label=lbl?lbl.textContent.trim():('row-'+i);
-      _hwSavedData[label]=inp.value.trim();
-    }
+    var label=lbl?lbl.textContent.trim():('row-'+i);
+    if(inp)fresh[label]=inp.value;
   }
+  _hwSavedData=fresh;
+  return count;
+}
+function syncHwChartLive(){
+  var preview=document.getElementById('prn-hw-preview');
+  if(!preview||!preview.dataset.count)return;
+  _hwRememberCurrentInputs();
+  generateHwChart();
+}
+function updateHwFromTo(){
+  if(!_hwRememberCurrentInputs())return;
   generateHwChart();
 }
 function generateHwChart(){
@@ -12625,6 +12762,10 @@ function posterToggleInput(chk){
   </div>
 </div>
 <script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
