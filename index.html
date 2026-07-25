@@ -521,14 +521,12 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">quiz</span>Mock Exams</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
-        <select id="mock-class" onchange="mockLoadStudents()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
-          <option value="">Select class</option>
-        </select>
+        <select id="mock-class" onchange="mockLoadStudents();_gpSync('mock-class','mock-class-btn')" style="display:none"><option value="">Select class...</option></select>
+        <button type="button" id="mock-class-btn" onclick="openGenericPicker('mock-class')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:pointer">Select class...</button>
       </div>
       <div><label class="flabel">STUDENT</label>
-        <select id="mock-student" onchange="mockShowList()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
-          <option value="">Select student</option>
-        </select>
+        <select id="mock-student" onchange="mockShowList();_gpSync('mock-student','mock-student-btn')" disabled style="display:none"><option value="">Select class first...</option></select>
+        <button type="button" id="mock-student-btn" onclick="openGenericPicker('mock-student')" disabled style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:not-allowed">Select class first...</button>
       </div>
     </div>
     <div id="mock-add-form" style="display:none;background:var(--card);border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid var(--ibdr)">
@@ -565,14 +563,16 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div><label class="flabel">CLASS</label>
-          <select id="ch-class" onchange="chOnClassChange()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
+          <select id="ch-class" onchange="chOnClassChange();_gpSync('ch-class','ch-class-btn')" style="display:none">
             <option value="">Select class</option>
           </select>
+          <button type="button" id="ch-class-btn" onclick="openGenericPicker('ch-class')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:pointer">Select class</button>
         </div>
         <div id="ch-school-wrap" style="display:none"><label class="flabel">SCHOOL</label>
-          <select id="ch-school" onchange="chRenderList()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
+          <select id="ch-school" onchange="chRenderList();_gpSync('ch-school','ch-school-btn')" disabled style="display:none">
             <option value="">Select school</option>
           </select>
+          <button type="button" id="ch-school-btn" onclick="openGenericPicker('ch-school')" disabled style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:not-allowed">Select school</button>
         </div>
       </div>
       <div style="margin-bottom:8px"><label class="flabel">CHAPTER NAME(S)</label><textarea id="ch-name" rows="6" placeholder="e.g. Introduction to Polynomials&#10;&#10;Tip: paste multiple chapters at once, one per line — they'll be added in order" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;resize:vertical;min-height:120px"></textarea></div>
@@ -620,6 +620,20 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
         <div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .3s"></div>
       </div>
     </div>
+  </div>
+
+  <div style="background:var(--card);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--bdr)">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
+      <div>
+        <div style="font-size:15px;font-weight:bold;color:var(--txt)"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">badge</span>Admission Number Start</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:2px">Set the starting number used for future auto-assigned admission numbers. Existing students stay unchanged.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input id="settings-adm-start" type="number" min="0" step="1" placeholder="200" style="flex:1;padding:11px 12px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+      <button onclick="saveAdmissionStart()" style="padding:11px 16px;border-radius:10px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:13px;border:none;cursor:pointer;white-space:nowrap">Save</button>
+    </div>
+    <div id="settings-adm-next-note" style="font-size:12px;color:var(--sub);margin-top:8px"></div>
   </div>
 
   <div onclick="toggleSettingsSection('backup')" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:var(--card);border-radius:12px;padding:14px;margin-bottom:2px;border:1px solid var(--bdr)">
@@ -1324,14 +1338,27 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
         <select id="prn-class" onchange="prnClassChanged();_gpSync('prn-class','prn-class-btn')" style="display:none"><option value="">Select class...</option></select>
         <button type="button" id="prn-class-btn" onclick="openGenericPicker('prn-class')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:pointer">Select class...</button>
       </div>
-      <div><label class="flabel">STUDENT</label>
+      <div><label class="flabel">HOME/CITY</label>
+        <select id="prn-loc" onchange="prnLocationChanged();_gpSync('prn-loc','prn-loc-btn')" style="display:none">
+          <option value="all">All Students</option>
+          <option value="Home">Home</option>
+          <option value="City">City</option>
+        </select>
+        <button type="button" id="prn-loc-btn" onclick="openGenericPicker('prn-loc')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;text-align:left;cursor:pointer">All Students</button>
+      </div>
+      <div style="grid-column:1 / -1"><label class="flabel">STUDENT</label>
         <select id="prn-student" onchange="renderPrnChart();_gpSync('prn-student','prn-student-btn')" disabled style="display:none"><option value="">Select class first...</option></select>
         <button type="button" id="prn-student-btn" onclick="openGenericPicker('prn-student')" disabled style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:not-allowed">Select class first...</button>
       </div>
     </div>
-    <div style="margin-bottom:12px;max-width:160px">
-      <label class="flabel">EMPTY ROWS</label>
-      <input id="prn-chart-empty-rows" type="number" min="0" max="30" value="8" onchange="renderPrnChart()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+    <div style="display:grid;grid-template-columns:minmax(0,160px) 1fr;gap:12px;align-items:end;margin-bottom:12px">
+      <div>
+        <label class="flabel">EMPTY ROWS</label>
+        <input id="prn-chart-empty-rows" type="number" min="0" max="30" value="8" onchange="renderPrnChart();renderPrnChartBulkTools()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+      </div>
+      <div id="prn-chart-bulk-tools" style="display:flex;align-items:end">
+        <button id="prn-chart-bulk-btn" onclick="printPrnChartBatch()" disabled style="width:100%;min-height:48px;padding:0 18px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:800;font-size:14px;letter-spacing:.8px;border:none;cursor:not-allowed;opacity:.6;display:flex;align-items:center;justify-content:center;box-sizing:border-box">PRINT ALL</button>
+      </div>
     </div>
     <div id="prn-chart-preview"></div>
   </div>
@@ -1395,7 +1422,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="inv-summary" style="background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.2));border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid rgba(139,92,246,.3)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <div style="font-size:12px;color:#818cf8;font-weight:bold;letter-spacing:1px">TOTAL NET WORTH</div>
-      <button onclick="openInvLockSettings()" title="Investment Lock" style="background:none;border:none;cursor:pointer;padding:2px 4px;opacity:.7"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:middle">lock</span></button>
+      <button onclick="openInvLockSettings()" title="Investment Lock" style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:var(--txt);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:1"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">lock</span></button>
     </div>
     <div id="inv-total" style="font-size:28px;font-weight:bold;color:var(--txt)">&#8377;0</div>
     <div id="inv-as-of" style="font-size:11px;color:#818cf8;margin-top:4px;opacity:.8"></div>
@@ -1610,8 +1637,13 @@ function loadDB(){
   _migrateAdmissionNumbers();
   _checkMonthSnapshot();
 }
+function _getAdmissionStart(){
+  var v=(db&&db.settings&&db.settings.admissionStart!==undefined)?parseInt(db.settings.admissionStart,10):200;
+  if(isNaN(v)||v<0)v=200;
+  return v;
+}
 function _getNextAdmissionNo(){
-  var maxNo=199;
+  var maxNo=_getAdmissionStart()-1;
   (db.students||[]).forEach(function(s){
     if(typeof s.admissionNo==='number'&&s.admissionNo>maxNo)maxNo=s.admissionNo;
   });
@@ -2652,6 +2684,30 @@ function renderSettingsView(){
     var pbDot=pbTog.firstElementChild;
     if(pbDot)pbDot.style.left=pitchBlack?'23px':'3px';
   }
+  renderAdmissionSettings();
+}
+function renderAdmissionSettings(){
+  var inp=document.getElementById('settings-adm-start');
+  var note=document.getElementById('settings-adm-next-note');
+  if(inp)inp.value=_getAdmissionStart();
+  if(note)note.textContent='Next auto admission number: '+_getNextAdmissionNo();
+}
+function saveAdmissionStart(){
+  var inp=document.getElementById('settings-adm-start');
+  if(!inp)return;
+  var val=parseInt(inp.value,10);
+  if(isNaN(val)||val<0){showToast('Starting admission number must be 0 or higher',true);renderAdmissionSettings();return;}
+  if(!db.settings)db.settings={};
+  db.settings.admissionStart=val;
+  saveDB();
+  renderAdmissionSettings();
+  if(curView==='add')_updateAdmissionFieldHint();
+  showToast('Starting admission number updated');
+}
+function _updateAdmissionFieldHint(){
+  var el=document.getElementById('f-adm-no');
+  if(!el||editId)return;
+  el.placeholder='Auto-assigned (next: '+_getNextAdmissionNo()+')';
 }
 function toggleSettingsSection(name){
   var block=document.getElementById('settings-'+name+'-block');
@@ -5556,7 +5612,7 @@ function startAdd(){
   var _fa=document.getElementById('f-addr');if(_fa)_fa.value='';
   var _fadm=document.getElementById('f-adm-no');if(_fadm)_fadm.value='';
   var _fs=document.getElementById('f-school');if(_fs)_fs.value='';
-  document.getElementById('phone-rows').innerHTML='';addPhRow('','Personal');initSubjectChips('');go('add');}
+  document.getElementById('phone-rows').innerHTML='';addPhRow('','Personal');initSubjectChips('');go('add');_updateAdmissionFieldHint();}
 function startEdit(sid){
   var s=db.students.find(function(x){return x.id===sid;});if(!s)return;
   editId=sid;document.getElementById('form-title').innerHTML='<span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Student';document.getElementById('save-btn').textContent='Update';
@@ -5611,7 +5667,7 @@ function saveForm(){
     var notes=(document.getElementById('f-notes')||{value:''}).value||'';
     var admNoRaw=(document.getElementById('f-adm-no')||{value:''}).value.trim();
     var admNoVal=admNoRaw?parseInt(admNoRaw):null;
-    if(admNoRaw&&(isNaN(admNoVal)||admNoVal<0)){showToast('Admission number must be a positive number',true);return;}
+    if(admNoRaw&&(isNaN(admNoVal)||admNoVal<0)){showToast('Admission number must be 0 or higher',true);return;}
     pushUndo();
     var dobVal=(document.getElementById('f-dob')||{value:''}).value||'';
     var payload={name:name,joiningDate:jd,fees:fees,grade:grade,subject:subjects[0]||'Maths',subjects:subjects,address:addr,school:school,location:loc,notes:notes,dob:dobVal,phone:ph.map(function(p){return p.number;}).join(', '),phones:ph};
@@ -9967,7 +10023,15 @@ function _pgPopulateClasses(){
     }
   });
   if(typeof _taUpdateClassBtn==="function")_taUpdateClassBtn();
-  if(typeof _gpSync==="function"){_gpSync('prn-class','prn-class-btn');_gpSync('prn-mock-class','prn-mock-class-btn');}
+  if(typeof _gpSync==="function"){
+    _gpSync('prn-class','prn-class-btn');
+    _gpSync('prn-mock-class','prn-mock-class-btn');
+    _gpSync('mock-class','mock-class-btn');
+    _gpSync('mock-student','mock-student-btn');
+    _gpSync('prn-loc','prn-loc-btn');
+    _gpSync('ch-class','ch-class-btn');
+    _gpSync('ch-school','ch-school-btn');
+  }
 }
 
 // ── Chapter dropdown on score chart ──
@@ -10163,6 +10227,10 @@ function openManageChapters(){
   } else {
     chRenderList();
   }
+  if(typeof _gpSync==='function'){
+    _gpSync('ch-class','ch-class-btn');
+    _gpSync('ch-school','ch-school-btn');
+  }
   openM('ch-mgr-modal');
 }
 // ══ School-wise chapter helpers ══
@@ -10188,12 +10256,19 @@ function _chPopulateSchools(selectId,cls){
 function chOnClassChange(){
   var cls=document.getElementById('ch-class').value;
   var wrap=document.getElementById('ch-school-wrap');
-  if(wrap)wrap.style.display=(!cls||_isSenior(cls))?'none':'block';
-  if(!cls||_isSenior(cls))chRenderList();
-  else{
-    _chPopulateSchools('ch-school',cls);
-    chRenderList();
+  var schoolSel=document.getElementById('ch-school');
+  var needsSchool=!!cls&&!_isSenior(cls);
+  if(wrap)wrap.style.display=needsSchool?'block':'none';
+  if(schoolSel){
+    schoolSel.disabled=!needsSchool;
+    if(!needsSchool)schoolSel.value='';
   }
+  if(needsSchool)_chPopulateSchools('ch-school',cls);
+  if(typeof _gpSync==='function'){
+    _gpSync('ch-class','ch-class-btn');
+    _gpSync('ch-school','ch-school-btn');
+  }
+  chRenderList();
 }
 function chRenderList(){
   var cls=document.getElementById('ch-class').value;
@@ -10399,11 +10474,21 @@ function mockLoadStudents(){
   if(form)form.style.display='none';
   if(wrap)wrap.innerHTML='';
   if(!el)return;
-  el.innerHTML='<option value="">Select student</option>';
-  if(!cls)return;
+  el.value='';
+  if(!cls){
+    el.innerHTML='<option value="">Select class first...</option>';
+    el.disabled=true;
+    _gpSync('mock-student','mock-student-btn');
+    return;
+  }
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
   studs.sort(function(a,b){return a.name.localeCompare(b.name);});
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+'</option>';});
+  el.innerHTML='<option value="">Select student...</option>';
+  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
+  el.disabled=!studs.length;
+  if(!studs.length)el.innerHTML='<option value="">No students found...</option>';
+  _gpSync('mock-class','mock-class-btn');
+  _gpSync('mock-student','mock-student-btn');
 }
 function mockShowList(){
   _mockEditId=null;
@@ -11311,7 +11396,11 @@ var prnMode='chart';
 function renderPrintables(){
   _initChapters();
   _pgPopulateClasses();
+  var locSel=document.getElementById('prn-loc');
+  if(locSel&&!locSel.value)locSel.value='all';
+  if(typeof _gpSync==='function')_gpSync('prn-loc','prn-loc-btn');
   setPrnMode(prnMode);
+  renderPrnChartBulkTools();
 }
 function setPrnMode(mode){
   prnMode=mode;
@@ -11328,6 +11417,7 @@ function setPrnMode(mode){
     var fromEl=document.getElementById('prn-hw-from');
     if(fromEl&&!fromEl.value)fromEl.value=_todayStr();
   }
+  if(mode==='chart')renderPrnChartBulkTools();
 }
 function prnMockClassChanged(){
   var cls=document.getElementById('prn-mock-class').value;
@@ -11345,18 +11435,71 @@ function prnMockClassChanged(){
 }
 function prnClassChanged(){
   var cls=document.getElementById('prn-class').value;
+  var loc=(document.getElementById('prn-loc')||{}).value||'all';
   var el=document.getElementById('prn-student');
   var preview=document.getElementById('prn-chart-preview');
   if(preview)preview.innerHTML='';
   if(!el)return;
-  if(!cls){el.innerHTML='<option value="">Select class first...</option>';el.disabled=true;_gpSync('prn-student','prn-student-btn');return;}
-  var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
+  if(!cls){el.innerHTML='<option value="">Select class first...</option>';el.disabled=true;_gpSync('prn-student','prn-student-btn');renderPrnChartBulkTools();return;}
+  var prev=el.value;
+  var studs=_getPrnChartFilteredStudents();
   studs.sort(function(a,b){return a.name.localeCompare(b.name);});
   el.innerHTML='<option value="">Select student...</option>';
   studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
-  el.disabled=false;
+  el.disabled=!studs.length;
+  if(studs.some(function(s){return String(s.id)===String(prev);})){el.value=prev;}
+  if(!studs.length){el.innerHTML='<option value="">No students found...</option>';}
   _gpSync('prn-student','prn-student-btn');
+  renderPrnChartBulkTools();
 }
+function prnLocationChanged(){
+  prnClassChanged();
+}
+function _getPrnChartFilteredStudents(){
+  var cls=(document.getElementById('prn-class')||{}).value||'';
+  var loc=(document.getElementById('prn-loc')||{}).value||'all';
+  if(!cls)return[];
+  return (db.students||[]).filter(function(s){
+    if((s.grade||'')!==cls)return false;
+    if(loc==='all')return true;
+    return (s.location||'Home')===loc;
+  });
+}
+function renderPrnChartBulkTools(){
+  var btn=document.getElementById('prn-chart-bulk-btn');
+  if(!btn)return;
+  var cls=(document.getElementById('prn-class')||{}).value||'';
+  var studs=cls?_getPrnChartFilteredStudents():[];
+  btn.disabled=!cls||!studs.length;
+  btn.style.opacity=btn.disabled?'.6':'1';
+  btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+  btn.textContent='PRINT ALL';
+}
+function printPrnChartBatch(){
+  var cls=(document.getElementById('prn-class')||{}).value||'';
+  if(!cls){showToast('Select a class first',true);return;}
+  var studs=_getPrnChartFilteredStudents().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  if(!studs.length){showToast('No students found for this filter',true);return;}
+  var emptyRows=parseInt((document.getElementById('prn-chart-empty-rows')||{}).value)||0;
+  var loc=(document.getElementById('prn-loc')||{}).value||'all';
+  var locLabel=loc==='all'?'All Students':loc;
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Progress Charts — Class '+esc(cls)+' — '+esc(locLabel)+'</title>';
+  h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;padding:4px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.meta{font-size:12px;color:#475569;margin:0 0 8px 2px;font-weight:700;letter-spacing:.3px}</style>';
+  h+='</head><body>';
+  studs.forEach(function(stu,idx){
+    var data=_buildPrnChartData(stu);
+    h+='<div class="page">';
+    h+='<div class="meta">Class '+esc(cls)+' • '+esc(locLabel)+' • Student '+(idx+1)+' of '+studs.length+'</div>';
+    h+=_buildPrnChartTableHTML(data,emptyRows,true);
+    h+='</div>';
+  });
+  h+='<script>setTimeout(function(){window.print();},450);<\/script></body></html>';
+  var w=window.open('','_blank');
+  w.document.write(h);
+  w.document.close();
+  w.focus();
+}
+
 
 function _buildPrnChartData(stu){
   _initChapters();
@@ -12482,6 +12625,8 @@ function posterToggleInput(chk){
   </div>
 </div>
 <script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
