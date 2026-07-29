@@ -1407,6 +1407,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
   <!-- HOMEWORK&nbsp;CHART MODE -->
   <div id="prn-hw-panel" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Homework Chart</div>
+      <button onclick="resetHwForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">NAME <span style="font-weight:400;opacity:0.7">(optional)</span></label>
         <input id="prn-hw-name" oninput="syncHwChartLive()" placeholder="" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
@@ -12186,6 +12190,18 @@ function syncHwChartLive(){
   if(!preview||!preview.dataset.count)return;
   _hwRememberCurrentInputs();
   generateHwChart();
+}
+function resetHwForm(){
+  document.getElementById('prn-hw-name').value='';
+  document.getElementById('prn-hw-class').value='';
+  document.getElementById('prn-hw-school').value='';
+  document.getElementById('prn-hw-subject').value='Mathematics';
+  document.getElementById('prn-hw-from').value='';
+  document.getElementById('prn-hw-to').value='';
+  _hwSavedData={};
+  var preview=document.getElementById('prn-hw-preview');
+  if(preview){preview.innerHTML='';preview.dataset.count='0';preview.dataset.name='';preview.dataset.cls='';preview.dataset.school='';preview.dataset.subject='';preview.dataset.labels='';}
+  showToast('Homework chart reset');
 }
 function updateHwFromTo(){
   if(!_hwRememberCurrentInputs())return;
