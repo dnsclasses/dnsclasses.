@@ -1430,6 +1430,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       </div>
     </div>
     <button onclick="generateHwChart()" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:bold;font-size:14px;border:none;margin-bottom:14px;cursor:pointer;box-shadow:0 2px 8px rgba(245,158,11,.3)">Generate Chart</button>
+    <div id="hw-copy-paste-btns" style="display:flex;gap:8px;margin-bottom:14px">
+      <button onclick="hwCopyAll()" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-weight:bold;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">content_copy</span>Copy All</button>
+      <button onclick="hwPasteAll()" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-weight:bold;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">content_paste</span>Paste All</button>
+    </div>
     <div id="prn-hw-preview"></div>
   </div>
 </div>
@@ -11912,6 +11916,185 @@ function printPrnMock(sid){
   w.focus();
 }
 
+// ═══ HOMEWORK COPY / PASTE ALL ═══
+function hwCopyAll(){
+  var preview=document.getElementById('prn-hw-preview');
+  var count=parseInt(preview.dataset.count||'0');
+  if(!count){showToast('Generate chart first',true);return;}
+  var lines=[];
+  for(var i=0;i<count;i++){
+    var inp=document.getElementById('hw-cell-'+i);
+    var dateLbl=document.getElementById('hw-date-'+i);
+    if(inp&&dateLbl){
+      var val=inp.value||'';
+      lines.push(dateLbl.textContent.trim()+'\t'+val);
+    }
+  }
+  var text=lines.join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      showToast('Copied all homework entries!');
+    }).catch(function(){
+      _hwFallbackCopy(text);
+    });
+  } else {
+    _hwFallbackCopy(text);
+  }
+}
+function _hwFallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;top:-9999px;left:-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try{document.execCommand('copy');showToast('Copied all homework entries!');}
+  catch(e){showToast('Copy failed — try manually',true);}
+  document.body.removeChild(ta);
+}
+function hwPasteAll(){
+  var preview=document.getElementById('prn-hw-preview');
+  var count=parseInt(preview.dataset.count||'0');
+  if(!count){showToast('Generate chart first',true);return;}
+  // Try clipboard API first
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(function(text){
+      if(text&&text.trim()){
+        _hwProcessPaste(text,count);
+      } else {
+        _hwFallbackPaste(count);
+      }
+    }).catch(function(){
+      _hwFallbackPaste(count);
+    });
+  } else {
+    _hwFallbackPaste(count);
+  }
+}
+function _hwFallbackPaste(count){
+  // Create a hidden textarea that listens for paste events
+  var ta=document.createElement('textarea');
+  ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:none;outline:none;font-size:1px;';
+  document.body.appendChild(ta);
+  ta.focus();
+  var handled=false;
+  var onPaste=function(e){
+    if(handled)return;
+    handled=true;
+    var clipData=(e.clipboardData||window.clipboardData);
+    var text='';
+    if(clipData&&clipData.getData){
+      text=clipData.getData('text/plain');
+    }
+    // Remove listener and textarea
+    ta.removeEventListener('paste',onPaste);
+    document.body.removeChild(ta);
+    if(text&&text.trim()){
+      _hwProcessPaste(text,count);
+    } else {
+      showToast('Nothing on clipboard',true);
+    }
+  };
+  ta.addEventListener('paste',onPaste);
+  // Also try execCommand paste
+  setTimeout(function(){
+    try{document.execCommand('paste');}catch(e){}
+    // If no paste happened within 1 second, report empty
+    setTimeout(function(){
+      if(!handled){
+        handled=true;
+        ta.removeEventListener('paste',onPaste);
+        document.body.removeChild(ta);
+        showToast('Nothing on clipboard',true);
+      }
+    },1000);
+  },200);
+}
+function _hwProcessPaste(text,count){
+  if(!text){showToast('Nothing in clipboard',true);return;}
+  var lines=text.split(/\r?\n/);
+  var matchCount=0;
+  var dateLbls=[];
+  for(var i=0;i<count;i++){
+    var lbl=document.getElementById('hw-date-'+i);
+    if(lbl)dateLbls.push(lbl.textContent.trim());
+  }
+  for(var li=0;li<lines.length;li++){
+    var line=lines[li].trim();
+    if(!line)continue;
+    // Try to extract date + homework from tab-separated or any format
+    var tabIdx=line.indexOf('\t');
+    var homeworkVal='';
+    var lineDate='';
+    if(tabIdx>0){
+      lineDate=line.substring(0,tabIdx).trim();
+      homeworkVal=line.substring(tabIdx+1).trim();
+    } else {
+      // No tab separator — treat entire line as homework
+      homeworkVal=line;
+    }
+    // Find matching date in our chart
+    var matchedIdx=-1;
+    if(lineDate){
+      for(var di=0;di<dateLbls.length;di++){
+        // Normalize: compare date strings loosely
+        if(_hwDatesMatch(dateLbls[di],lineDate)){
+          matchedIdx=di;
+          break;
+        }
+      }
+    }
+    if(matchedIdx>=0){
+      var inp=document.getElementById('hw-cell-'+matchedIdx);
+      if(inp){
+        inp.value=homeworkVal;
+        _hwAutoSizeCell(inp);
+        _hwCheckTest(matchedIdx);
+        matchCount++;
+      }
+    }
+  }
+  if(matchCount>0){
+    _hwRefreshLiveLayout();
+    showToast('Pasted '+matchCount+' entr'+(matchCount===1?'y':'ies')+'!');
+  } else if(lines.length>0&&lines.some(function(l){return l.trim();})){
+    // No tab-separated data — try pasting line by line sequentially
+    var dataLines=lines.filter(function(l){return l.trim();});
+    for(var si=0;si<Math.min(dataLines.length,count);si++){
+      var inp2=document.getElementById('hw-cell-'+si);
+      if(inp2){
+        inp2.value=dataLines[si].trim();
+        _hwAutoSizeCell(inp2);
+        _hwCheckTest(si);
+      }
+    }
+    _hwRefreshLiveLayout();
+    showToast('Pasted '+Math.min(dataLines.length,count)+' line'+(Math.min(dataLines.length,count)===1?'':'s')+' sequentially!');
+  } else {
+    showToast('No valid data found in clipboard',true);
+  }
+}
+function _hwDatesMatch(chartDate,pastedDate){
+  // Normalize both dates for comparison
+  // Expected format: "01 Jan 2025 (Monday)" or similar
+  var norm=function(s){
+    return s.replace(/\s+/g,' ').trim().toLowerCase();
+  };
+  // Try exact match first
+  if(norm(chartDate)===norm(pastedDate))return true;
+  // Try matching without day name
+  var d1=chartDate.replace(/\s*\(.*?\)\s*$/,'').trim().toLowerCase();
+  var d2=pastedDate.replace(/\s*\(.*?\)\s*$/,'').trim().toLowerCase();
+  if(d1===d2)return true;
+  // Try matching just day number + month
+  var parts1=d1.split(/\s+/);
+  var parts2=d2.split(/\s+/);
+  if(parts1.length>=3&&parts2.length>=3){
+    if(parts1[0]===parts2[0]&&parts1[1]===parts2[1]&&parts1[2]===parts2[2])return true;
+    // Also try with leading zero removal
+    if(parseInt(parts1[0])===parseInt(parts2[0])&&parts1[1]===parts2[1]&&parts1[2]===parts2[2])return true;
+  }
+  return false;
+}
 function _hwCheckTest(i){
   var inp=document.getElementById('hw-cell-'+i);
   var dateTd=document.getElementById('hw-date-'+i);
@@ -11921,6 +12104,12 @@ function _hwCheckTest(i){
   var isTest=!isExam&&/\btest\b/i.test(inp.value);
   var bg=isExam?'#fecaca':(isTest?'#bbf7d0':'');
   var bold=isExam||isTest;
+  // Highlight the entire row
+  var row=dateTd.parentElement;
+  if(row){
+    row.style.background=bg;
+    row.style.fontWeight=bold?'800':'';
+  }
   dateTd.style.background=bg;
   hwTd.style.background=bg;
   dateTd.style.fontWeight=bold?'800':'700';
@@ -12137,7 +12326,7 @@ function _buildHwChartStaticHTML(isPrint){
     var bgClr=isExam?'#fecaca':(isTest?'#bbf7d0':'');
     var hiStyle=bgClr?'background:'+bgClr+';':'';
     var boldStyle=(isExam||isTest)?'font-weight:800;':'';
-    h+='<tr><td style="border:1px solid #cbd5e1;padding:10px 8px;font-size:'+dateFs+';font-weight:700;white-space:nowrap;line-height:1.35;vertical-align:top;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.01em;text-rendering:auto;'+hiStyle+boldStyle+'">'+esc(labels[i]||'')+'</td>';
+    h+='<tr style="'+hiStyle+'"><td style="border:1px solid #cbd5e1;padding:10px 8px;font-size:'+dateFs+';font-weight:700;white-space:nowrap;line-height:1.35;vertical-align:top;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.01em;text-rendering:auto;'+hiStyle+boldStyle+'">'+esc(labels[i]||'')+'</td>';
     h+='<td style="border:1px solid #cbd5e1;padding:'+pad+';'+hiStyle+boldStyle+'word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;line-height:1.4;vertical-align:top;">'+esc(val)+'</td></tr>';
   }
   h+='</table></div>';
@@ -12274,6 +12463,8 @@ function hwShareImage(){
   var preview=document.getElementById('prn-hw-preview');
   if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
   var name=(preview.dataset.name||'homework_chart').replace(/\s+/g,'_');
+  var studentName=preview.dataset.name||'';
+  var shareText='Homework Chart - '+studentName;
   _hwCaptureChart(function(canvas){
     // STRATEGY 1: Share API — most native experience on Android
     canvas.toBlob(function(blob){
@@ -12282,8 +12473,8 @@ function hwShareImage(){
       if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
         navigator.share({
           files:[file],
-          title:'DNS Classes - Homework Chart',
-          text:(preview.dataset.name||'')
+          title:shareText,
+          text:shareText
         }).then(function(){
           showToast('Shared successfully!');
         }).catch(function(err){
@@ -12296,8 +12487,8 @@ function hwShareImage(){
         // Can share text/URL but not files — share as data URL
         var dataUrl=canvas.toDataURL('image/png');
         navigator.share({
-          title:'DNS Classes - Homework Chart',
-          text:(preview.dataset.name||'')+'\n'+dataUrl
+          title:shareText,
+          text:shareText+'\n'+dataUrl
         }).catch(function(){
           _hwDownload(canvas,preview.dataset.name||'homework_chart');
         });
