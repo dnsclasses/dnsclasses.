@@ -1356,6 +1356,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
   <!-- PROGRESS CHART MODE -->
   <div id="prn-chart-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">show_chart</span>Progress Chart</div>
+      <button onclick="resetPrnChartForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
         <select id="prn-class" onchange="prnClassChanged();_gpSync('prn-class','prn-class-btn')" style="display:none"><option value="">Select class...</option></select>
@@ -1388,6 +1392,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
   <!-- MOCK RECORD MODE -->
   <div id="prn-mock-panel" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">track_changes</span>Mock Record</div>
+      <button onclick="resetPrnMockForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
         <select id="prn-mock-class" onchange="prnMockClassChanged();_gpSync('prn-mock-class','prn-mock-class-btn')" style="display:none"><option value="">Select class...</option></select>
@@ -11518,6 +11526,36 @@ function renderPrintables(){
   if(typeof _gpSync==='function')_gpSync('prn-loc','prn-loc-btn');
   setPrnMode(prnMode);
   renderPrnChartBulkTools();
+}
+function resetPrnChartForm(){
+  var clsBtn=document.getElementById('prn-class-btn');
+  var locBtn=document.getElementById('prn-loc-btn');
+  var stuBtn=document.getElementById('prn-student-btn');
+  var clsSel=document.getElementById('prn-class');
+  var locSel=document.getElementById('prn-loc');
+  var stuSel=document.getElementById('prn-student');
+  if(clsBtn){clsBtn.textContent='Select class...';clsBtn.style.color='var(--sub)';}
+  if(locBtn){locBtn.textContent='All Students';locBtn.style.color='var(--txt)';}
+  if(stuBtn){stuBtn.textContent='Select class first...';stuBtn.style.color='var(--sub)';stuBtn.disabled=true;}
+  if(clsSel){clsSel.value='';clsSel.selectedIndex=0;}
+  if(locSel){locSel.value='all';locSel.selectedIndex=0;}
+  if(stuSel){stuSel.value='';stuSel.selectedIndex=0;stuSel.disabled=true;}
+  var emptyRows=document.getElementById('prn-chart-empty-rows');if(emptyRows)emptyRows.value='0';
+  var preview=document.getElementById('prn-chart-preview');if(preview)preview.innerHTML='';
+  showToast('Progress chart reset');
+}
+function resetPrnMockForm(){
+  var clsBtn=document.getElementById('prn-mock-class-btn');
+  var stuBtn=document.getElementById('prn-mock-student-btn');
+  var clsSel=document.getElementById('prn-mock-class');
+  var stuSel=document.getElementById('prn-mock-student');
+  if(clsBtn){clsBtn.textContent='Select class...';clsBtn.style.color='var(--sub)';}
+  if(stuBtn){stuBtn.textContent='Select class first...';stuBtn.style.color='var(--sub)';stuBtn.disabled=true;}
+  if(clsSel){clsSel.value='';clsSel.selectedIndex=0;}
+  if(stuSel){stuSel.value='';stuSel.selectedIndex=0;stuSel.disabled=true;}
+  var emptyRows=document.getElementById('prn-mock-empty-rows');if(emptyRows)emptyRows.value='0';
+  var preview=document.getElementById('prn-mock-preview');if(preview)preview.innerHTML='';
+  showToast('Mock record reset');
 }
 function setPrnMode(mode){
   prnMode=mode;
