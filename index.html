@@ -38,6 +38,13 @@ body.pitch-black .m3-dash,body:not(.light) .m3-dash{
   transition:transform .18s ease,box-shadow .18s ease;position:relative;overflow:hidden}
 .m3-card:active{transform:scale(.97);box-shadow:var(--m3-shadow-hover)}
 @keyframes m3FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.pulse-hw{animation:pulse-red 2s infinite}
+.zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.3s ease;padding:20px}
+.zoom-overlay.active{opacity:1;visibility:visible}
+.zoom-img{max-width:95%;max-height:90%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.5);transform:scale(0.8);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);will-change:transform}
+.zoom-overlay.active .zoom-img{transform:scale(1)}
+.zoom-img.no-transition{transition:none !important}
 .m3-fade{animation:m3FadeIn .35s ease both}
 .m3-stat-icon{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .m3-stat-num{font-family:'Inter',sans-serif;font-weight:800;font-size:26px;color:var(--m3-txt);line-height:1.1}
@@ -261,7 +268,11 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
         </div>
       </div>
     </div>
-    <div class="m3-fade" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px">
+    <div class="m3-fade" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px">
+      <div onclick="toggleDashSection('hw')" id="fc-dash-hw" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
+        <div class="m3-stat-icon" style="background:rgba(239,68,68,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-red);font-size:17px">edit_note</span></div>
+        <div id="s-dash-hw" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px">Ongoing HW</div>
+      </div>
       <div onclick="toggleDashSection('collect')" id="fc-dash-collect" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(245,158,11,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-orange);font-size:17px">payments</span></div>
         <div id="s-dash-collect" class="m3-stat-num" style="font-size:14px">₹0</div><div class="m3-stat-label" style="font-size:9px">Collections</div>
@@ -311,6 +322,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
     <div id="dash-tests-block" class="hidden" style="margin-top:8px">
       <div id="dash-tests-content"></div>
+    </div>
+
+    <div id="dash-hw-block" class="hidden" style="margin-top:8px">
+      <div id="dash-hw-content"></div>
     </div>
   </div>
   <div id="v-byclass" class="hidden" style="min-height:200px">
@@ -1447,12 +1462,21 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       </div>
     </div>
     <button onclick="generateHwChart()" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:bold;font-size:14px;border:none;margin-bottom:14px;cursor:pointer;box-shadow:0 2px 8px rgba(245,158,11,.3)">Generate Chart</button>
+    <div style="margin-bottom:14px">
+      <label class="flabel">PASTE HOMEWORK (AUTO-PARSE)</label>
+      <textarea id="hw-auto-parse" oninput="autoParseHwText()" placeholder="Paste line by line homework here...&#10;Example:&#10;01/01: Math Ex 1.1&#10;02/01: Science Ch 2&#10;Or just line by line content..." style="width:100%;min-height:100px;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;resize:vertical;font-family:inherit"></textarea>
+    </div>
     <div id="hw-copy-paste-btns" style="display:flex;gap:8px;margin-bottom:14px">
       <button onclick="hwCopyAll()" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-weight:bold;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">content_copy</span>Copy All</button>
       <button onclick="hwPasteAll()" style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-weight:bold;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">content_paste</span>Paste All</button>
     </div>
     <div id="prn-hw-preview"></div>
   </div>
+</div>
+
+<!-- Zoom Overlay -->
+<div id="hw-zoom-overlay" class="zoom-overlay" onclick="closeHwZoom()">
+  <img id="hw-zoom-img" class="zoom-img" src="" alt="Zoomed Homework Chart" onclick="event.stopPropagation()">
 </div>
 
 <!-- ====== INVESTMENTS VIEW ====== -->
@@ -2502,8 +2526,8 @@ function _textColorFor(rgbStr,isLight){
   var dark=brightness>195;
   return {color:dark?'#1a1200':'#fff',shadow:dark?'none':'0 1px 3px rgba(0,0,0,.45)'};
 }
-var DASH_CARD_COLORS={collect:'180,83,9',daily:'67,56,202',admissions:'29,78,216',tests:'126,34,206'};
-var DASH_CARD_COLORS_DARK={collect:'251,191,36',daily:'129,140,248',admissions:'96,165,250',tests:'192,132,252'};
+var DASH_CARD_COLORS={collect:'180,83,9',daily:'67,56,202',admissions:'29,78,216',tests:'126,34,206',hw:'220,38,38'};
+var DASH_CARD_COLORS_DARK={collect:'251,191,36',daily:'129,140,248',admissions:'96,165,250',tests:'192,132,252',hw:'248,113,113'};
 function _updateDashSmallCards(){
   var now=new Date();
   var prefix=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
@@ -2551,6 +2575,9 @@ function _updateDashSmallCards(){
     card.style.borderWidth=isOpen?'2px':'1px';
     card.style.boxShadow=isOpen?('0 0 0 3px rgba('+rgb+',.15)'):'none';
   });
+
+  // Update HW count
+  _updateDashHwCount();
 
   // Flashing: Tests card flashes whenever ANY upcoming test exists (not just today);
   // Pending card flashes continuously until the pending amount reaches zero.
@@ -2681,7 +2708,7 @@ function togglePaperMade(id){
   saveDB();
   renderDashTests();
 }
-var DASH_CARD_NAMES=['collect','daily','admissions','tests'];
+var DASH_CARD_NAMES=['collect','daily','admissions','tests','hw'];
 function toggleDashSection(name){
   var blockId=name==='daily'?'dash-daily-block-wrap':'dash-'+name+'-block';
   var block=document.getElementById(blockId);
@@ -2710,6 +2737,7 @@ function toggleDashSection(name){
     if(name==='daily')renderDailyCollection();
     if(name==='admissions')renderDashAdmissions();
     if(name==='tests')renderDashTests();
+    if(name==='hw')renderDashHwCharts();
   }
 }
 function toggleDashExpandMode(){
@@ -12244,6 +12272,8 @@ function resetHwForm(){
   document.getElementById('prn-hw-subject').value='Mathematics';
   document.getElementById('prn-hw-from').value='';
   document.getElementById('prn-hw-to').value='';
+  var autoParse = document.getElementById('hw-auto-parse');
+  if(autoParse) autoParse.value='';
   _hwSavedData={};
   var preview=document.getElementById('prn-hw-preview');
   if(preview){preview.innerHTML='';preview.dataset.count='0';preview.dataset.name='';preview.dataset.cls='';preview.dataset.school='';preview.dataset.subject='';preview.dataset.labels='';}
@@ -12519,7 +12549,308 @@ function _hwDownload(canvas,name){
 function hwSaveImage(){
   var preview=document.getElementById('prn-hw-preview');
   if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
-  _hwCaptureChart(function(canvas){_hwDownload(canvas,preview.dataset.name||'homework_chart');});
+  _hwCaptureChart(function(canvas){
+    _hwDownload(canvas,preview.dataset.name||'homework_chart');
+    _hwSaveToDashboard(canvas);
+  });
+}
+function hwSaveToDashboard(){
+  var preview=document.getElementById('prn-hw-preview');
+  if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
+  _hwCaptureChart(function(canvas){
+    _hwSaveToDashboard(canvas);
+  });
+}
+function _hwSaveToDashboard(canvas){
+  try{
+    var preview=document.getElementById('prn-hw-preview');
+    var dataUrl=canvas.toDataURL('image/png');
+    var now=new Date();
+    var entry={
+      id:'hw_'+now.getTime(),
+      name:preview.dataset.name||'',
+      cls:preview.dataset.cls||'',
+      school:preview.dataset.school||'',
+      subject:preview.dataset.subject||'',
+      count:parseInt(preview.dataset.count||'0'),
+      createdAt:now.toISOString(),
+      imgData:dataUrl
+    };
+    if(!db.settings)db.settings={};
+    if(!db.settings.savedHwCharts)db.settings.savedHwCharts=[];
+    db.settings.savedHwCharts.unshift(entry);
+    saveDB();
+    _updateDashHwCount();
+    
+    // Immediate reflect on dashboard
+    renderDashHwCharts();
+    var bubble = document.getElementById('fc-dash-hw');
+    if(bubble) {
+      bubble.classList.add('pulse-hw');
+      setTimeout(function(){ bubble.classList.remove('pulse-hw'); }, 3000);
+    }
+    
+    showToast('Chart saved to dashboard!');
+  }catch(e){console.warn('hwSaveToDash:',e);showToast('Save failed',true);}
+}
+
+var _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, ticking: false };
+function openHwZoom(src) {
+  var overlay = document.getElementById('hw-zoom-overlay');
+  var img = document.getElementById('hw-zoom-img');
+  if(overlay && img) {
+    img.src = src;
+    img.classList.remove('no-transition');
+    img.style.transform = 'translate(0px, 0px) scale(1)';
+    _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, ticking: false };
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    img.ontouchstart = function(e) {
+      img.classList.add('no-transition');
+      if (e.touches.length === 2) {
+        _zoomState.startDist = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+      } else if (e.touches.length === 1) {
+        _zoomState.startX = e.touches[0].pageX - _zoomState.lastX;
+        _zoomState.startY = e.touches[0].pageY - _zoomState.lastY;
+      }
+    };
+    img.ontouchmove = function(e) {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        var dist = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY
+        );
+        _zoomState.scale = Math.min(Math.max(1, _zoomState.lastScale * (dist / _zoomState.startDist)), 4);
+      } else if (e.touches.length === 1 && _zoomState.scale > 1) {
+        _zoomState.x = e.touches[0].pageX - _zoomState.startX;
+        _zoomState.y = e.touches[0].pageY - _zoomState.startY;
+      }
+      
+      if (!_zoomState.ticking) {
+        requestAnimationFrame(function() {
+          img.style.transform = 'translate(' + _zoomState.x + 'px, ' + _zoomState.y + 'px) scale(' + _zoomState.scale + ')';
+          _zoomState.ticking = false;
+        });
+        _zoomState.ticking = true;
+      }
+    };
+    img.ontouchend = function(e) {
+      if (e.touches.length === 0) {
+        img.classList.remove('no-transition');
+        _zoomState.lastScale = _zoomState.scale;
+        _zoomState.lastX = _zoomState.x;
+        _zoomState.lastY = _zoomState.y;
+      }
+    };
+  }
+}
+
+function closeHwZoom() {
+  var overlay = document.getElementById('hw-zoom-overlay');
+  var img = document.getElementById('hw-zoom-img');
+  if(overlay) {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    if(img) {
+      img.style.transform = 'translate(0px, 0px) scale(1)';
+      _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0 };
+    }
+  }
+}
+
+function autoParseHwText() {
+  var text = document.getElementById('hw-auto-parse').value;
+  if(!text.trim()) return;
+  
+  var lines = text.split('\n').filter(function(l){ return l.trim().length > 0; });
+  if(!lines.length) return;
+  
+  var parsed = [];
+  var currentYear = new Date().getFullYear();
+  
+  // Regex for common date formats
+  // 01/01, 01-01, 1 Jan, 1st Jan, 01/01/2024 etc.
+  var dateRegex = /(\d{1,2})[\/\-](0[1-9]|1[0-2]|\d{1,2})(?:[\/\-](\d{2,4}))?|(\d{1,2})(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i;
+  
+  var lastDate = new Date();
+  lastDate.setHours(0,0,0,0);
+  
+  lines.forEach(function(line, index) {
+    var match = line.match(dateRegex);
+    var dateObj;
+    var content = line;
+    
+    if(match) {
+      content = line.replace(dateRegex, '').replace(/^[:\-\s]+/, '').trim();
+      var day, month, year;
+      
+      if(match[1] && match[2]) { // DD/MM or DD-MM
+        day = parseInt(match[1]);
+        month = parseInt(match[2]) - 1;
+        year = match[3] ? (match[3].length === 2 ? 2000 + parseInt(match[3]) : parseInt(match[3])) : currentYear;
+      } else if(match[4] && match[5]) { // DD MMM
+        day = parseInt(match[4]);
+        var months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+        month = months.indexOf(match[5].toLowerCase());
+        year = currentYear;
+      }
+      
+      dateObj = new Date(year, month, day);
+      if(isNaN(dateObj.getTime())) dateObj = new Date(lastDate);
+    } else {
+      // If no date, use last date (first line = today, subsequent = last + 1)
+      dateObj = new Date(lastDate);
+      if(index > 0) dateObj.setDate(dateObj.getDate() + 1);
+      else dateObj.setDate(dateObj.getDate()); // Start from today immediately
+    }
+    
+    parsed.push({ date: dateObj, content: content });
+    lastDate = new Date(dateObj);
+  });
+  
+  if(!parsed.length) return;
+  
+  // Sort by date
+  parsed.sort(function(a,b){ return a.date - b.date; });
+  
+  var minDate = parsed[0].date;
+  var maxDate = parsed[parsed.length - 1].date;
+  
+  // Set inputs using local date format YYYY-MM-DD
+  var _fmt = function(d) {
+    var y = d.getFullYear(), m = ('0'+(d.getMonth()+1)).slice(-2), day = ('0'+d.getDate()).slice(-2);
+    return y + '-' + m + '-' + day;
+  };
+  document.getElementById('prn-hw-from').value = _fmt(minDate);
+  document.getElementById('prn-hw-to').value = _fmt(maxDate);
+  
+  // Generate chart
+  generateHwChart();
+  
+  // Fill content
+  var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  
+  parsed.forEach(function(item) {
+    var lbl = ('0' + item.date.getDate()).slice(-2) + ' ' + monthNames[item.date.getMonth()] + ' ' + item.date.getFullYear() + ' (' + dayNames[item.date.getDay()] + ')';
+    // Find the textarea for this date
+    // generateHwChart creates them with id hw-cell-i where i is index from fromDate to toDate
+    // We need to match the date label
+    var rows = document.querySelectorAll('#hw-table-live tr');
+    for(var i=1; i<rows.length; i++) {
+      var dateTd = rows[i].cells[0];
+      if(dateTd && dateTd.textContent.trim() === lbl) {
+        var textarea = rows[i].querySelector('textarea');
+        if(textarea) {
+          textarea.value = item.content;
+          _hwAutoSizeCell(textarea);
+          _hwCheckTest(i-1);
+        }
+        break;
+      }
+    }
+  });
+  
+  _hwRefreshLiveLayout();
+}
+function _updateDashHwCount(){
+  var el=document.getElementById('s-dash-hw');
+  if(!el)return;
+  var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  el.textContent=charts.length;
+}
+function hwDashSave(idx){
+  var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  if(idx<0||idx>=charts.length)return;
+  var entry=charts[idx];
+  try{
+    var a=document.createElement('a');
+    a.href=entry.imgData;
+    var safe=(entry.name||'hw_chart').replace(/\s+/g,'_');
+    a.download='homework_'+safe+'.png';
+    a.style.cssText='position:fixed;top:-100px;left:-100px;opacity:0;pointer-events:none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){if(a.parentElement)document.body.removeChild(a);},1500);
+    showToast('Image saved!');
+  }catch(e){showToast('Save failed',true);}
+}
+function hwDashShare(idx){
+  var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  if(idx<0||idx>=charts.length)return;
+  var entry=charts[idx];
+  var shareText='Homework Chart - '+(entry.name||'Unknown');
+  try{
+    var dataUrl=entry.imgData;
+    var binStr=atob(dataUrl.split(',')[1]);
+    var len=binStr.length;
+    var arr=new Uint8Array(len);
+    for(var i=0;i<len;i++)arr[i]=binStr.charCodeAt(i);
+    var blob=new Blob([arr],{type:'image/png'});
+    var file=new File([blob],'homework_chart.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:shareText,text:shareText}).then(function(){showToast('Shared successfully!');}).catch(function(err){
+        if(err.name!=='AbortError')hwDashSave(idx);
+      });
+    } else if(navigator.share){
+      navigator.share({title:shareText,text:shareText+'\n'+dataUrl}).catch(function(){hwDashSave(idx);});
+    } else {
+      hwDashSave(idx);
+    }
+  }catch(e){hwDashSave(idx);}
+}
+function hwDashRemove(idx){
+  if(!confirm('Remove this homework chart from the dashboard?'))return;
+  var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  charts.splice(idx,1);
+  if(!db.settings)db.settings={};
+  db.settings.savedHwCharts=charts;
+  saveDB();
+  renderDashHwCharts();
+  _updateDashHwCount();
+}
+function renderDashHwCharts(){
+  var cont=document.getElementById('dash-hw-content');
+  if(!cont)return;
+  var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  if(!charts.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--sub);padding:14px;font-size:13px">No saved homework charts yet. Save a chart from Printables → Homework and it will appear here.</div>';
+    return;
+  }
+  var h='';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+  h+='<div style="font-weight:bold;font-size:13px;color:var(--acc);letter-spacing:.3px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">edit_note</span>ONGOING HOMEWORKS ('+charts.length+')</div>';
+  h+='</div>';
+  charts.forEach(function(entry,idx){
+    var _hdrParts=[];
+    if(entry.cls)_hdrParts.push('Class '+esc(entry.cls));
+    if(entry.school)_hdrParts.push(esc(entry.school));
+    if(entry.subject)_hdrParts.push(esc(entry.subject));
+    var hdrLine=_hdrParts.join(' | ');
+    var namePart=entry.name||'Homework Chart';
+    var dateParts=entry.createdAt?new Date(entry.createdAt):new Date();
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var dateStr=dateParts.getDate()+' '+mo[dateParts.getMonth()]+' '+dateParts.getFullYear();
+    h+='<div style="background:var(--card);border:1px solid var(--ibdr);border-radius:12px;padding:10px;margin-bottom:10px">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(namePart)+'</div>';
+    h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+'</div>';
+    h+='</div>';
+    h+='<div style="display:flex;gap:4px;flex-shrink:0;margin-left:6px">';
+    h+='<button onclick="hwDashSave('+idx+')" style="padding:5px 10px;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,.12);color:#22c55e;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">download</span>Save</button>';
+    h+='<button onclick="hwDashShare('+idx+')" style="padding:5px 10px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">share</span>Share</button>';
+    h+='<button onclick="hwDashRemove('+idx+')" style="padding:5px 6px;border-radius:8px;border:1px solid #ef4444;background:rgba(239,68,68,.12);color:#ef4444;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>';
+    h+='</div></div>';
+    h+='<div onclick="openHwZoom(this.querySelector(\'img\').src)" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'"><img src="'+entry.imgData+'" style="width:100%;border-radius:8px;border:1px solid var(--ibdr)" alt="Homework Chart"></div>';
+    h+='</div>';
+  });
+  cont.innerHTML=h;
 }
 function hwShareImage(){
   var preview=document.getElementById('prn-hw-preview');
@@ -12528,6 +12859,9 @@ function hwShareImage(){
   var studentName=preview.dataset.name||'';
   var shareText='Homework Chart - '+studentName;
   _hwCaptureChart(function(canvas){
+    // Save to dashboard immediately when Share is clicked
+    _hwSaveToDashboard(canvas);
+    
     // STRATEGY 1: Share API — most native experience on Android
     canvas.toBlob(function(blob){
       if(!blob){_hwDownload(canvas,preview.dataset.name||'homework_chart');return;}
@@ -12551,6 +12885,8 @@ function hwShareImage(){
         navigator.share({
           title:shareText,
           text:shareText+'\n'+dataUrl
+        }).then(function(){
+          showToast('Shared successfully!');
         }).catch(function(){
           _hwDownload(canvas,preview.dataset.name||'homework_chart');
         });
