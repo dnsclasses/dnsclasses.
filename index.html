@@ -40,9 +40,9 @@ body.pitch-black .m3-dash,body:not(.light) .m3-dash{
 @keyframes m3FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
 .pulse-hw{animation:pulse-red 2s infinite}
-.zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.3s ease;padding:20px}
+.zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.3s ease;padding:20px;touch-action:none}
 .zoom-overlay.active{opacity:1;visibility:visible}
-.zoom-img{max-width:95%;max-height:90%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.5);transform:scale(0.8);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);will-change:transform}
+.zoom-img{max-width:95%;max-height:90%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.5);transform:scale(0.8);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);will-change:transform;touch-action:none}
 .zoom-overlay.active .zoom-img{transform:scale(1)}
 .zoom-img.no-transition{transition:none !important}
 .m3-fade{animation:m3FadeIn .35s ease both}
@@ -12651,6 +12651,8 @@ function _hwSaveToDashboard(canvas){
 }
 
 var _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, ticking: false };
+var _hwZoomScrollPos = 0;
+function _hwPreventScroll(e) { e.preventDefault(); e.stopPropagation(); }
 function openHwZoom(src) {
   var overlay = document.getElementById('hw-zoom-overlay');
   var img = document.getElementById('hw-zoom-img');
@@ -12659,10 +12661,23 @@ function openHwZoom(src) {
     img.classList.remove('no-transition');
     img.style.transform = 'translate(0px, 0px) scale(1)';
     _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, ticking: false };
-    overlay.classList.add('active');
+    
+    // Save scroll position and lock body
+    _hwZoomScrollPos = window.pageYOffset || document.documentElement.scrollTop;
+    document.body.style.position = 'fixed';
+    document.body.style.top = '-' + _hwZoomScrollPos + 'px';
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
     
+    overlay.classList.add('active');
+    
+    // Robust touch locking - ONLY for scroll-related events
+    // Removing touchstart prevention so clicks/taps work
+    overlay.addEventListener('touchmove', _hwPreventScroll, { passive: false });
+    overlay.addEventListener('wheel', _hwPreventScroll, { passive: false });
+    
     img.ontouchstart = function(e) {
+      e.stopPropagation(); // Don't let preventScroll catch the image touch
       img.classList.add('no-transition');
       if (e.touches.length === 2) {
         _zoomState.startDist = Math.hypot(
@@ -12711,7 +12726,18 @@ function closeHwZoom() {
   var img = document.getElementById('hw-zoom-img');
   if(overlay) {
     overlay.classList.remove('active');
+    
+    // Remove robust locks
+    overlay.removeEventListener('touchmove', _hwPreventScroll);
+    overlay.removeEventListener('wheel', _hwPreventScroll);
+    
+    // Restore body scroll
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
     document.body.style.overflow = '';
+    window.scrollTo(0, _hwZoomScrollPos);
+    
     if(img) {
       img.style.transform = 'translate(0px, 0px) scale(1)';
       _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0 };
