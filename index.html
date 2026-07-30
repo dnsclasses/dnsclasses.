@@ -12701,6 +12701,18 @@ function openHwZoom(src) {
         _zoomState.x = e.touches[0].pageX - _zoomState.startX;
         _zoomState.y = e.touches[0].pageY - _zoomState.startY;
       }
+
+      // Always apply boundary constraints like a gallery app
+      var scaledW = img.offsetWidth * _zoomState.scale;
+      var scaledH = img.offsetHeight * _zoomState.scale;
+      var viewW = overlay.clientWidth;
+      var viewH = overlay.clientHeight;
+      
+      var maxX = Math.max(0, (scaledW - viewW) / 2);
+      var maxY = Math.max(0, (scaledH - viewH) / 2);
+      
+      _zoomState.x = Math.min(Math.max(_zoomState.x, -maxX), maxX);
+      _zoomState.y = Math.min(Math.max(_zoomState.y, -maxY), maxY);
       
       if (!_zoomState.ticking) {
         requestAnimationFrame(function() {
