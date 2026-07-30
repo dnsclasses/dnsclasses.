@@ -10867,10 +10867,11 @@ function pgEditCell(sid,chapter,tno){
     +'<div id="pg-cell-err" style="color:#ef4444;font-size:12px;min-height:16px;margin-bottom:8px"></div>'
     +'<label class="flabel">OR MARK AS</label>'
     +'<div id="pg-cell-status-row" style="display:flex;gap:6px;margin-bottom:16px">'+statusBtnsHtml+'</div>'
+    +'<button onclick="pgLoadAllMarksForTest('+sid+',\''+esc(chapter)+'\',\''+esc(tno)+'\')" style="width:100%;padding:10px;border-radius:10px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#6366f1;font-weight:bold;font-size:12px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">group</span>Load All Marks for this Test</button>'
     +'<div style="display:flex;gap:8px">'
     +'<button id="pg-cell-clear" style="padding:11px 14px;border-radius:8px;background:rgba(100,116,139,.12);border:1px solid var(--ibdr);color:var(--sub);font-weight:bold;cursor:pointer">Clear</button>'
-    +'<button id="pg-cell-cancel" style="flex:1;padding:11px;border-radius:8px;background:var(--m3nav-chip);color:var(--m3nav-chiptxt);border:1px solid var(--navbdr);font-weight:bold;cursor:pointer">Cancel</button>'
-    +'<button id="pg-cell-save" style="flex:1;padding:11px;border-radius:8px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:bold;cursor:pointer">Save</button>'
+    +'<button id="pg-cell-cancel" style="flex:1;padding:11px 14px;border-radius:8px;background:var(--m3nav-chip);color:var(--m3nav-chiptxt);border:1px solid var(--navbdr);font-weight:bold;cursor:pointer">Cancel</button>'
+    +'<button id="pg-cell-save" style="flex:1;padding:11px 14px;border-radius:8px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:bold;cursor:pointer">Save</button>'
     +'</div></div>';
   document.body.appendChild(modal);
 
@@ -10937,6 +10938,61 @@ function pgEditCell(sid,chapter,tno){
     db.progress[sid][chapter][tno]={v:v,total:defTotal};
     saveDB();modal.remove();_refreshAllProgressViews();showToast('Mark updated');
   };
+}
+
+function pgLoadAllMarksForTest(sid, chapter, tno) {
+  var stu = db.students.find(function(s){return s.id === sid;});
+  if(!stu) return;
+  
+  // Close current modal
+  var ex = document.querySelector('[data-pg-edit-modal]');
+  if(ex) ex.remove();
+  
+  // Go to Score Chart view
+  go('poster');
+  pgSwitchView('chapters');
+  
+  // Fill Class
+  var clsEl = document.getElementById('pr-class');
+  if(clsEl) {
+    clsEl.value = stu.grade || '';
+    // Trigger load students and chapters
+    posterLoadStudents();
+  }
+  
+  // Fill Location (default to student's location)
+  var locEl = document.getElementById('pr-loc');
+  if(locEl) locEl.value = stu.location || 'Home';
+  
+  // Fill School (if applicable)
+  var schEl = document.getElementById('pr-school');
+  if(schEl && stu.school) schEl.value = stu.school;
+
+  // Re-trigger student load after setting loc/school
+  posterLoadStudents();
+
+  // Fill Chapter
+  setTimeout(function() {
+    var topicEl = document.getElementById('pr-topic');
+    if(topicEl) {
+      topicEl.value = chapter;
+      if(typeof _prUpdateTopicBtn === 'function') _prUpdateTopicBtn();
+      
+      // Fill Test No
+      var tnoEl = document.getElementById('pr-tno');
+      if(tnoEl) {
+        tnoEl.value = tno;
+        // Restore saved marks for this test
+        if(typeof _restoreScoreState === 'function') _restoreScoreState();
+      }
+      
+      // Set Total Marks (try to infer from existing data)
+      var totalEl = document.getElementById('pr-total');
+      if(totalEl) {
+        totalEl.value = _pgInferTotal(chapter, tno, 20);
+      }
+    }
+  }, 100);
 }
 function pgResetProgress(){
   var clsEl=document.getElementById('pg-class');
