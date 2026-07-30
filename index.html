@@ -75,9 +75,14 @@ body.pitch-black{
   --wa-green:#128c4a;
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;padding-bottom:60px;font-size:16px;transition:background .3s,color .3s}
-@keyframes dashTestFlash{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dashTestFlash{0%,100%{opacity:.7}50%{opacity:1}}
 .dash-test-flash{position:relative;isolation:isolate}
-.dash-test-flash::before{content:'';position:absolute;inset:-2px;border-radius:inherit;background-color:rgb(var(--flash-rgb,239,68,68));animation:dashTestFlash .85s ease-in-out infinite;z-index:-1;pointer-events:none}
+.dash-test-flash::before{content:'';position:absolute;inset:-2px;border-radius:inherit;background-color:rgb(var(--flash-rgb,160,32,32));animation:dashTestFlash .85s ease-in-out infinite;z-index:-1;pointer-events:none}
+/* Flash text: heading (class/student name) in light gold, body text in white */
+.dash-test-flash .fl-heading,.dash-test-flash .fl-day-label{color:#fbbf24 !important;text-shadow:0 1px 4px rgba(0,0,0,.7) !important}
+.dash-test-flash .fl-body{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.6) !important}
+/* Buttons inside flash area get white background except WhatsApp button */
+.dash-test-flash button:not(.wa-btn){background:#fff !important;color:#1e293b !important;text-shadow:none !important}
 input,select,textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;outline:none;font-family:'Inter',sans-serif}
 button{cursor:pointer;border:none;font-family:inherit}
 button:active{opacity:.75;transform:scale(.97)}
@@ -2446,24 +2451,28 @@ function renderDashTests(){
         var flashing=isToday&&!r.flashStopped;
         var dayLabel=isToday?'TODAY':(days===1?'TOMORROW':(days+' days'));
         var dayColor=urgent?'#ef4444':(soon?_amberClr:'var(--sub)');
-        var flashTextColor=flashing?'#7f1d1d':null;
-        h+='<div'+(flashing?' class="dash-test-flash"':'')+' style="background:'+bg+';border:1.5px solid '+border+';border-radius:10px;padding:11px 13px;margin-bottom:8px'+(flashing?';--flash-rgb:252,165,165':'')+'">';
+        var flashTextColor=flashing?'#fff':null;
+        var paperReady=r.paperMade===true;
+        var flashRgb=paperReady?'25,140,70':'160,32,32';
+        var flashBorder=paperReady?(isToday?'#15803d':'#15803d'):null;
+        var paperBorder=paperReady&&!flashing?'2.5px solid #15803d':'1.5px solid '+(flashing?(paperReady?'#15803d':'rgb('+flashRgb+')'):border);
+        h+='<div'+(flashing?' class="dash-test-flash"':'')+' style="background:'+(flashing?'':bg)+';border:'+paperBorder+';border-radius:10px;padding:11px 13px;margin-bottom:8px'+(flashing?';--flash-rgb:'+flashRgb:'')+'">';
         h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
         h+='<div style="flex:1">';
         var _displayFor=(r.isStudent&&r.cls)?('Class '+r.cls+' - '+r.forWho):r.forWho;
-        h+='<div style="font-weight:800;font-size:15px;color:'+(flashTextColor||'var(--acc)')+'">'+esc(_displayFor)+'</div>';
-        h+='<div style="font-weight:bold;font-size:13px;color:'+(flashTextColor||'var(--txt)')+';margin-top:2px">'+esc(r.topics.join(' + '))+'</div>';
+        h+='<div class="'+(flashing?'fl-heading':'')+'" style="font-weight:800;font-size:15px;color:'+(flashing?'#fbbf24':'var(--acc)')+'">'+esc(_displayFor)+'</div>';
+        h+='<div class="'+(flashing?'fl-body':'')+'" style="font-weight:bold;font-size:13px;color:'+(flashing?flashTextColor:'var(--txt)')+';margin-top:2px">'+esc(r.topics.join(' + '))+'</div>';
         var _dnames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         var _dow=_dnames[new Date(r.date+'T00:00:00').getDay()];
-        h+='<div style="font-size:11px;color:'+(flashTextColor||'var(--sub)')+';margin-top:2px">'+esc(fmtD(r.date))+' ('+_dow+')'+(r.mode==='rev'?' \u2022 Revision':'')+'</div>';
+        h+='<div class="'+(flashing?'fl-body':'')+'" style="font-size:11px;color:'+(flashing?flashTextColor:'var(--sub)')+';margin-top:2px">'+esc(fmtD(r.date))+' ('+_dow+')'+(r.mode==='rev'?' \u2022 Revision':'')+'</div>';
         h+='</div>';
-        h+='<div style="font-size:12px;font-weight:800;color:'+(flashTextColor||dayColor)+';white-space:nowrap;flex-shrink:0">'+dayLabel+'</div>';
+        h+='<div class="'+(flashing?'fl-day-label':'')+'" style="font-size:12px;font-weight:800;color:'+(flashing?flashTextColor:dayColor)+';white-space:nowrap;flex-shrink:0">'+dayLabel+'</div>';
         h+='</div>';
         var _btnBg=_isLight?'#f1f5f9':'#1e293b';
         var _btnBdr=_isLight?'#cbd5e1':'#475569';
         var _btnTxt=_isLight?'#1e293b':'#f1f5f9';
         h+='<div style="display:flex;gap:5px;margin-top:8px;align-items:center">';
-        h+='<button onclick="resendTestAlert(\''+r.id+'\')" style="padding:6px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+_waIcon(16,'transparent')+'</button>';
+        h+='<button class="wa-btn" onclick="resendTestAlert(\''+r.id+'\')" style="padding:6px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+_waIcon(16,'transparent')+'</button>';
         h+='<button onclick="togglePaperMade(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(r.paperMade?'#22c55e':_btnBdr)+';background:'+(r.paperMade?'#22c55e':_btnBg)+';color:'+(r.paperMade?'#fff':_btnTxt)+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.paperMade?'\u2705 Ready':'\ud83d\udcdd Paper')+'</button>';
         h+='<button onclick="editReminderDate(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">event</span>Date</button>';
         if(isToday&&!r.flashStopped)h+='<button onclick="stopReminderFlash(\''+r.id+'\')" title="Stop Flash" style="padding:6px 8px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:13px;cursor:pointer;flex-shrink:0">\ud83d\udd15</button>';
@@ -2549,7 +2558,7 @@ function _updateDashSmallCards(){
   // adapt to any card's own color rather than being hardcoded to one hue.
   function _applyCardFlash(card,shouldFlash,numId,flashRgb,skipTextColor){
     if(!card)return;
-    card.style.setProperty('--flash-rgb',flashRgb||'239,68,68');
+    card.style.setProperty('--flash-rgb',flashRgb||'160,32,32');
     var wasFlashing=card.classList.contains('dash-test-flash');
     if(shouldFlash&&!wasFlashing){
       // Force a reflow before adding the class — without this, the CSS
@@ -2600,14 +2609,14 @@ function _updateDashSmallCards(){
   var pendingText=(document.getElementById('s-pending')||{}).textContent||'\u20b90';
   var pendingNum=parseFloat(pendingText.replace(/[^\d.]/g,''))||0;
   var _pendRatio=parseFloat((pendingCard&&pendingCard.dataset.pendingRatio)||'0');
-  _applyCardFlash(pendingCard,pendingNum>0&&_pendRatio>0.2,'s-pending',(pendingCard&&pendingCard.dataset.severityRgb)||'239,68,68',true);
+  _applyCardFlash(pendingCard,pendingNum>0&&_pendRatio>0.2,'s-pending',(pendingCard&&pendingCard.dataset.severityRgb)||'160,32,32',true);
 }
 function _updateDashTestsBadge(){
   var badge=document.getElementById('dash-tests-badge');
   if(!badge)return;
   var list=(db.settings&&db.settings.testReminders)||[];
   var todayCount=list.filter(function(r){return _testDaysUntil(r.date)===0&&!r.flashStopped;}).length;
-  badge.innerHTML=todayCount?' <span class="dash-test-flash" style="display:inline-block;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:4px">'+todayCount+'</span>':'';
+  badge.innerHTML=todayCount?' <span class="dash-test-flash" style="display:inline-block;background:#9f1239;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:4px">'+todayCount+'</span>':'';
 }
 var _editingReminderId=null;
 function editReminderDate(id){
@@ -2669,7 +2678,6 @@ function togglePaperMade(id){
   if(!r)return;
   pushUndo();
   r.paperMade=!r.paperMade;
-  showToast(r.paperMade?'Marked as paper ready':'Marked as paper not made');
   saveDB();
   renderDashTests();
 }
@@ -6286,7 +6294,7 @@ function _updateAttendFlash(){
       if(!(s.attendance&&s.attendance[todayStr])){shouldFlash=true;break;}
     }
   }
-  btn.style.setProperty('--flash-rgb','239,68,68');
+  btn.style.setProperty('--flash-rgb','160,32,32');
   var wasFlashing=btn.classList.contains('dash-test-flash');
   if(shouldFlash&&!wasFlashing){
     void btn.offsetWidth;
