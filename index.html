@@ -7251,9 +7251,18 @@ function getDashCollections(monthly,selVal){
 function renderIncomeGraph(){
   var block=document.getElementById('dash-graph-inline');if(!block)return;
   var now=new Date(),months=[];
-  for(var i=11;i>=0;i--){
+  var maxFuture = 0;
+  db.students.forEach(function(s){
+    Object.keys(s.payments||{}).forEach(function(key){
+      var kp=key.split('-'),ky=parseInt(kp[0]),km=parseInt(kp[1]||1)-1;
+      var diff = (ky - now.getFullYear()) * 12 + (km - now.getMonth());
+      if(diff > maxFuture) maxFuture = diff;
+    });
+  });
+  for(var i=11;i>=-maxFuture;i--){
     var yr=now.getFullYear(),mo=now.getMonth()-i;
     while(mo<0){mo+=12;yr--;}
+    while(mo>11){mo-=12;yr++;}
     var prefix=yr+'-'+('0'+(mo+1)).slice(-2),home=0,city=0;
     db.students.forEach(function(s){
       var loc=(s.location||'Home');
@@ -7322,7 +7331,12 @@ function renderDashCollections(){
   var moLabel=MO[now.getMonth()].slice(0,3)+' '+String(now.getFullYear()).slice(2);
   var monthSet={};
   db.students.forEach(function(s){Object.keys(s.payments||{}).forEach(function(key){var kp=key.split('-'),ky=parseInt(kp[0]),km=parseInt(kp[1]||1)-1;var mk=ky+'-'+km;if(!monthSet[mk])monthSet[mk]={year:ky,month:km};});});
-  var mOpts=Object.keys(monthSet).sort().reverse().filter(function(k){return k!==curMonKey;}).map(function(k){var d2=monthSet[k],lbl=MO[d2.month].slice(0,3)+' '+String(d2.year).slice(2),val=d2.year+'-'+d2.month;return '<option value="'+val+'"'+(selVal===val?' selected':'')+'>'+lbl+'</option>';}).join('');
+  var mKeys=Object.keys(monthSet).sort(function(a,b){
+    var pa=a.split('-'),pb=b.split('-');
+    var ya=parseInt(pa[0]),ma=parseInt(pa[1]),yb=parseInt(pb[0]),mb=parseInt(pb[1]);
+    return (ya-yb)||(ma-mb);
+  }).reverse();
+  var mOpts=mKeys.filter(function(k){return k!==curMonKey;}).map(function(k){var d2=monthSet[k],lbl=MO[d2.month].slice(0,3)+' '+String(d2.year).slice(2),val=d2.year+'-'+d2.month;return '<option value="'+val+'"'+(selVal===val?' selected':'')+'>'+lbl+'</option>';}).join('');
   var drop='<select id="collect-filter-sel" onchange="renderDashCollections()" style="padding:4px 8px;border-radius:20px;font-size:13px;font-weight:bold;border:1px solid '+(isDark?'rgba(251,191,36,.4)':'rgba(180,83,9,.4)')+';background:var(--card);color:'+(isDark?'#fbbf24':'#b45309')+';max-width:90px"><option value="month"'+(selVal==='month'?' selected':'')+'>'+moLabel+'</option>'+mOpts+'<option value="all"'+(selVal==='all'?' selected':'')+'>All Time</option></select>';
   var html='<div style="background:'+cBg()+';border-radius:13px;padding:13px;border:1px solid rgba(180,83,9,.25);margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:bold;font-size:14px;color:'+(isDark?'#fbbf24':'#b45309')+'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">payments</span>COLLECTIONS</div>'+drop+'</div>';
   function locRow(loc,data,total){if(!total)return '';var icon=loc==='home'?'\ud83c\udfe0':'\ud83c\udfd9\ufe0f',name=loc==='home'?'Home':'City';return '<div style="background:'+cBg()+';border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid '+(isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)')+'"><div style="font-weight:bold;font-size:15px;color:'+cTxt()+';margin-bottom:8px">'+icon+' '+name+'</div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="color:var(--sub)">\ud83d\udcb5 Cash</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.cash?'₹'+data.cash.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--sub)">\ud83d\udcf1 Online</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.online?'₹'+data.online.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:bold;border-top:1px solid var(--bdr);padding-top:6px"><span style="color:var(--sub)">Total</span><span style="color:#16a34a;font-weight:bold">₹'+total.toLocaleString()+'</span></div></div>';}
