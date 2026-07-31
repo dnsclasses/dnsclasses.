@@ -7321,23 +7321,20 @@ function renderIncomeGraph(){
 }
 function renderDashCollections(){
   var block=document.getElementById('dash-collect-inner');if(!block)return;
-  var selEl=document.getElementById('collect-filter-sel');
-  var selVal=selEl?selEl.value:_collectFilter;_collectFilter=selVal;
+  var selVal=_collectFilter;
   var monthly=selVal==='month',d=getDashCollections(monthly,selVal);
   var hT=d.home.cash+d.home.online,cT=d.city.cash+d.city.online;
   var gC=d.home.cash+d.city.cash,gO=d.home.online+d.city.online,g=gC+gO;
   if(g===0){block.innerHTML='';return;}
-  var now=new Date(),curMonKey=now.getFullYear()+'-'+now.getMonth();
-  var moLabel=MO[now.getMonth()].slice(0,3)+' '+String(now.getFullYear()).slice(2);
-  var monthSet={};
-  db.students.forEach(function(s){Object.keys(s.payments||{}).forEach(function(key){var kp=key.split('-'),ky=parseInt(kp[0]),km=parseInt(kp[1]||1)-1;var mk=ky+'-'+km;if(!monthSet[mk])monthSet[mk]={year:ky,month:km};});});
-  var mKeys=Object.keys(monthSet).sort(function(a,b){
-    var pa=a.split('-'),pb=b.split('-');
-    var ya=parseInt(pa[0]),ma=parseInt(pa[1]),yb=parseInt(pb[0]),mb=parseInt(pb[1]);
-    return (ya-yb)||(ma-mb);
-  }).reverse();
-  var mOpts=mKeys.filter(function(k){return k!==curMonKey;}).map(function(k){var d2=monthSet[k],lbl=MO[d2.month].slice(0,3)+' '+String(d2.year).slice(2),val=d2.year+'-'+d2.month;return '<option value="'+val+'"'+(selVal===val?' selected':'')+'>'+lbl+'</option>';}).join('');
-  var drop='<select id="collect-filter-sel" onchange="renderDashCollections()" style="padding:4px 8px;border-radius:20px;font-size:13px;font-weight:bold;border:1px solid '+(isDark?'rgba(251,191,36,.4)':'rgba(180,83,9,.4)')+';background:var(--card);color:'+(isDark?'#fbbf24':'#b45309')+';max-width:90px"><option value="month"'+(selVal==='month'?' selected':'')+'>'+moLabel+'</option>'+mOpts+'<option value="all"'+(selVal==='all'?' selected':'')+'>All Time</option></select>';
+  var now=new Date();
+  var moLabel = 'All Time';
+  if(selVal==='month'){
+    moLabel = MO[now.getMonth()].slice(0,3)+' '+String(now.getFullYear()).slice(2);
+  } else if(selVal!=='all'){
+    var pts=selVal.split('-');
+    moLabel = MO[parseInt(pts[1])].slice(0,3)+' '+String(pts[0]).slice(2);
+  }
+  var drop='<button onclick="openMonthPicker()" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;border:1px solid '+(isDark?'rgba(251,191,36,.4)':'rgba(180,83,9,.4)')+';background:var(--card);color:'+(isDark?'#fbbf24':'#b45309')+';cursor:pointer;display:flex;align-items:center;gap:4px">'+moLabel+' <span class="material-symbols-outlined" style="font-size:14px">expand_more</span></button>';
   var html='<div style="background:'+cBg()+';border-radius:13px;padding:13px;border:1px solid rgba(180,83,9,.25);margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:bold;font-size:14px;color:'+(isDark?'#fbbf24':'#b45309')+'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">payments</span>COLLECTIONS</div>'+drop+'</div>';
   function locRow(loc,data,total){if(!total)return '';var icon=loc==='home'?'\ud83c\udfe0':'\ud83c\udfd9\ufe0f',name=loc==='home'?'Home':'City';return '<div style="background:'+cBg()+';border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid '+(isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)')+'"><div style="font-weight:bold;font-size:15px;color:'+cTxt()+';margin-bottom:8px">'+icon+' '+name+'</div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="color:var(--sub)">\ud83d\udcb5 Cash</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.cash?'₹'+data.cash.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--sub)">\ud83d\udcf1 Online</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.online?'₹'+data.online.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:bold;border-top:1px solid var(--bdr);padding-top:6px"><span style="color:var(--sub)">Total</span><span style="color:#16a34a;font-weight:bold">₹'+total.toLocaleString()+'</span></div></div>';}
   html+=locRow('home',d.home,hT)+locRow('city',d.city,cT);
@@ -13716,6 +13713,51 @@ function addNextCycle(sid){
   renderProfile();
   showToast('Next month cycle added');
 }
+function openMonthPicker(){
+  var list=document.getElementById('month-picker-list');
+  if(!list)return;
+  var now=new Date(),curMonKey=now.getFullYear()+'-'+now.getMonth();
+  var monthSet={};
+  db.students.forEach(function(s){
+    Object.keys(s.payments||{}).forEach(function(key){
+      var kp=key.split('-'),ky=parseInt(kp[0]),km=parseInt(kp[1]||1)-1;
+      var mk=ky+'-'+km;
+      if(!monthSet[mk])monthSet[mk]={year:ky,month:km,key:mk};
+    });
+  });
+  var mKeys=Object.keys(monthSet).sort(function(a,b){
+    var pa=a.split('-'),pb=b.split('-');
+    var ya=parseInt(pa[0]),ma=parseInt(pa[1]),yb=parseInt(pb[0]),mb=parseInt(pb[1]);
+    return (ya-yb)||(ma-mb);
+  }).reverse();
+  
+  var options = [{val:'month',lbl:MO[now.getMonth()].slice(0,3)+' '+now.getFullYear()+' (Current)'}];
+  mKeys.forEach(function(k){
+    if(k===curMonKey)return;
+    var d2=monthSet[k];
+    options.push({val:d2.year+'-'+d2.month,lbl:MO[d2.month].slice(0,3)+' '+d2.year});
+  });
+  options.push({val:'all',lbl:'All Time'});
+  
+  list.innerHTML='';
+  options.forEach(function(opt){
+    var row=document.createElement('div');
+    row.style.cssText='padding:15px 20px;font-size:15px;color:var(--txt);border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:space-between';
+    row.innerHTML='<span>'+opt.lbl+'</span>'+(_collectFilter===opt.val?'<span class="material-symbols-outlined" style="color:#22c55e;font-size:18px">check_circle</span>':'');
+    row.onclick=function(){
+      _collectFilter=opt.val;
+      closeMonthPicker();
+      renderDashCollections();
+      renderIncomeGraph();
+    };
+    list.appendChild(row);
+  });
+  document.getElementById('month-picker-modal').style.display='block';
+}
+function closeMonthPicker(){
+  var m=document.getElementById('month-picker-modal');
+  if(m)m.style.display='none';
+}
 </script>
 
 <!-- Category Picker Modal -->
@@ -13727,6 +13769,18 @@ function addNextCycle(sid){
       <button onclick="closeCatModal()" style="background:var(--ibg);border:none;border-radius:20px;padding:6px 14px;color:var(--txt);font-size:14px;cursor:pointer;touch-action:manipulation">Cancel</button>
     </div>
     <div id="cat-picker-list" data-no-swipe="1" style="position:absolute;top:56px;bottom:0;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--card)"></div>
+  </div>
+</div>
+
+<!-- Month Picker Modal -->
+<div id="month-picker-modal" data-no-swipe="1" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999">
+  <div onclick="closeMonthPicker()" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5)"></div>
+  <div class="mbox" style="position:absolute;bottom:0;left:0;right:0;height:70vh;background:var(--card);border-radius:20px 20px 0 0;padding:0">
+    <div style="position:absolute;top:0;left:0;right:0;height:56px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;border-bottom:1px solid var(--bdr);background:var(--card);border-radius:20px 20px 0 0;z-index:1">
+      <span style="font-size:16px;font-weight:700;color:var(--txt)">Select Month</span>
+      <button onclick="closeMonthPicker()" style="background:var(--ibg);border:none;border-radius:20px;padding:6px 14px;color:var(--txt);font-size:14px;cursor:pointer;touch-action:manipulation">Cancel</button>
+    </div>
+    <div id="month-picker-list" data-no-swipe="1" style="position:absolute;top:56px;bottom:0;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--card)"></div>
   </div>
 </div>
 <script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
