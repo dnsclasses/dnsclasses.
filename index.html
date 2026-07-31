@@ -12639,6 +12639,7 @@ function _hwDownload(canvas,name){
 function hwSaveImage(){
   var preview=document.getElementById('prn-hw-preview');
   if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
+  _hwRememberCurrentInputs(); // Capture data immediately
   _hwCaptureChart(function(canvas){
     _hwDownload(canvas,preview.dataset.name||'homework_chart');
     _hwSaveToDashboard(canvas);
@@ -12662,8 +12663,10 @@ function _hwSaveToDashboard(canvas){
       cls:preview.dataset.cls||'',
       school:preview.dataset.school||'',
       subject:preview.dataset.subject||'',
+      fromDate:document.getElementById('prn-hw-from').value||'',
       endDate:preview.dataset.to||'',
       count:parseInt(preview.dataset.count||'0'),
+      hwData:JSON.parse(JSON.stringify(_hwSavedData)),
       createdAt:now.toISOString(),
       imgData:dataUrl
     };
@@ -13016,6 +13019,7 @@ function renderDashHwCharts(){
     h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+(entry.endDate?' <span style="color:var(--sub)">\u2022</span> Ends '+fmtD(entry.endDate):'')+'</div>';
     h+='</div>';
     h+='<div style="display:flex;gap:4px;flex-shrink:0;margin-left:6px">';
+    h+='<button onclick="editHwChart('+idx+')" style="padding:5px 10px;border-radius:8px;border:1px solid var(--acc);background:rgba(251,191,36,.12);color:var(--acc);font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">edit</span>Edit</button>';
     h+='<button onclick="hwDashSave('+idx+')" style="padding:5px 10px;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,.12);color:#22c55e;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">download</span>Save</button>';
     h+='<button onclick="hwDashShare('+idx+')" style="padding:5px 10px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">share</span>Share</button>';
     h+='<button onclick="hwDashRemove('+idx+')" style="padding:5px 6px;border-radius:8px;border:1px solid #ef4444;background:rgba(239,68,68,.12);color:#ef4444;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>';
@@ -13028,6 +13032,7 @@ function renderDashHwCharts(){
 function hwShareImage(){
   var preview=document.getElementById('prn-hw-preview');
   if(!preview||!parseInt(preview.dataset.count||'0')){showToast('Generate chart first',true);return;}
+  _hwRememberCurrentInputs(); // Capture data immediately
   var name=(preview.dataset.name||'homework_chart').replace(/\s+/g,'_');
   var studentName=preview.dataset.name||'';
   var shareText='Homework Chart - '+studentName;
@@ -13757,6 +13762,36 @@ function openMonthPicker(){
 function closeMonthPicker(){
   var m=document.getElementById('month-picker-modal');
   if(m)m.style.display='none';
+}
+function editHwChart(idx){
+  var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  if(idx<0||idx>=charts.length)return;
+  var entry=charts[idx];
+  
+  // 1. Navigate to Printables -> Homework
+  go('printables');
+  setPrnMode('hw');
+  
+  // 2. Fill inputs (always possible)
+  document.getElementById('prn-hw-name').value = entry.name||'';
+  document.getElementById('prn-hw-class').value = entry.cls||'';
+  document.getElementById('prn-hw-school').value = entry.school||'';
+  document.getElementById('prn-hw-subject').value = entry.subject||'';
+  document.getElementById('prn-hw-from').value = entry.fromDate||'';
+  document.getElementById('prn-hw-to').value = entry.endDate||'';
+  
+  if(!entry.hwData){
+    showToast('Basic info loaded. Row data was not saved for this older chart.', true);
+    return;
+  }
+  
+  // 3. Set the global _hwSavedData
+  _hwSavedData = JSON.parse(JSON.stringify(entry.hwData));
+  
+  // 4. Generate the chart table
+  generateHwChart();
+  
+  showToast('Homework data loaded for editing');
 }
 </script>
 
