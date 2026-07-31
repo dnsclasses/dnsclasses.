@@ -857,6 +857,19 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 </div></div>
 
+<div id="hw-delete-modal" class="modal hidden" onclick="closeM('hw-delete-modal')" style="z-index:2100">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:24px">
+  <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:#ef4444;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+    <span class="material-symbols-outlined" style="font-size:32px">delete_forever</span>
+  </div>
+  <div style="font-weight:800;font-size:18px;color:var(--txt);margin-bottom:8px">Delete Chart?</div>
+  <div style="font-size:14px;color:var(--sub);margin-bottom:24px;line-height:1.5">Are you sure you want to remove this homework chart from the dashboard?</div>
+  <div style="display:flex;gap:10px">
+    <button onclick="closeM('hw-delete-modal')" style="flex:1;padding:12px;border-radius:12px;background:var(--ibg);color:var(--txt);font-weight:bold;font-size:14px;border:1px solid var(--ibdr);cursor:pointer">Cancel</button>
+    <button id="hw-delete-confirm-btn" style="flex:1;padding:12px;border-radius:12px;background:#ef4444;color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.2)">Delete</button>
+  </div>
+</div></div>
+
 <div id="reminder-date-modal" class="modal hidden" onclick="closeM('reminder-date-modal')">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:360px">
   <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">event</span>Change Test Date</div>
@@ -2154,7 +2167,7 @@ function doUndo(){
   var _mkS=document.getElementById('mock-student');if(_mkS&&_mkS.value)_refreshAllMockViews(parseInt(_mkS.value));
   renderDailyCollection();
   if(typeof renderByClass==='function')renderByClass();
-  if(curView==='dash')renderDashTests();
+  if(curView==='dash'){renderDashTests();renderDashHwCharts();}
 }
 function doRedo(){
   if(!redoStack.length)return;
@@ -2169,7 +2182,7 @@ function doRedo(){
     if(_rdi)_renderInvDetails(_rdi); else closeM('inv-detail-modal');
   }
   showToast('Redone!');
-  if(curView==='dash')renderDashTests();
+  if(curView==='dash'){renderDashTests();renderDashHwCharts();}
 }
 function refreshUndoUI(){
   var hasUndo=undoStack.length>0,hasRedo=redoStack.length>0;
@@ -2390,7 +2403,7 @@ function go(v,noPush){
     if(_ls)_ls.remove();
   }
 }
-function refresh(){if(curView==='dash')renderDash();else if(curView==='byclass')renderByClass();else if(curView==='profile')renderProfile();else if(curView==='attend')renderAttend();else if(curView==='manager')renderManager();else if(curView==='settings'){renderSettingsView();var _bb=document.getElementById('settings-backup-block'),_ab=document.getElementById('settings-alerts-block');if(_bb&&!_bb.classList.contains('hidden'))renderBackupView();if(_ab&&!_ab.classList.contains('hidden'))renderAlertsView();}else if(curView==='sessions')renderSessionsView();else if(curView==='investments')renderInvestments();else if(curView==='report'&&_rptCurrentSid)generateReport(_rptCurrentSid);else if(curView==='printables'){if(prnMode==='chart')renderPrnChart();else if(prnMode==='mock')renderPrnMock();}}
+function refresh(){if(curView==='dash'){renderDash();var hb=document.getElementById('dash-hw-block');if(hb&&!hb.classList.contains('hidden'))renderDashHwCharts();}else if(curView==='byclass')renderByClass();else if(curView==='profile')renderProfile();else if(curView==='attend')renderAttend();else if(curView==='manager')renderManager();else if(curView==='settings'){renderSettingsView();var _bb=document.getElementById('settings-backup-block'),_ab=document.getElementById('settings-alerts-block');if(_bb&&!_bb.classList.contains('hidden'))renderBackupView();if(_ab&&!_ab.classList.contains('hidden'))renderAlertsView();}else if(curView==='sessions')renderSessionsView();else if(curView==='investments')renderInvestments();else if(curView==='report'&&_rptCurrentSid)generateReport(_rptCurrentSid);else if(curView==='printables'){if(prnMode==='chart')renderPrnChart();else if(prnMode==='mock')renderPrnMock();}}
 
 // ═══ DASHBOARD ═══
 function setFilter(f){
@@ -12653,6 +12666,7 @@ function _hwSaveToDashboard(canvas){
 var _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, ticking: false };
 var _hwZoomScrollPos = 0;
 function _hwPreventScroll(e) { e.preventDefault(); e.stopPropagation(); }
+var _hwLastTap = 0;
 function openHwZoom(src) {
   var overlay = document.getElementById('hw-zoom-overlay');
   var img = document.getElementById('hw-zoom-img');
@@ -12661,6 +12675,7 @@ function openHwZoom(src) {
     img.classList.remove('no-transition');
     img.style.transform = 'translate(0px, 0px) scale(1)';
     _zoomState = { scale: 1, lastScale: 1, startDist: 0, x: 0, y: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, ticking: false };
+    _hwLastTap = Date.now(); // Record first tap to allow double-tap from dashboard
     
     // Save scroll position and lock body
     _hwZoomScrollPos = window.pageYOffset || document.documentElement.scrollTop;
@@ -12677,7 +12692,26 @@ function openHwZoom(src) {
     overlay.addEventListener('wheel', _hwPreventScroll, { passive: false });
     
     img.ontouchstart = function(e) {
-      e.stopPropagation(); // Don't let preventScroll catch the image touch
+      e.stopPropagation(); 
+      var now = Date.now();
+      if (now - _hwLastTap < 300) {
+        // Double tap detected
+        e.preventDefault();
+        img.classList.remove('no-transition');
+        if (_zoomState.scale > 1.1) {
+          _zoomState.scale = 1; _zoomState.x = 0; _zoomState.y = 0;
+        } else {
+          _zoomState.scale = 2.5;
+        }
+        _zoomState.lastScale = _zoomState.scale;
+        _zoomState.lastX = _zoomState.x;
+        _zoomState.lastY = _zoomState.y;
+        img.style.transform = 'translate(' + _zoomState.x + 'px, ' + _zoomState.y + 'px) scale(' + _zoomState.scale + ')';
+        _hwLastTap = 0;
+        return;
+      }
+      _hwLastTap = now;
+      
       img.classList.add('no-transition');
       if (e.touches.length === 2) {
         _zoomState.startDist = Math.hypot(
@@ -12901,14 +12935,22 @@ function hwDashShare(idx){
   }catch(e){hwDashSave(idx);}
 }
 function hwDashRemove(idx){
-  if(!confirm('Remove this homework chart from the dashboard?'))return;
-  var charts=(db.settings&&db.settings.savedHwCharts)||[];
-  charts.splice(idx,1);
-  if(!db.settings)db.settings={};
-  db.settings.savedHwCharts=charts;
-  saveDB();
-  renderDashHwCharts();
-  _updateDashHwCount();
+  var btn = document.getElementById('hw-delete-confirm-btn');
+  if(btn) {
+    btn.onclick = function() {
+      pushUndo();
+      var charts=(db.settings&&db.settings.savedHwCharts)||[];
+      charts.splice(idx,1);
+      if(!db.settings)db.settings={};
+      db.settings.savedHwCharts=charts;
+      saveDB();
+      renderDashHwCharts();
+      _updateDashHwCount();
+      closeM('hw-delete-modal');
+      showToast('Chart removed');
+    };
+    openM('hw-delete-modal');
+  }
 }
 function renderDashHwCharts(){
   var cont=document.getElementById('dash-hw-content');
