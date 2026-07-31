@@ -2254,9 +2254,13 @@ function getCycles(s){
     var anchorParts=anchorStr.split('-');
     var anchorDate=mkD(parseInt(anchorParts[0]),parseInt(anchorParts[1])-1,parseInt(anchorParts[2]));
     var dueDay=anchorDate.getDate(),y=anchorDate.getFullYear(),m=anchorDate.getMonth();
+    var extraCount = s.extraCycles || 0;
     while(true){
       var cs=mkD(y,m,dueDay);
-      if(cs.getTime()>now.getTime())break;
+      if(cs.getTime()>now.getTime()){
+        if(extraCount > 0) extraCount--;
+        else break;
+      }
       if(run.to){var rt=mkD(run.to.getFullYear(),run.to.getMonth(),run.to.getDate());if(cs.getTime()>=rt.getTime())break;}
       var key=dkey(y,m,dueDay);
       if(!seen[key]&&!excl[key]){
@@ -4614,6 +4618,10 @@ function renderProfile(){
       '<button data-action="rmmonth" data-sid="'+s.id+'" data-key="'+cy.key+'" style="padding:4px 8px;border-radius:18px;border:1px solid #ef4444;background:rgba(239,68,68,.1);color:#ef4444;font-size:13px;font-weight:bold"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle">close</span></button>'+
       '</div></div>';
   }
+  monthsHtml += '<div style="margin-top:10px;text-align:center">'+
+    '<button data-action="addnextcycle" data-sid="'+s.id+'" style="padding:8px 16px;border-radius:20px;border:1.5px dashed var(--acc);background:transparent;color:var(--acc);font-size:13px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:6px">'+
+    '<span class="material-symbols-outlined" style="font-size:16px">add_circle</span>Add Next Month Cycle</button>'+
+    '</div>';
   document.getElementById('prof-months').innerHTML=monthsHtml;
   var _pm=document.getElementById('prof-months');
   if(_pm)_pm.onclick=handleMonthClick;
@@ -4628,6 +4636,7 @@ function handleMonthClick(e){
   if(action==='editcycle')openEditCycle(sid,key);
   else if(action==='editpay')logPay(sid,key,true);
   else if(action==='showrec')showRec(sid,key);
+  else if(action==='addnextcycle')addNextCycle(sid);
   else if(action==='unpay')unpay(sid,key);
   else if(action==='markpaid')logPay(sid,key,false);
   else if(action==='rmmonth')askRmMonth(sid,key);
@@ -12414,6 +12423,7 @@ function generateHwChart(){
     preview.dataset.cls=cls;
     preview.dataset.school=school;
     preview.dataset.subject=subject;
+    preview.dataset.to=toV;
     preview.dataset.count=dates.length;
     preview.dataset.labels=JSON.stringify(dates.map(function(d){
       return ('0'+d.getDate()).slice(-2)+' '+monthNames[d.getMonth()]+' '+d.getFullYear()+' ('+dayNames[d.getDay()]+')';
@@ -12641,6 +12651,7 @@ function _hwSaveToDashboard(canvas){
       cls:preview.dataset.cls||'',
       school:preview.dataset.school||'',
       subject:preview.dataset.subject||'',
+      endDate:preview.dataset.to||'',
       count:parseInt(preview.dataset.count||'0'),
       createdAt:now.toISOString(),
       imgData:dataUrl
@@ -12977,8 +12988,21 @@ function renderDashHwCharts(){
     h+='<div style="background:var(--card);border:1px solid var(--ibdr);border-radius:12px;padding:10px;margin-bottom:10px">';
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
     h+='<div style="flex:1;min-width:0">';
-    h+='<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(namePart)+'</div>';
-    h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+'</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px">'+
+      '<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(namePart)+'</div>'+
+      (function(){
+        if(!entry.endDate)return '';
+        var n = new Date();
+        var today = n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+        if(today === entry.endDate){
+          return '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;animation:pulse-red 2s infinite">LAST DAY</span>';
+        } else if(today > entry.endDate){
+          return '<span style="background:#64748b;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">FINISHED</span>';
+        }
+        return '';
+      })()+
+      '</div>';
+    h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+(entry.endDate?' <span style="color:var(--sub)">\u2022</span> Ends '+fmtD(entry.endDate):'')+'</div>';
     h+='</div>';
     h+='<div style="display:flex;gap:4px;flex-shrink:0;margin-left:6px">';
     h+='<button onclick="hwDashSave('+idx+')" style="padding:5px 10px;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,.12);color:#22c55e;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">download</span>Save</button>';
@@ -13669,6 +13693,15 @@ function posterToggleInput(chk){
     _cpPend=null;
   },{capture:true});
 })();
+
+function addNextCycle(sid){
+  var s=db.students.find(function(x){return x.id===sid;});
+  if(!s)return;
+  s.extraCycles = (s.extraCycles || 0) + 1;
+  saveDB();
+  renderProfile();
+  showToast('Next month cycle added');
+}
 </script>
 
 <!-- Category Picker Modal -->
