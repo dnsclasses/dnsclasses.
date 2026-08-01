@@ -4308,7 +4308,7 @@ function _reportSendImage(cardId,headingText,fnamePrefix,caption){
   _reportCaptureImage(cardId,headingText,function(blob,s){
     var ph=phones(s);
     if(!ph.length||!ph[0].number){showToast('No phone number',true);return;}
-    showPhonePicker(ph,blob,fnamePrefix+' - '+s.name+'.png',caption);
+    showPhonePicker(ph,blob,fnamePrefix+' - '+s.name+'.png',caption + ' of ' + s.name);
   });
 }
 function sendAttendanceImage(){_reportSendImage('rpt-attend-card',null,'Attendance Report','Attendance \ud83d\uddd3\ufe0f');}
@@ -4872,7 +4872,7 @@ function sendRecImg(){
   }).then(function(canvas){
     canvas.toBlob(function(blob){
       if(!blob){sendRecText();return;}
-      showPhonePicker(ph,blob,'dns_receipt.png');
+      showPhonePicker(ph,blob,'dns_receipt.png', 'Fee Receipt of ' + s.name);
     },'image/png',1.0);
   }).catch(function(){sendRecText();});
 }
@@ -4951,7 +4951,7 @@ function sendMRImg(){
   }).then(function(canvas){
     canvas.toBlob(function(blob){
       if(!blob){sendMRText();return;}
-      showPhonePicker(ph,blob,'dns_master_receipt.png');
+      showPhonePicker(ph,blob,'dns_master_receipt.png', 'Fee Statement of ' + s.name);
     },'image/png',1.0);
   }).catch(function(){sendMRText();});
 }
@@ -11557,7 +11557,7 @@ function pgShareImage(){
     canvas.toBlob(function(blob){
       var file=new File([blob],'progress_'+stu.name.replace(/\s/g,'_')+'.png',{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        navigator.share({files:[file],title:'DNS Classes - '+stu.name+' Progress'}).catch(function(){_pgDownload(canvas,stu.name);});
+        navigator.share({files:[file],title:'DNS Classes - '+stu.name+' Progress', text: 'Progress Report of ' + stu.name}).catch(function(){_pgDownload(canvas,stu.name);});
       } else {_pgDownload(canvas,stu.name);}
     },'image/png');
   });
