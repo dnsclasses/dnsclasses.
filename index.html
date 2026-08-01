@@ -13711,9 +13711,38 @@ function posterToggleInput(chk){
 })();
 
 function addNextCycle(sid){
-  var s=db.students.find(function(x){return x.id===sid;});
-  if(!s)return;
-  s.extraCycles = (s.extraCycles || 0) + 1;
+  var s = db.students.find(function(x){return x.id===sid;});
+  if(!s) return;
+  
+  var cycles = getCycles(s);
+  var lastCycle = cycles[cycles.length - 1];
+  
+  var y, m, d;
+  if (lastCycle) {
+    var parts = lastCycle.key.split('-');
+    y = parseInt(parts[0]);
+    m = parseInt(parts[1]) - 1;
+    d = parseInt(parts[2]);
+    m++;
+    if (m > 11) { m = 0; y++; }
+  } else {
+    var start = s.joiningDate ? new Date(s.joiningDate) : new Date();
+    y = start.getFullYear();
+    m = start.getMonth();
+    d = start.getDate();
+  }
+  
+  var nextKey = dkey(y, m, d);
+  var wasExcluded = false;
+  if (s.excludedMonths && s.excludedMonths.indexOf(nextKey) >= 0) {
+    s.excludedMonths = s.excludedMonths.filter(function(k){ return k !== nextKey; });
+    wasExcluded = true;
+  }
+  
+  if (!wasExcluded) {
+    s.extraCycles = (s.extraCycles || 0) + 1;
+  }
+  
   saveDB();
   renderProfile();
   showToast('Next month cycle added');
