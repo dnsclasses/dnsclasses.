@@ -2938,17 +2938,31 @@ function renderDash(){
     var loc=s.location||'Home';
     getCycles(s).forEach(function(cy){
       var rec=(s.payments||{})[cy.key];
+      var fullFee=Number(s.fees)||0;
       if(rec){
-        var amt=getAmt(s,rec),fullFee=Number(s.fees)||0;
+        var amt=getAmt(s,rec);
         if(loc==='Home')paidHome+=amt;else paidCity+=amt;
-        if(fullFee>0&&amt>0&&amt<fullFee)partialList.push({s:s,c:cy,rec:rec,bal:fullFee-amt});
+        if(fullFee>0&&amt>0&&amt<fullFee){
+          var bal=fullFee-amt;
+          totalPending+=bal;
+          var diff=calcDiff(cy.key);
+          var text=diff>0?diff+'d Overdue':(diff===0?'Due Today':'Due in '+Math.abs(diff)+'d');
+          text+=' (Partial: ₹'+amt.toLocaleString()+' paid)';
+          var dp={s:s,c:cy,diff:diff,text:text,pendingAmt:bal};
+          pendingList.push(dp);
+          partialList.push({s:s,c:cy,rec:rec,bal:bal});
+          if(diff===0)dueToday.push(dp);
+          else if(diff>0&&diff<=10)overdue.push(dp);
+          else if(diff>10)longOver.push(dp);
+          else if(diff<0&&diff>=-5)upcoming.push(dp);
+        }
         else paidList.push({s:s,c:cy,rec:rec});
       }
       else if((s.status||'active')==='active'){
         var diff=calcDiff(cy.key);
-        totalPending+=Number(s.fees||0);
+        totalPending+=fullFee;
         var text=diff>0?diff+'d Overdue':(diff===0?'Due Today':'Due in '+Math.abs(diff)+'d');
-        var dp={s:s,c:cy,diff:diff,text:text};
+        var dp={s:s,c:cy,diff:diff,text:text,pendingAmt:fullFee};
         pendingList.push(dp);
         if(diff===0)dueToday.push(dp);
         else if(diff>0&&diff<=10)overdue.push(dp);
@@ -3088,8 +3102,16 @@ function renderDash(){
     if(dashFilter==='active'){html='<div style="color:'+_dfGreen+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">check_circle</span>ACTIVE ('+active.length+')</div>';html+=active.map(function(s){return miniCard(s);}).join('');if(!active.length)html+='<div style="color:var(--sub);text-align:center;padding:20px">No active students.</div>';}
     else if(dashFilter==='inactive'){html='<div style="color:'+_dfRed+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">cancel</span>LEFT ('+inactive.length+')</div>';html+=inactive.map(function(s){return miniCard(s);}).join('');if(!inactive.length)html+='<div style="color:var(--sub);text-align:center;padding:20px">No discontinued students.</div>';}
     else if(dashFilter==='allstu'){html='<div style="color:'+_dfBlue+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">groups</span>ALL STUDENTS ('+_st.length+')</div>';var a2=_st.filter(function(s){return(s.status||'active')==='active';});var i2=_st.filter(function(s){return s.status==='discontinued';});if(a2.length)html+='<div style="font-size:12px;color:'+_dfGreen+';margin-bottom:6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">check_circle</span>ACTIVE</div>'+a2.map(function(s){return miniCard(s);}).join('');if(i2.length)html+='<div style="font-size:12px;color:'+_dfRed+';margin:10px 0 6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">cancel</span>LEFT</div>'+i2.map(function(s){return miniCard(s);}).join('');}
-    else if(dashFilter==='due'){html='<div style="color:'+_dfAmber+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">notifications_active</span>DUE TODAY ('+dueToday.length+')</div>';html+=dueToday.map(function(d){return alertCard(d.s,d.c,'#f59e0b','Due Today');}).join('');if(!dueToday.length)html+='<div style="color:var(--sub);text-align:center;padding:20px">None due today.</div>';}
-    else if(dashFilter==='pending'){html='<div style="color:#ef4444;font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">warning</span>ALL PENDING ('+pendingList.length+')</div>';html+=pendingList.map(function(d){var col=d.diff>0?'#ef4444':(d.diff===0?'#f59e0b':'#3b82f6');return alertCard(d.s,d.c,col,d.text);}).join('');}
+    else if(dashFilter==='due'){html='<div style="color:'+_dfAmber+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">notifications_active</span>DUE TODAY ('+dueToday.length+')</div>';html+=dueToday.map(function(d){return alertCard(d.s,d.c,'#f59e0b','Due Today',d.pendingAmt);}).join('');if(!dueToday.length)html+='<div style="color:var(--sub);text-align:center;padding:20px">None due today.</div>';}
+    else if(dashFilter==='pending'){
+      html='<div style="color:#ef4444;font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">warning</span>ALL PENDING ('+pendingList.length+')</div>';
+      html+=pendingList.map(function(d){var col=d.diff>0?'#ef4444':(d.diff===0?'#f59e0b':'#3b82f6');return alertCard(d.s,d.c,col,d.text,d.pendingAmt);}).join('');
+      if(partialList.length){
+        html+='<div style="color:#f97316;font-weight:bold;font-size:13px;margin:14px 0 8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">pie_chart</span>PARTIAL PAYMENTS ('+partialList.length+')</div>';
+        html+=partialList.map(function(d){return alertCard(d.s,d.c,'#f97316','\u20b9'+getAmt(d.s,d.rec).toLocaleString()+' paid \u00b7 \u20b9'+d.bal.toLocaleString()+' due',d.bal);}).join('');
+      }
+      html+='<div onclick="setFilter(\'pending\')" style="margin-top:14px;text-align:center;color:var(--sub);font-size:12px;cursor:pointer;padding:8px"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:3px">close</span>Close pending view</div>';
+    }
     else if(dashFilter==='contabsent'){
       html='<div style="color:#dc2626;font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">error</span>CONTINUOUSLY ABSENT ('+contAbsentList.length+')</div>';
       html+=contAbsentList.map(function(d){return absentCard(d.s,_micon('error',13)+d.streak+' day'+(d.streak!==1?'s':'')+' absent in a row',false,d.streak);}).join('');
@@ -3129,33 +3151,28 @@ function renderDash(){
       }).join('');
       if(!_clsStu.length)html+='<div style="color:var(--sub);text-align:center;padding:20px">No students in Class '+_clsG+'.</div>';
     }
-    else if(dashFilter==='paid'){html='<div style="color:#22c55e;font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">task_alt</span>ALL PAID ('+paidList.length+')</div>';html+=paidList.map(function(d){var amt=getAmt(d.s,d.rec),pd=d.rec.paidOn?fmtD(d.rec.paidOn):'';return alertCard(d.s,d.c,'#22c55e','✓ ₹'+amt.toLocaleString()+' on '+pd);}).join('');if(partialList.length)html+='<div style="color:#f97316;font-weight:bold;font-size:13px;margin:10px 0 6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">pie_chart</span>PARTIAL ('+partialList.length+')</div>'+partialList.map(function(d){return alertCard(d.s,d.c,'#f97316','₹'+getAmt(d.s,d.rec).toLocaleString()+' paid • ₹'+d.bal.toLocaleString()+' due');}).join('');}
+    else if(dashFilter==='paid'){html='<div style="color:#22c55e;font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">task_alt</span>ALL PAID ('+paidList.length+')</div>';html+=paidList.map(function(d){var amt=getAmt(d.s,d.rec),pd=d.rec.paidOn?fmtD(d.rec.paidOn):'';return alertCard(d.s,d.c,'#22c55e','✓ ₹'+amt.toLocaleString()+' on '+pd);}).join('');if(partialList.length)html+='<div style="color:#f97316;font-weight:bold;font-size:13px;margin:10px 0 6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">pie_chart</span>PARTIAL ('+partialList.length+')</div>'+partialList.map(function(d){return alertCard(d.s,d.c,'#f97316','₹'+getAmt(d.s,d.rec).toLocaleString()+' paid • ₹'+d.bal.toLocaleString()+' due',d.bal);}).join('');}
     dc.innerHTML=html;return;
   }
 
   var html='';
-  // Priority alerts always visible (partial + consecutive absents)
+  // Priority alerts now hide by default — partial payments only show when the user clicks the Pending card.
+  // Reached only when no dashFilter is active, so we keep the #dash-priority container empty.
   var pr=document.getElementById('dash-priority');
-  if(pr){
-    var ph='';
-    if(partialList.length)ph+='<div onclick="showMgrCatExpenses(\''+c.id+'\','+mgrYear+','+mgrMonth+')" style="margin-bottom:10px;cursor:pointer">'
-      +'<div style="color:#f97316;font-weight:bold;font-size:12px;margin-bottom:5px;letter-spacing:.5px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">pie_chart</span>PARTIAL PAYMENTS ('+partialList.length+')</div>'
-      +partialList.map(function(d){return alertCard(d.s,d.c,'#f97316','\u20b9'+getAmt(d.s,d.rec).toLocaleString()+' paid \u00b7 \u20b9'+d.bal.toLocaleString()+' due');}).join('')
-      +'</div>';
-    pr.innerHTML=ph;
-  }
+  if(pr){pr.innerHTML='';}
 
   dc.innerHTML=html;
   renderDailyCollection();
 }
 
 function dashSec(title,list,color){
-  return '<div style="margin-bottom:14px"><div style="color:'+color+';font-weight:bold;font-size:13px;margin-bottom:7px;letter-spacing:0.02em">'+title+'</div>'+list.map(function(d){return alertCard(d.s,d.c,color,d.text);}).join('')+'</div>';
+  return '<div style="margin-bottom:14px"><div style="color:'+color+';font-weight:bold;font-size:13px;margin-bottom:7px;letter-spacing:0.02em">'+title+'</div>'+list.map(function(d){return alertCard(d.s,d.c,color,d.text,d.pendingAmt);}).join('')+'</div>';
 }
 
-function alertCard(s,c,color,text){
+function alertCard(s,c,color,text,overrideAmt){
   var ph=phones(s);
   var _initial=(s.name||'?').trim().charAt(0).toUpperCase();
+  var displayAmt=(overrideAmt!==undefined)?overrideAmt:Number(s.fees);
   return '<div style="background:'+color+'15;border:1px solid '+color+'40;border-radius:12px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px '+color+'12">'+
     '<div style="cursor:pointer;flex:1;min-width:0;display:flex;align-items:center;gap:10px" onclick="openProf('+s.id+')">'+
     '<div style="width:38px;height:38px;border-radius:50%;background:'+color+'35;border:2px solid '+color+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:'+color+';flex-shrink:0;box-shadow:0 1px 3px '+color+'40">'+_initial+'</div>'+
@@ -3165,7 +3182,7 @@ function alertCard(s,c,color,text){
     '<div style="font-size:13px;color:'+color+';font-weight:bold">'+text+'</div>'+
     '</div></div>'+
     '<div style="text-align:right;flex-shrink:0">'+
-    '<div style="font-weight:bold;color:var(--acc);font-size:15px">₹'+Number(s.fees).toLocaleString()+'</div>'+
+    '<div style="font-weight:bold;color:var(--acc);font-size:15px">₹'+displayAmt.toLocaleString()+'</div>'+
     '<div style="display:flex;gap:4px;margin-top:5px">'+
     (ph.length?'<button onclick="openWA('+s.id+')" style="padding:6px;border-radius:6px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center">'+_waIcon(18,'transparent')+'</button>':'')+
     '<button onclick="logPay('+s.id+',\''+c.key+'\',false)" style="padding:5px 10px;border-radius:10px;border:1px solid #22c55e;background:rgba(34,197,94,.1);color:#22c55e;font-size:12px;font-weight:bold">✓ Paid</button>'+
@@ -7634,7 +7651,7 @@ function backupToGScript(silent){
           localStorage.setItem('dns_gscript_last_ts',Date.now().toString());
           showToast('Auto-backed up to Drive');
           // Try GET to fetch folder URL
-          fetch(url+'?action=info').then(function(r){return r.json();}).then(function(info){
+          fetch(url + (url.indexOf('?') === -1 ? '?' : '&') + 'action=info').then(function(r){return r.json();}).then(function(info){
             if(info.folderUrl){
               localStorage.setItem('dns_gscript_folder',info.folderUrl);
               var fl=document.getElementById('gscript-folder-link');
@@ -7652,7 +7669,7 @@ function restoreFromGScript(){
   var url=localStorage.getItem('dns_gscript_url')||'';
   if(!url){showToast('Paste your Apps Script URL first',true);return;}
   showToast('Fetching from Google Drive...');
-  fetch(url+'?action=restore')
+  fetch(url + (url.indexOf('?') === -1 ? '?' : '&') + 'action=restore')
     .then(function(r){return r.json();})
     .then(function(data){
       if(data.success&&data.data&&data.data.db){
@@ -13848,6 +13865,7 @@ function editHwChart(idx){
   </div>
 </div>
 <script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
