@@ -40,9 +40,9 @@ body.pitch-black .m3-dash,body:not(.light) .m3-dash{
 @keyframes m3FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
 .pulse-hw{animation:pulse-red 2s infinite}
-.zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.3s ease;padding:20px;touch-action:none}
+.zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.3s ease;padding:20px;touch-action:none;overscroll-behavior:none}
 .zoom-overlay.active{opacity:1;visibility:visible}
-.zoom-img{max-width:95%;max-height:90%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.5);transform:scale(0.8);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);will-change:transform;touch-action:none}
+.zoom-img{max-width:95%;max-height:90%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.5);transform:scale(0.8);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);will-change:transform;touch-action:none;overscroll-behavior:none}
 .zoom-overlay.active .zoom-img{transform:scale(1)}
 .zoom-img.no-transition{transition:none !important}
 .m3-fade{animation:m3FadeIn .35s ease both}
@@ -5943,6 +5943,82 @@ function runGlobalSearch(){
   if(!q){res.innerHTML='<div style="text-align:center;color:var(--sub);padding:30px;font-size:14px">Start typing to search everything \u2014 students, payments, expenses, income, chapters, mock exams. Try "max trophies" or "highest attendance in July" too!</div>';return;}
 
   // ── Smart queries (max trophies/medals/gold/silver/bronze, highest attendance) ──
+  var m;
+  if (q.indexOf('report of ') === 0) {
+    var sName = q.replace('report of ', '').trim();
+    var s = db.students.find(function(x) { return x.name.toLowerCase() === sName; });
+    if (s) { closeGlobalSearch(); openStudentReport(s.id); return; }
+  }
+  if (q.indexOf('attendance of ') === 0) {
+    var sName = q.replace('attendance of ', '').trim();
+    var s = db.students.find(function(x) { return x.name.toLowerCase() === sName; });
+    if (s) {
+      closeGlobalSearch();
+      openStudentReport(s.id);
+      setTimeout(function() {
+        var el = document.getElementById('rpt-attend-card');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+      return;
+    }
+  }
+  if (q.indexOf('progress chart of ') === 0 || q.indexOf('progress report of ') === 0) {
+    var sName = q.replace('progress chart of ', '').replace('progress report of ', '').trim();
+    var s = db.students.find(function(x) { return x.name.toLowerCase() === sName; });
+    if (s) {
+      closeGlobalSearch();
+      openStudentReport(s.id);
+      setTimeout(function() {
+        var el = document.getElementById('rpt-progress-card');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+      return;
+    }
+  }
+  if (q.indexOf('fees record of ') === 0) {
+    var sName = q.replace('fees record of ', '').trim();
+    var s = db.students.find(function(x) { return x.name.toLowerCase() === sName; });
+    if (s) {
+      closeGlobalSearch();
+      openStudentReport(s.id);
+      setTimeout(function() {
+        var el = document.getElementById('rpt-fees-card');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+      return;
+    }
+  }
+  if (q === 'highest trophies' || q === 'highest trophies') {
+    var lead = _gsAchievementLeaders('trophy');
+    if (lead.top.length) {
+      var icon = _gsAchievementIcon('trophy');
+      var cards = lead.top.map(function(r) {
+        return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf(' + r.s.id + ')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
+          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">' + esc(r.s.name) + '</div>' +
+          '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class ' + esc(r.s.grade || '') + (r.s.school ? ' \u2022 ' + esc(r.s.school) : '') + '</div></div>' +
+          '<div style="font-size:20px;font-weight:800;color:var(--acc)">' + icon + ' ' + r.count + '</div>' +
+          '</div>';
+      });
+      res.innerHTML = '<div style="font-size:13px;font-weight:800;color:var(--sub);letter-spacing:0.5px;margin-bottom:10px">' + icon + ' HIGHEST TROPHIES (' + lead.maxCount + ')' + (lead.top.length > 1 ? ' \u2014 tied' : '') + '</div>' + cards.join('');
+      return;
+    }
+  }
+  if (q === 'highest medals') {
+    var lead = _gsAchievementLeaders('medal');
+    if (lead.top.length) {
+      var icon = _gsAchievementIcon('medal');
+      var cards = lead.top.map(function(r) {
+        return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf(' + r.s.id + ')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
+          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">' + esc(r.s.name) + '</div>' +
+          '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class ' + esc(r.s.grade || '') + (r.s.school ? ' \u2022 ' + esc(r.s.school) : '') + '</div></div>' +
+          '<div style="font-size:20px;font-weight:800;color:var(--acc)">' + icon + ' ' + r.count + '</div>' +
+          '</div>';
+      });
+      res.innerHTML = '<div style="font-size:13px;font-weight:800;color:var(--sub);letter-spacing:0.5px;margin-bottom:10px">' + icon + ' HIGHEST MEDALS (' + lead.maxCount + ')' + (lead.top.length > 1 ? ' \u2014 tied' : '') + '</div>' + cards.join('');
+      return;
+    }
+  }
+
   var smart=_gsParseSmartQuery(q);
   if(smart){
     if(smart.kind==='achievement'){
@@ -7236,7 +7312,65 @@ function openContAbsentWA(sid,streak){
   else showPhonePicker(ph,null,null,msg);
 }
 function openAttendWA(sid,urgent){var s=db.students.find(function(x){return x.id===sid;});if(!s)return;var ph=phones(s);if(!ph.length){showToast('No phone number',true);return;}var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);var mn=MO[now.getMonth()]+' '+now.getFullYear();var streak=getRecentConsecAbsent(s);var msg;if(urgent&&streak>=2){msg='Dear Parent,'+'\n\n*URGENT ATTENDANCE ALERT*'+'\n\nYour ward *'+s.name+'* (Class '+(s.grade||'-')+') has been continuously absent for '+streak+' day'+(streak!==1?'s':'')+'.'+'\n\nThis month so far:'+'\n\u2705 Present: '+st.present+'\n\u274c Absent: '+st.absent+'\n\ud83d\udfe1 Late: '+st.late+'\n\ud83d\udcca Attendance: '+st.pct+'%'+'\n\nPlease ensure regular attendance.'+'\n\nRegards,\nDNS Classes';}else{msg='Dear Parent,'+'\n\nYour ward *'+s.name+'* (Class '+(s.grade||'-')+') has been absent *'+st.absent+' day'+(st.absent!==1?'s':'')+' in '+mn+'*.'+'\n\nThis month so far:'+'\n\u2705 Present: '+st.present+'\n\u274c Absent: '+st.absent+'\n\ud83d\udfe1 Late: '+st.late+'\n\ud83d\udcca Attendance: '+st.pct+'%'+'\n\nPlease ensure regular attendance.'+'\n\nRegards,\nDNS Classes';}if(ph.length===1)openWAUrl(ph[0].number,msg);else showPhonePicker(ph,null,null,msg);}
-function sendMonthlyAttendSummary(sid){sid=parseInt(sid)||sid;var s=db.students.find(function(x){return x.id===sid;});if(!s)return;var ph=phones(s);if(!ph.length){showToast('No phone number',true);return;}var now=new Date(),yr=now.getFullYear(),mo=now.getMonth();var st=getAttendStats(s,yr,mo,null);var mn=MO[mo]+' '+yr;if(!st.total){showToast('No attendance data',true);return;}var msg='Dear Parent,\n\nAttendance Report for *'+s.name+'* (Class '+(s.grade||'-')+') \u2014 *'+mn+'*\n\n\u2705 Present: *'+st.present+' days*\n\u274c Absent: *'+st.absent+' days*\n\ud83d\udfe1 Late: *'+st.late+' days*\n\ud83d\udcca Attendance: *'+st.pct+'%*\n'+(st.pct<75?'\n\u26a0\ufe0f Attendance below 75%. Please ensure regular attendance.\n':'')+'\nRegards,\nDNS Classes';if(ph.length===1)openWAUrl(ph[0].number,msg);else showPhonePicker(ph,null,null,msg);}
+function sendMonthlyAttendSummary(sid) {
+  sid = parseInt(sid) || sid;
+  var s = db.students.find(function(x) { return x.id === sid; });
+  if (!s) return;
+  var ph = phones(s);
+  if (!ph.length) { showToast('No phone number', true); return; }
+
+  // Use the existing month picker modal logic but customize it for attendance
+  var list = document.getElementById('month-picker-list');
+  if (!list) return;
+  list.innerHTML = '';
+  
+  // Get unique months from student's attendance
+  var att = s.attendance || {};
+  var months = {};
+  Object.keys(att).forEach(function(d) {
+    var dt = new Date(d);
+    var ym = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+    if (!months[ym]) {
+      months[ym] = { y: dt.getFullYear(), m: dt.getMonth() };
+    }
+  });
+
+  var mKeys = Object.keys(months).sort().reverse();
+  if (!mKeys.length) { showToast('No attendance data', true); return; }
+
+  // Add Overall Option
+  var overallRow = document.createElement('div');
+  overallRow.style.cssText = 'padding:15px 20px;font-size:15px;color:var(--txt);border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:rgba(59,130,246,0.08)';
+  overallRow.innerHTML = '<span style="font-weight:bold;color:var(--acc)">\ud83d\udcca Overall Attendance</span>';
+  overallRow.onclick = function() {
+    closeMonthPicker();
+    var st = getAttendStats(s, null, null, Object.keys(s.attendance || {}));
+    var msg = 'Dear Parent,\n\n*Overall Attendance Report* for *' + s.name + '* (Class ' + (s.grade || '-') + ')\n\n\u2705 Present: *' + st.present + ' days*\n\u274c Absent: *' + st.absent + ' days*\n\ud83d\udfe1 Late: *' + st.late + ' days*\n\ud83d\udcca Overall Attendance: *' + st.pct + '%*\n' + (st.pct < 75 ? '\n\u26a0\ufe0f Overall attendance is below 75%. Please ensure regular attendance.\n' : '') + '\nRegards,\nDNS Classes';
+    if (ph.length === 1) openWAUrl(ph[0].number, msg);
+    else showPhonePicker(ph, null, null, msg);
+  };
+  list.appendChild(overallRow);
+
+  mKeys.forEach(function(ym) {
+    var mo = months[ym];
+    var row = document.createElement('div');
+    row.style.cssText = 'padding:15px 20px;font-size:15px;color:var(--txt);border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:space-between';
+    row.innerHTML = '<span>' + MO[mo.m] + ' ' + mo.y + '</span>';
+    row.onclick = function() {
+      closeMonthPicker();
+      var st = getAttendStats(s, mo.y, mo.m, null);
+      var mn = MO[mo.m] + ' ' + mo.y;
+      var msg = 'Dear Parent,\n\nAttendance Report for *' + s.name + '* (Class ' + (s.grade || '-') + ') \u2014 *' + mn + '*\n\n\u2705 Present: *' + st.present + ' days*\n\u274c Absent: *' + st.absent + ' days*\n\ud83d\udfe1 Late: *' + st.late + ' days*\n\ud83d\udcca Attendance: *' + st.pct + '%*\n' + (st.pct < 75 ? '\n\u26a0\ufe0f Attendance below 75%. Please ensure regular attendance.\n' : '') + '\nRegards,\nDNS Classes';
+      if (ph.length === 1) openWAUrl(ph[0].number, msg);
+      else showPhonePicker(ph, null, null, msg);
+    };
+    list.appendChild(row);
+  });
+
+  document.getElementById('month-picker-modal').style.display = 'block';
+  var title = document.querySelector('#month-picker-modal span');
+  if (title) title.textContent = 'Select Attendance Month';
+}
 var _collectFilter='month';
 
 
@@ -12725,6 +12859,8 @@ function openHwZoom(src) {
     document.body.style.top = '-' + _hwZoomScrollPos + 'px';
     document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.touchAction = 'none';
     
     overlay.classList.add('active');
     
@@ -12767,6 +12903,7 @@ function openHwZoom(src) {
     };
     img.ontouchmove = function(e) {
       e.preventDefault();
+      e.stopPropagation();
       if (e.touches.length === 2) {
         var dist = Math.hypot(
           e.touches[0].pageX - e.touches[1].pageX,
@@ -12799,6 +12936,7 @@ function openHwZoom(src) {
       }
     };
     img.ontouchend = function(e) {
+      e.stopPropagation();
       if (e.touches.length === 0) {
         img.classList.remove('no-transition');
         _zoomState.lastScale = _zoomState.scale;
@@ -12824,6 +12962,8 @@ function closeHwZoom() {
     document.body.style.top = '';
     document.body.style.width = '';
     document.body.style.overflow = '';
+    document.body.style.overscrollBehavior = '';
+    document.body.style.touchAction = '';
     window.scrollTo(0, _hwZoomScrollPos);
     
     if(img) {
@@ -13767,6 +13907,8 @@ function addNextCycle(sid){
 function openMonthPicker(){
   var list=document.getElementById('month-picker-list');
   if(!list)return;
+  var title = document.querySelector('#month-picker-modal span');
+  if (title) title.textContent = 'Select Month';
   var now=new Date(),curMonKey=now.getFullYear()+'-'+now.getMonth();
   var monthSet={};
   db.students.forEach(function(s){
