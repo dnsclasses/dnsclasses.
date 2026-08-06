@@ -444,21 +444,21 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
     <button id="hs-az" onclick="setHistSort('az')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid var(--acc);background:var(--btn);color:var(--btntxt)">A&#8211;Z</button>
     <button id="hs-pres" onclick="setHistSort('present')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(34,197,94,.4);background:rgba(34,197,94,.12);color:#22c55e">&#9660; Present</button>
-    <button id="hs-abs" onclick="setHistSort('absent')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(239,68,68,.4);background:rgba(239,68,68,.12);color:#ef4444">&#9660; Absent</button>
+    <button id="hs-abs" onclick="setHistSort('absent')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(239,68,68,.4);background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+'">&#9660; Absent</button>
     <button id="hs-pct" onclick="setHistSort('pct')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(99,102,241,.4);background:rgba(99,102,241,.12);color:#818cf8">&#9660; %</button>
   </div>
   <div style="background:var(--ibg);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;margin-bottom:6px">
     <div style="font-size:11px;font-weight:bold;color:var(--sub);margin-bottom:8px;letter-spacing:0.02em;text-align:center">ALERT THRESHOLDS</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:16px">
       <div style="display:flex;align-items:center;gap:3px;flex:1">
-        <span style="font-size:11px;color:#ef4444;font-weight:bold">&#128308; Absent&#8805;</span>
-        <button onclick="adjThresh('abs',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:#ef4444;font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
+        <span style="font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold">&#128308; Absent&#8805;</span>
+        <button onclick="adjThresh('abs',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:'+(isDark?'#f87171':'#ef4444')+';font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
         <div id="thresh-abs-val" style="width:32px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--ibg);border-top:1px solid var(--ibdr);border-bottom:1px solid var(--ibdr);font-size:13px;font-weight:bold;color:var(--txt)">4</div>
         <button onclick="adjThresh('abs',1)" style="width:26px;height:26px;border-radius:0 5px 5px 0;border:1px solid var(--ibdr);background:var(--card);color:#22c55e;font-size:14px;font-weight:bold;cursor:pointer">+</button>
       </div>
       <div style="display:flex;align-items:center;gap:3px;flex:1">
         <span style="font-size:11px;color:#f59e0b;font-weight:bold">&#128993; Late&#8805;</span>
-        <button onclick="adjThresh('late',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:#ef4444;font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
+        <button onclick="adjThresh('late',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:'+(isDark?'#f87171':'#ef4444')+';font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
         <div id="thresh-late-val" style="width:32px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--ibg);border-top:1px solid var(--ibdr);border-bottom:1px solid var(--ibdr);font-size:13px;font-weight:bold;color:var(--txt)">4</div>
         <button onclick="adjThresh('late',1)" style="width:26px;height:26px;border-radius:0 5px 5px 0;border:1px solid var(--ibdr);background:var(--card);color:#22c55e;font-size:14px;font-weight:bold;cursor:pointer">+</button>
       </div>
@@ -478,7 +478,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="pg-view-chapters">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">bar_chart</span>Score Chart</div>
-    <button onclick="resetScoreChart()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+    <button onclick="resetScoreChart()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
   </div>
 
   <!-- Row 1: Class + Location (select class FIRST) -->
@@ -543,7 +543,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div style="margin-top:24px">
     <div class="sec-hdr" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
       <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">bar_chart</span>STUDENT PROGRESS CHART</span>
-      <button onclick="pgResetProgress()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="pgResetProgress()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -807,8 +807,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 
   <div onclick="openReset()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:rgba(239,68,68,.08);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid rgba(239,68,68,.3)">
-    <span style="font-size:15px;font-weight:bold;color:#ef4444"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">delete_forever</span>Reset Data</span>
-    <span style="color:#ef4444;font-size:18px">›</span>
+    <span style="font-size:15px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+'"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">delete_forever</span>Reset Data</span>
+    <span style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:18px">›</span>
   </div>
 </div>
 
@@ -849,7 +849,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <!-- Test Alert Generator Modal -->
 <div id="restore-confirm-modal" class="modal hidden" onclick="closeM('restore-confirm-modal')" style="z-index:350">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px">
-  <div style="font-weight:bold;font-size:16px;color:#ef4444;margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">warning</span>Confirm Restore</div>
+  <div style="font-weight:bold;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">warning</span>Confirm Restore</div>
   <div id="restore-confirm-text" style="font-size:14px;color:var(--txt);margin-bottom:16px;line-height:1.5"></div>
   <div style="display:flex;gap:10px">
     <button onclick="closeM('restore-confirm-modal')" style="flex:1;padding:12px;border-radius:10px;background:var(--ibg);color:var(--txt);font-weight:bold;font-size:14px;border:1px solid var(--ibdr);cursor:pointer">Cancel</button>
@@ -859,7 +859,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
 <div id="hw-delete-modal" class="modal hidden" onclick="closeM('hw-delete-modal')" style="z-index:2100">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:24px">
-  <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:#ef4444;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+  <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:'+(isDark?'#f87171':'#ef4444')+';display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
     <span class="material-symbols-outlined" style="font-size:32px">delete_forever</span>
   </div>
   <div style="font-weight:800;font-size:18px;color:var(--txt);margin-bottom:8px">Delete Chart?</div>
@@ -988,7 +988,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
 <div id="mgr-exp-modal" class="modal mbot hidden" onclick="closeM('mgr-exp-modal')">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
-  <div style="font-weight:bold;font-size:16px;color:#ef4444;margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">trending_down</span>Add Expense</div>
+  <div style="font-weight:bold;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">trending_down</span>Add Expense</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label class="flabel">DATE</label><input type="date" id="mgr-exp-date"></div>
     <div><label class="flabel">AMOUNT (₹)</label><input type="number" id="mgr-exp-amt" placeholder="0" min="0" onclick="openMgrCalc(this)"></div>
@@ -1011,8 +1011,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <div id="mgr-edit-exp-modal" class="modal mbot hidden" style="z-index:350" onclick="closeM('mgr-edit-exp-modal')">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-    <div style="font-weight:bold;font-size:16px;color:#ef4444"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Expense</div>
-    <button onclick="deleteMgrExpense(window._editExpId);closeM('mgr-edit-exp-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
+    <div style="font-weight:bold;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+'"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Expense</div>
+    <button onclick="deleteMgrExpense(window._editExpId);closeM('mgr-edit-exp-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label class="flabel">DATE</label><input type="date" id="mgr-edit-exp-date"></div>
@@ -1053,7 +1053,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
     <div style="font-weight:bold;font-size:16px;color:#22c55e"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Income</div>
-    <button onclick="deleteMgrIncome(window._editIncId);closeM('mgr-edit-inc-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
+    <button onclick="deleteMgrIncome(window._editIncId);closeM('mgr-edit-inc-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label class="flabel">DATE</label><input type="date" id="mgr-edit-inc-date"></div>
@@ -1075,7 +1075,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     <div id="calc-display" style="font-size:26px;font-weight:bold;color:var(--txt)">0</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px">
-    <button onclick="calcBtn('C')" style="grid-column:span 2;padding:18px;border-radius:10px;background:rgba(239,68,68,.15);color:#ef4444;font-size:19px;font-weight:bold;border:none;cursor:pointer">C</button>
+    <button onclick="calcBtn('C')" style="grid-column:span 2;padding:18px;border-radius:10px;background:rgba(239,68,68,.15);color:'+(isDark?'#f87171':'#ef4444')+';font-size:19px;font-weight:bold;border:none;cursor:pointer">C</button>
     <button onclick="calcBtn('←')" style="padding:18px;border-radius:10px;background:var(--ibg);color:var(--txt);font-size:22px;border:none;cursor:pointer">⌫</button>
     <button onclick="calcBtn('÷')" style="padding:18px;border-radius:10px;background:rgba(245,158,11,.15);color:#f59e0b;font-size:22px;font-weight:bold;border:none;cursor:pointer">÷</button>
     <button onclick="calcBtn('7')" style="padding:18px;border-radius:10px;background:var(--ibg);color:var(--txt);font-size:22px;font-weight:bold;border:none;cursor:pointer">7</button>
@@ -1127,7 +1127,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
 <div id="rm-modal" class="modal hidden"><div class="mbox" style="max-width:280px;text-align:center"><div class="material-symbols-outlined" style="font-size:32px;color:#f59e0b">help</div><div style="font-weight:bold;margin-top:8px;font-size:16px">Remove This Month?</div><div id="rm-desc" style="color:var(--sub);font-size:13px;margin-top:5px;line-height:1.5"></div><div style="display:flex;gap:10px;margin-top:16px"><button id="rm-ok" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Remove</button><button onclick="closeM('rm-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
 
-<div id="del-modal" class="modal hidden"><div class="mbox" style="max-width:280px;text-align:center"><div class="material-symbols-outlined" style="font-size:32px;color:#ef4444">warning</div><div style="font-weight:bold;margin-top:8px;font-size:16px">Remove Student?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">All records deleted permanently.</div><div style="display:flex;gap:10px;margin-top:16px"><button id="del-ok" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Remove</button><button onclick="closeM('del-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
+<div id="del-modal" class="modal hidden"><div class="mbox" style="max-width:280px;text-align:center"><div class="material-symbols-outlined" style="font-size:32px;color:'+(isDark?'#f87171':'#ef4444')+'">warning</div><div style="font-weight:bold;margin-top:8px;font-size:16px">Remove Student?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">All records deleted permanently.</div><div style="display:flex;gap:10px;margin-top:16px"><button id="del-ok" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Remove</button><button onclick="closeM('del-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
 
 
 <!-- Backup Modal -->
@@ -1317,7 +1317,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 </div></div>
 
-<div id="rst-modal" class="modal hidden"><div class="mbox" style="max-width:290px;text-align:center"><div class="material-symbols-outlined" style="font-size:34px;color:#ef4444">delete_forever</div><div style="font-weight:bold;margin-top:8px;font-size:16px;color:#ef4444">Reset All Data?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">Permanently erases ALL students and records.</div><div style="margin-top:12px;text-align:left"><label class="flabel">ENTER INVESTMENT PIN</label><input id="rst-pin" type="password" inputmode="numeric" placeholder="PIN" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"><div style="font-size:11px;color:var(--sub);margin-top:4px">Hint: same PIN used to unlock Investments</div></div><div style="margin-top:12px"><label class="flabel">TYPE "RESET" TO CONFIRM</label><input id="rst-input" placeholder="RESET" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"></div><div style="display:flex;gap:10px;margin-top:14px"><button onclick="doReset()" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Erase All</button><button onclick="closeM('rst-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
+<div id="rst-modal" class="modal hidden"><div class="mbox" style="max-width:290px;text-align:center"><div class="material-symbols-outlined" style="font-size:34px;color:'+(isDark?'#f87171':'#ef4444')+'">delete_forever</div><div style="font-weight:bold;margin-top:8px;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+'">Reset All Data?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">Permanently erases ALL students and records.</div><div style="margin-top:12px;text-align:left"><label class="flabel">ENTER INVESTMENT PIN</label><input id="rst-pin" type="password" inputmode="numeric" placeholder="PIN" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"><div style="font-size:11px;color:var(--sub);margin-top:4px">Hint: same PIN used to unlock Investments</div></div><div style="margin-top:12px"><label class="flabel">TYPE "RESET" TO CONFIRM</label><input id="rst-input" placeholder="RESET" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"></div><div style="display:flex;gap:10px;margin-top:14px"><button onclick="doReset()" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Erase All</button><button onclick="closeM('rst-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
 
 <!-- Attendance Export Modal -->
 <div id="att-export-modal" class="modal hidden" onclick="closeM('att-export-modal')">
@@ -1391,7 +1391,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-chart-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">show_chart</span>Progress Chart</div>
-      <button onclick="resetPrnChartForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="resetPrnChartForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -1427,7 +1427,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-mock-panel" class="hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">track_changes</span>Mock Record</div>
-      <button onclick="resetPrnMockForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="resetPrnMockForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -1450,7 +1450,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-hw-panel" class="hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Homework Chart</div>
-      <button onclick="resetHwForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="resetHwForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">NAME <span style="font-weight:400;opacity:0.7">(optional)</span></label>
@@ -1660,7 +1660,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
   <div style="display:flex;gap:8px;margin-top:14px">
     <button id="inv-detail-edit-btn" onclick="if(window._invDetailId)openEditInvestment(window._invDetailId)" style="flex:1;padding:10px;border-radius:8px;background:rgba(129,140,248,.15);color:#818cf8;font-weight:bold;border:1px solid rgba(129,140,248,.3);font-size:13px">&#x270F; Edit</button>
-    <button id="inv-detail-del-btn" onclick="" style="padding:10px 16px;border-radius:8px;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-size:13px">&#x1F5D1;</button>
+    <button id="inv-detail-del-btn" onclick="" style="padding:10px 16px;border-radius:8px;background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';border:1px solid rgba(239,68,68,.3);font-size:13px">&#x1F5D1;</button>
   </div>
 </div></div>
 
@@ -1920,7 +1920,7 @@ function _rankTrendBadge(prevRank,curRank,fontSize){
   if(prevRank===null||prevRank===undefined)return '<span style="font-size:'+fontSize+'px;font-weight:800;color:#3b82f6;background:rgba(59,130,246,.12);border-radius:8px;padding:'+pad+'">NEW</span>';
   var delta=prevRank-curRank;
   if(delta===0)return '<span style="font-size:'+fontSize+'px;font-weight:800;color:var(--sub);background:rgba(148,163,184,.15);border-radius:8px;padding:'+pad+'">\u2013 same</span>';
-  if(delta>0)return '<span style="font-size:'+fontSize+'px;font-weight:800;color:#16a34a;background:rgba(34,197,94,.12);border-radius:8px;padding:'+pad+'">\u25b2'+delta+'</span>';
+  if(delta>0)return '<span style="font-size:'+fontSize+'px;font-weight:800;color:'+(isDark?'#4ade80':'#16a34a')+';background:rgba(34,197,94,.12);border-radius:8px;padding:'+pad+'">\u25b2'+delta+'</span>';
   return '<span style="font-size:'+fontSize+'px;font-weight:800;color:#dc2626;background:rgba(220,38,38,.12);border-radius:8px;padding:'+pad+'">\u25bc'+Math.abs(delta)+'</span>';
 }
 function _tieBreakByHistory(a,b,fromYm){
@@ -2517,7 +2517,7 @@ function renderDashTests(){
         h+='<button onclick="togglePaperMade(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(r.paperMade?'#22c55e':_btnBdr)+';background:'+(r.paperMade?'#22c55e':_btnBg)+';color:'+(r.paperMade?'#fff':_btnTxt)+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.paperMade?'\u2705 Ready':'\ud83d\udcdd Paper')+'</button>';
         h+='<button onclick="editReminderDate(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">event</span>Date</button>';
         if(isToday&&!r.flashStopped)h+='<button onclick="stopReminderFlash(\''+r.id+'\')" title="Stop Flash" style="padding:6px 8px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:13px;cursor:pointer;flex-shrink:0">\ud83d\udd15</button>';
-        h+='<button onclick="dismissReminder(\''+r.id+'\')" style="padding:6px 9px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:#ef4444;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">\u2715</button>';
+        h+='<button onclick="dismissReminder(\''+r.id+'\')" style="padding:6px 9px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">\u2715</button>';
         h+='</div>';
         h+='</div>';
       });
@@ -2632,7 +2632,10 @@ function _updateDashSmallCards(){
     if(iconEl){
       if(shouldFlash){
         if(iconEl.dataset.origColor===undefined)iconEl.dataset.origColor=iconEl.style.color||'';
-        iconEl.style.color='#fff';
+        // If the card has a severity ratio (like Pending), check if the background is light
+        var ratio = parseFloat(card.dataset.pendingRatio || '1');
+        var isLightFlash = (ratio > 0 && ratio < 0.5);
+        iconEl.style.color = isLightFlash ? '#78350f' : '#fff';
       } else if(iconEl.dataset.origColor!==undefined){
         iconEl.style.color=iconEl.dataset.origColor;
         delete iconEl.dataset.origColor;
@@ -2835,7 +2838,7 @@ function absentCard(s,badge,waUrgent,streak){
   var _waClr=document.body.classList.contains('light')?'#b45309':'#f59e0b';
   return '<div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px" onclick="openHistForStudent('+s.id+')">'
     +'<div style="flex:1;min-width:0;cursor:pointer">'
-    +'<div style="font-weight:bold;font-size:15px;color:'+(_disc?'#ef4444':cTxt())+'">'+esc(s.name)+(_disc?' <span style="font-size:10px;font-weight:bold;color:#ef4444;background:rgba(239,68,68,.15);padding:1px 5px;border-radius:6px"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:-2px;margin-right:4px">cancel</span>LEFT</span>':'')+' </div>'
+    +'<div style="font-weight:bold;font-size:15px;color:'+(_disc?'#ef4444':cTxt())+'">'+esc(s.name)+(_disc?' <span style="font-size:10px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';background:rgba(239,68,68,.15);padding:1px 5px;border-radius:6px"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:-2px;margin-right:4px">cancel</span>LEFT</span>':'')+' </div>'
     +'<div style="font-size:12px;color:var(--sub)">Class '+esc(s.grade||'-')+'</div>'
     +'<div style="font-size:13px;color:#dc2626;font-weight:bold;margin-top:2px">'+badge+'</div>'
     +'</div>'
@@ -2872,7 +2875,7 @@ function renderBirthdayAndClassCount(){
             +'<div style="font-size:12px;color:var(--sub)">Class '+esc(s.grade||'-')+(age?' · Turning '+age:'')+'</div></div>'
             +'</div>'
             +(ph2.length?'<button onclick="event.stopPropagation();openBirthdayWA('+s.id+')" style="padding:6px;border-radius:6px;border:none;background:linear-gradient(135deg,#fbbf24,#b45309);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+_waIcon(18,'transparent')+'</button>':'')
-            +'<button onclick="event.stopPropagation();dismissBirthday('+s.id+')" style="padding:5px 8px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:#ef4444;font-size:11px;cursor:pointer;flex-shrink:0">\u2715</button>'
+            +'<button onclick="event.stopPropagation();dismissBirthday('+s.id+')" style="padding:5px 8px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;cursor:pointer;flex-shrink:0">\u2715</button>'
             +'</div>';
         }).join('')+'</div>';
     } else { bday.innerHTML=''; }
@@ -3032,12 +3035,19 @@ function renderDash(){
     pendCard.dataset.severityRgb=pendRgbStr;
     pendCard.dataset.pendingRatio=pendingRatio.toFixed(3);
   }
-  if(_pendStaticFill){
-    if(numEl)numEl.style.color='#78350f';
-    if(lblEl)lblEl.style.color='#78350f';
+  var _isLightMode = document.body.classList.contains('light');
+  if(_pendStaticFill || (pendingRatio >= 0.2 && pendingRatio < 0.5)){
+    // Light background fill (Yellow/Orange) - always use dark text for visibility
+    if(numEl) numEl.style.color = '#78350f';
+    if(lblEl) lblEl.style.color = '#78350f';
+  } else if (pendingRatio >= 0.5) {
+    // Dark background fill (Red) - always use light text for visibility
+    if(numEl) numEl.style.color = '#fff';
+    if(lblEl) lblEl.style.color = '#fff';
   } else {
-    if(numEl)numEl.style.color='';
-    if(lblEl)lblEl.style.color='';
+    // No background fill - use theme default (handled by CSS variables)
+    if(numEl) numEl.style.color = '';
+    if(lblEl) lblEl.style.color = '';
   }
   _updateDashSmallCards(); // re-check flash state now that the real pending amount is set
   var sca=document.getElementById('s-cont-absent');if(sca)sca.textContent=contAbsentList.length;
@@ -3104,7 +3114,7 @@ function renderDash(){
     else if(dashFilter==='allstu'){html='<div style="color:'+_dfBlue+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">groups</span>ALL STUDENTS ('+_st.length+')</div>';var a2=_st.filter(function(s){return(s.status||'active')==='active';});var i2=_st.filter(function(s){return s.status==='discontinued';});if(a2.length)html+='<div style="font-size:12px;color:'+_dfGreen+';margin-bottom:6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">check_circle</span>ACTIVE</div>'+a2.map(function(s){return miniCard(s);}).join('');if(i2.length)html+='<div style="font-size:12px;color:'+_dfRed+';margin:10px 0 6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">cancel</span>LEFT</div>'+i2.map(function(s){return miniCard(s);}).join('');}
     else if(dashFilter==='due'){html='<div style="color:'+_dfAmber+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">notifications_active</span>DUE TODAY ('+dueToday.length+')</div>';html+=dueToday.map(function(d){return alertCard(d.s,d.c,'#f59e0b','Due Today',d.pendingAmt);}).join('');if(!dueToday.length)html+='<div style="color:var(--sub);text-align:center;padding:20px">None due today.</div>';}
     else if(dashFilter==='pending'){
-      html='<div style="color:#ef4444;font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">warning</span>ALL PENDING ('+pendingList.length+')</div>';
+      html='<div style="color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;font-size:13px;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">warning</span>ALL PENDING ('+pendingList.length+')</div>';
       html+=pendingList.map(function(d){var col=d.diff>0?'#ef4444':(d.diff===0?'#f59e0b':'#3b82f6');return alertCard(d.s,d.c,col,d.text,d.pendingAmt);}).join('');
       if(partialList.length){
         html+='<div style="color:#f97316;font-weight:bold;font-size:13px;margin:14px 0 8px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">pie_chart</span>PARTIAL PAYMENTS ('+partialList.length+')</div>';
@@ -3131,7 +3141,7 @@ function renderDash(){
       var _clsDisc=_clsStu.filter(function(s){return s.status==='discontinued';}).length;
       html='<div style="font-weight:bold;font-size:13px;color:var(--acc);margin-bottom:4px">'
         +'<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:3px">school</span>Class '+_clsG+' — <span style="color:#22c55e">'+_clsActive+' Active</span>'
-        +(_clsDisc?' <span style="color:#ef4444">'+_clsDisc+' Left</span>':'')+'</div>'
+        +(_clsDisc?' <span style="color:'+(isDark?'#f87171':'#ef4444')+'">'+_clsDisc+' Left</span>':'')+'</div>'
         +'<div style="font-size:11px;color:var(--sub);margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:-1px;margin-right:3px">circle</span>highlighted = discontinued</div>';
       html+=_clsStu.map(function(s){
         var ci=getCurrentCycle(s);
@@ -3337,7 +3347,7 @@ function openRankExcludeModal(){
       bodyHtml+='<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr);cursor:pointer">'
         +'<input type="checkbox" data-sid="'+s.id+'" onchange="toggleRankExclude('+s.id+',this.checked)" '+checked+' style="width:18px;height:18px;flex-shrink:0">'
         +'<span style="font-size:13px;color:var(--txt);flex:1">'+esc(s.name)+'</span>'
-        +'<span id="rank-excl-badge-'+s.id+'">'+(s.rankExcluded?'<span style="font-size:10px;font-weight:700;color:#ef4444">EXCLUDED</span>':'')+'</span>'
+        +'<span id="rank-excl-badge-'+s.id+'">'+(s.rankExcluded?'<span style="font-size:10px;font-weight:700;color:'+(isDark?'#f87171':'#ef4444')+'">EXCLUDED</span>':'')+'</span>'
         +'</label>';
     });
   });
@@ -3358,7 +3368,7 @@ function toggleRankExclude(sid,checked){
   s.rankExcluded=checked;
   saveDB();
   var badge=document.getElementById('rank-excl-badge-'+sid);
-  if(badge)badge.innerHTML=checked?'<span style="font-size:10px;font-weight:700;color:#ef4444">EXCLUDED</span>':'';
+  if(badge)badge.innerHTML=checked?'<span style="font-size:10px;font-weight:700;color:'+(isDark?'#f87171':'#ef4444')+'">EXCLUDED</span>':'';
   var countBadge=document.getElementById('rank-excl-count-badge');
   if(countBadge){
     var n=(db.students||[]).filter(function(x){return x.status!=='inactive'&&x.rankExcluded;}).length;
@@ -3472,17 +3482,17 @@ function renderRankings(){
         });
         return out;
       }
-      var _isDkScreen=!document.body.classList.contains('light');
+      var _isDarkScreen=!document.body.classList.contains('light');
       if(_ac.troph||_ac.gold||_ac.silv||_ac.brnz){
         h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-top:5px">';
         h+='<span style="font-size:9px;font-weight:800;color:var(--sub);letter-spacing:0.5px;width:40px;flex-shrink:0">TESTS</span>';
-        h+=_bldPills(_ac.troph,_ac.gold,_ac.silv,_ac.brnz,_isDkScreen);
+        h+=_bldPills(_ac.troph,_ac.gold,_ac.silv,_ac.brnz,_isDarkScreen);
         h+='</div>';
       }
       if(_ac.mTroph||_ac.mGold||_ac.mSilv||_ac.mBrnz){
         h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-top:3px">';
         h+='<span style="font-size:9px;font-weight:800;color:var(--sub);letter-spacing:0.5px;width:40px;flex-shrink:0">MOCKS</span>';
-        h+=_bldPills(_ac.mTroph,_ac.mGold,_ac.mSilv,_ac.mBrnz,_isDkScreen);
+        h+=_bldPills(_ac.mTroph,_ac.mGold,_ac.mSilv,_ac.mBrnz,_isDarkScreen);
         h+='</div>';
       }
       h+='</div>';
@@ -3996,16 +4006,16 @@ function generateReport(sid){
   _rptCurrentSid=sid;
   var s=(db.students||[]).find(function(x){return x.id===sid;});
   if(!s)return;
-  var isDk=!document.body.classList.contains('light');
+  var isDark=!document.body.classList.contains('light');
   var isPB=document.body.classList.contains('pitch-black');
-  var bg=isPB?'#000000':(isDk?'#0f172a':'#ffffff');
-  var card=isPB?'#0a0a0a':(isDk?'#1e293b':'#ffffff');
-  var txt=isDk?'#e2e8f0':'#1e293b';
-  var sub=isDk?'#94a3b8':'#64748b';
-  var acc=isDk?'#fbbf24':'#2563eb';
-  var bdr=isDk?'rgba(100,116,139,0.3)':'rgba(30,41,59,0.12)';
-  var ibg=isDk?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.05)';
-  var btntxt=isDk?'#0f172a':'#ffffff';
+  var bg=isPB?'#000000':(isDark?'#0f172a':'#ffffff');
+  var card=isPB?'#0a0a0a':(isDark?'#1e293b':'#ffffff');
+  var txt=isDark?'#e2e8f0':'#1e293b';
+  var sub=isDark?'#94a3b8':'#64748b';
+  var acc=isDark?'#fbbf24':'#2563eb';
+  var bdr=isDark?'rgba(100,116,139,0.3)':'rgba(30,41,59,0.12)';
+  var ibg=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.05)';
+  var btntxt=isDark?'#0f172a':'#ffffff';
   var ff='font-family:Arial,Helvetica,sans-serif';
   var phArr=s.phones&&s.phones.length?s.phones:(s.phone?s.phone.split(',').map(function(n){return{number:n.trim(),tag:''};}):[]);
   var phStr=phArr.map(function(p){return p.number+(p.tag?' ('+p.tag+')':'');}).join(', ')||'\u2014';
@@ -4029,7 +4039,7 @@ function generateReport(sid){
   var _sess=(db.sessions||[]).find(function(x){return x.id===(s.sessionId||curSession);});
   if(_sess)h+='<div style="font-size:10px;color:'+sub+';font-weight:600;margin-bottom:3px">'+esc(_sess.label)+'</div>';
   h+='<div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">';
-  h+='<span style="background:'+acc+';color:'+(isDk?'#0f172a':'#fff')+';border-radius:16px;padding:2px 9px;font-size:10px;font-weight:700">'+esc(s.grade||'')+'</span>';
+  h+='<span style="background:'+acc+';color:'+(isDark?'#0f172a':'#fff')+';border-radius:16px;padding:2px 9px;font-size:10px;font-weight:700">'+esc(s.grade||'')+'</span>';
   var _actBg=s.status==='inactive'?'#ef4444':'#22c55e';
   h+='<span style="background:'+_actBg+';color:#fff;border-radius:16px;padding:2px 9px;font-size:10px;font-weight:700">'+(s.status==='inactive'?'Inactive':'Active')+'</span>';
   h+='</div></div>';
@@ -4081,7 +4091,7 @@ function generateReport(sid){
       var mo=months[ym],p=0,ab=0,lt=0;
       Object.values(mo.days).forEach(function(rec){var st=rec.status;if(st==='present')p++;else if(st==='late')lt++;else ab++;});
       var tot=p+ab+lt,pct=tot>0?Math.round((p+lt)/tot*100):0;
-      var pctCol=pct>=75?'#22c55e':pct>=50?'#d97706':'#ef4444';
+      var pctCol=pct>=75?(isDark?'#4ade80':'#22c55e'):pct>=50?(isDark?'#fbbf24':'#d97706'):(isDark?'#f87171':'#ef4444');
       h+='<div style="margin-bottom:14px">';
       var _ltPart=lt?' · <span style="color:#f59e0b">'+lt+' L</span>':'';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
@@ -4089,7 +4099,7 @@ function generateReport(sid){
       h+='<span style="font-size:11px">';
       h+='<span style="font-weight:700;color:'+pctCol+'">'+pct+'%</span>';
       h+='<span style="font-weight:600;color:'+sub+'">';
-      h+=' (<span style="color:#22c55e">'+p+' P</span> · <span style="color:#ef4444">'+ab+' A</span>'+_ltPart+')</span>';
+      h+=' (<span style="color:#22c55e">'+p+' P</span> · <span style="color:'+(isDark?'#f87171':'#ef4444')+'">'+ab+' A</span>'+_ltPart+')</span>';
       h+='</span>';
       h+='</div>';
       h+='<div style="display:flex;flex-wrap:wrap;align-items:flex-start">';
@@ -4105,9 +4115,9 @@ function generateReport(sid){
       h+='</div></div>';
     });
     h+='<div style="display:flex;gap:14px;font-size:11px;color:'+sub+';margin-top:2px">';
-    h+='<span style="color:#22c55e;font-weight:700">&#9679; Present</span>';
-    h+='<span style="color:#f59e0b;font-weight:700">&#9679; Late</span>';
-    h+='<span style="color:#ef4444;font-weight:700">&#9679; Absent</span></div>';
+    h+='<span style="color:'+(isDark?'#4ade80':'#22c55e')+';font-weight:700">&#9679; Present</span>';
+    h+='<span style="color:'+(isDark?'#fbbf24':'#f59e0b')+';font-weight:700">&#9679; Late</span>';
+    h+='<span style="color:'+(isDark?'#f87171':'#ef4444')+';font-weight:700">&#9679; Absent</span></div>';
     h+='</div>';
   }
   // Chapter Progress - reuses the exact same chart builder as the Test Records page
@@ -4143,29 +4153,29 @@ function generateReport(sid){
       h+='</div>';
       h+='</div>';
       if(_msPaid.length){
-        h+='<div style="font-size:13px;font-weight:800;color:#16a34a;margin-bottom:6px">\u2705 PAID ('+_msPaid.length+')</div>';
+        h+='<div style="font-size:13px;font-weight:800;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:6px">\u2705 PAID ('+_msPaid.length+')</div>';
         h+='<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="border-bottom:2px solid #86efac">';
         h+='<th style="padding:4px 3px;font-size:10px;text-align:left;color:'+sub+';white-space:nowrap">#</th><th style="padding:4px 3px;font-size:10px;text-align:left;color:'+sub+';white-space:nowrap">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left;color:'+sub+';white-space:nowrap">PAID ON</th><th style="padding:4px 3px;font-size:10px;text-align:right;color:'+sub+';white-space:nowrap">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:center;color:'+sub+';white-space:nowrap">MODE</th><th style="padding:4px 3px;font-size:10px;text-align:right;color:'+sub+';white-space:nowrap">RECEIPT#</th></tr></thead><tbody>';
         _msPaid.forEach(function(c,i){
           var rec=s.payments[c.key]||{};
           var amt=getAmt(s,rec);
           var mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';
-          h+='<tr style="border-bottom:1px solid '+bdr+'"><td style="padding:5px 3px;font-size:13px;color:'+txt+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:13px;color:'+txt+';white-space:nowrap">'+esc(c.label)+'</td><td style="padding:5px 3px;font-size:13px;color:'+txt+';white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 3px;font-size:13px;text-align:right;color:#16a34a;font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString('en-IN')+'</td><td style="padding:5px 3px;font-size:13px;text-align:center;white-space:nowrap">'+mE+'</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:'+sub+';white-space:nowrap">'+(rec.receiptId?esc('#'+rec.receiptId):'\u2014')+'</td></tr>';
+          h+='<tr style="border-bottom:1px solid '+bdr+'"><td style="padding:5px 3px;font-size:13px;color:'+txt+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:13px;color:'+txt+';white-space:nowrap">'+esc(c.label)+'</td><td style="padding:5px 3px;font-size:13px;color:'+txt+';white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 3px;font-size:13px;text-align:right;color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString('en-IN')+'</td><td style="padding:5px 3px;font-size:13px;text-align:center;white-space:nowrap">'+mE+'</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:'+sub+';white-space:nowrap">'+(rec.receiptId?esc('#'+rec.receiptId):'\u2014')+'</td></tr>';
         });
         h+='</tbody></table>';
       }
       if(_msUnpaid.length){
-        h+='<div style="font-size:13px;font-weight:800;color:#ef4444;margin-bottom:6px">\u26a0\ufe0f PENDING ('+_msUnpaid.length+')</div>';
+        h+='<div style="font-size:13px;font-weight:800;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:6px">\u26a0\ufe0f PENDING ('+_msUnpaid.length+')</div>';
         h+='<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="border-bottom:2px solid #fca5a5">';
         h+='<th style="padding:4px 3px;font-size:10px;text-align:left;color:'+sub+';white-space:nowrap">#</th><th style="padding:4px 3px;font-size:10px;text-align:left;color:'+sub+';white-space:nowrap">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left;color:'+sub+';white-space:nowrap">STATUS</th><th style="padding:4px 3px;font-size:10px;text-align:right;color:'+sub+';white-space:nowrap">AMOUNT</th></tr></thead><tbody>';
         _msUnpaid.forEach(function(c,i){
-          h+='<tr style="border-bottom:1px solid '+bdr+'"><td style="padding:5px 3px;font-size:13px;color:#ef4444;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:13px;color:#ef4444;white-space:nowrap">'+esc(c.label)+'</td><td style="padding:5px 3px;font-size:13px;color:#ef4444;white-space:nowrap">Unpaid</td><td style="padding:5px 3px;font-size:13px;text-align:right;color:#ef4444;font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees||0).toLocaleString('en-IN')+'</td></tr>';
+          h+='<tr style="border-bottom:1px solid '+bdr+'"><td style="padding:5px 3px;font-size:13px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:13px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+esc(c.label)+'</td><td style="padding:5px 3px;font-size:13px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 3px;font-size:13px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees||0).toLocaleString('en-IN')+'</td></tr>';
         });
         h+='</tbody></table>';
       }
       h+='<div style="border-top:2px solid '+txt+';padding-top:10px">';
       h+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid '+bdr+';color:'+txt+'"><span>Total Billed ('+_msCycles.length+' months)</span><span style="font-weight:bold">\u20b9'+(_msTPaid+_msTPend).toLocaleString('en-IN')+'</span></div>';
-      h+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid '+bdr+';color:#16a34a"><span>Total Paid ('+_msPaid.length+' months)</span><span style="font-weight:bold">\u20b9'+_msTPaid.toLocaleString('en-IN')+'</span></div>';
+      h+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid '+bdr+';color:'+(isDark?'#4ade80':'#16a34a')+'"><span>Total Paid ('+_msPaid.length+' months)</span><span style="font-weight:bold">\u20b9'+_msTPaid.toLocaleString('en-IN')+'</span></div>';
       h+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:'+(_msTPend>0?'#ef4444':'#16a34a')+';font-weight:bold"><span>Outstanding</span><span>\u20b9'+_msTPend.toLocaleString('en-IN')+'</span></div>';
       h+='</div>';
       // Discontinue/Rejoin history - lives inside the Fees card so it hides
@@ -4492,7 +4502,7 @@ function stuCard(s){
     (ci.isPaid?'<button onclick="showRec('+s.id+',\''+ci.key+'\')" style="padding:4px 8px;border-radius:6px;border:1px solid var(--acc);background:rgba(251,191,36,.1);color:var(--acc);font-size:13px;font-weight:bold"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle">receipt_long</span></button>':'')+
     (ci.key?'<button onclick="'+(ci.isPaid?'unpay('+s.id+',\''+ci.key+'\')':'logPay('+s.id+',\''+ci.key+'\',false)')+'" style="padding:4px 8px;border-radius:6px;border:1px solid '+(ci.isPaid?cSub():'#22c55e')+';background:'+(ci.isPaid?'transparent':'rgba(34,197,94,.1)')+';color:'+(ci.isPaid?'var(--sub)':'#22c55e')+';font-size:13px;font-weight:bold">'+(ci.isPaid?'Unpay':'✓ Paid')+'</button>':'')+
     '<button onclick="startEdit('+s.id+')" style="padding:4px 8px;border-radius:6px;border:1px solid #3b82f6;background:rgba(59,130,246,.1);color:#3b82f6;font-size:13px;font-weight:bold">Edit</button>'+
-    '<button onclick="askDel('+s.id+')" style="padding:4px 8px;border-radius:6px;border:1px solid #ef4444;background:rgba(239,68,68,.1);color:#ef4444;font-size:13px"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>'+
+    '<button onclick="askDel('+s.id+')" style="padding:4px 8px;border-radius:6px;border:1px solid #ef4444;background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';font-size:13px"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>'+
     '</div></div></div>';
 }
 
@@ -4578,7 +4588,7 @@ function renderProfile(){
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">'+
     '<div style="background:'+cInner()+';border-radius:8px;padding:9px;text-align:center;border:1px solid var(--ibdr)"><div style="font-weight:bold;color:#22c55e;font-size:15px">₹'+(totalPaid+totalPend).toLocaleString()+'</div><div style="font-size:9px;color:var(--sub);letter-spacing:0.02em">TOTAL</div></div>'+
     '<div style="background:'+cInner()+';border-radius:8px;padding:9px;text-align:center;border:1px solid var(--ibdr)"><div style="font-weight:bold;color:#22c55e;font-size:15px">₹'+totalPaid.toLocaleString()+'</div><div style="font-size:9px;color:var(--sub);letter-spacing:0.02em">PAID</div></div>'+
-    '<div style="background:'+cInner()+';border-radius:8px;padding:9px;text-align:center;border:1px solid var(--ibdr)"><div style="font-weight:bold;color:'+(totalPend>0?'#ef4444':'#22c55e')+';font-size:15px">₹'+totalPend.toLocaleString()+'</div><div style="font-size:9px;color:var(--sub);letter-spacing:0.02em">PENDING</div></div>'+
+    '<div style="background:'+cInner()+';border-radius:8px;padding:9px;text-align:center;border:1px solid var(--ibdr)"><div style="font-weight:bold;color:'+(totalPend>0?(_admLight?'#b91c1c':'#f87171'):(_admLight?'#15803d':'#4ade80'))+';font-size:15px">₹'+totalPend.toLocaleString()+'</div><div style="font-size:9px;color:var(--sub);letter-spacing:0.02em">PENDING</div></div>'+
     '</div></div>';
 
   var ph2=document.getElementById('prof-hist');ph2.innerHTML='';
@@ -4632,7 +4642,7 @@ function renderProfile(){
       (paid?'<button data-action="editpay" data-sid="'+s.id+'" data-key="'+cy.key+'" style="padding:4px 8px;border-radius:18px;border:1px solid #3b82f6;background:rgba(59,130,246,.1);color:#3b82f6;font-size:13px;font-weight:bold">\u270f\ufe0f</button>':'')+
       (paid?'<button data-action="showrec" data-sid="'+s.id+'" data-key="'+cy.key+'" style="padding:4px 8px;border-radius:18px;border:1px solid var(--acc);background:rgba(251,191,36,.1);color:var(--acc);font-size:13px;font-weight:bold">\ud83d\udcdc</button>':'')+
       '<button data-action="'+(paid?'unpay':'markpaid')+'" data-sid="'+s.id+'" data-key="'+cy.key+'" style="padding:4px 8px;border-radius:18px;border:1px solid '+(paid?'#94a3b8':'#22c55e')+';background:'+(paid?'transparent':'rgba(34,197,94,.1)')+';color:'+(paid?'var(--sub)':'#22c55e')+';font-size:13px;font-weight:bold">'+(paid?'Unpay':'Mark Paid')+'</button>'+
-      '<button data-action="rmmonth" data-sid="'+s.id+'" data-key="'+cy.key+'" style="padding:4px 8px;border-radius:18px;border:1px solid #ef4444;background:rgba(239,68,68,.1);color:#ef4444;font-size:13px;font-weight:bold"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle">close</span></button>'+
+      '<button data-action="rmmonth" data-sid="'+s.id+'" data-key="'+cy.key+'" style="padding:4px 8px;border-radius:18px;border:1px solid #ef4444;background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';font-size:13px;font-weight:bold"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle">close</span></button>'+
       '</div></div>';
   }
   monthsHtml += '<div style="margin-top:10px;text-align:center">'+
@@ -4850,8 +4860,8 @@ function showRec(sid,key){
     aHtml='<div style="font-size:10px;font-weight:bold;color:#0f172a;letter-spacing:0.5px;margin-bottom:5px">ATTENDANCE \u2014 '+pMoName.toUpperCase()+'</div>'
       +'<div style="font-size:12px;color:#475569;margin-bottom:4px">Your&nbsp;attendance&nbsp;for <b style="color:#0f172a">'+pMoName+'</b>:</div>'
       +'<div style="display:flex;gap:10px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:4px">'
-      +'<span style="color:#16a34a">\u2705 Present: '+ast.present+'</span>'
-      +'<span style="color:#ef4444">\u274c Absent: '+ast.absent+'</span>'
+      +'<span style="color:'+(isDark?'#4ade80':'#16a34a')+'">\u2705 Present: '+ast.present+'</span>'
+      +'<span style="color:'+(isDark?'#f87171':'#ef4444')+'">\u274c Absent: '+ast.absent+'</span>'
       +'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ast.late+'</span>'
       +'</div>'
       +'<div style="font-size:11px;font-weight:bold;color:'+aPctCol+'">\ud83d\udcca Attendance %: '+ast.pct+'%</div>';
@@ -4917,8 +4927,8 @@ function openMR(sid){
   var tPend=unpaid.reduce(function(sum,c){return sum+Number(s.fees||0);},0);
   var mrNo='DNS-M-'+Math.floor(100000+Math.random()*900000);
   var today=fmtD(new Date().toISOString());
-  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:#16a34a;font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 3px;font-size:11px;text-align:center">'+mE+'</td><td style="padding:5px 3px;font-size:10px;color:#64748b">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
-  var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 3px;font-size:11px;color:#ef4444;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:11px;color:#ef4444;white-space:nowrap">'+c.label+'</td><td style="padding:5px 3px;font-size:11px;color:#ef4444;white-space:nowrap">Unpaid</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:#ef4444;font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees).toLocaleString()+'</td><td style="padding:5px 3px;font-size:10px;color:#94a3b8">\u2014</td></tr>';}).join('');
+  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 3px;font-size:11px;text-align:center">'+mE+'</td><td style="padding:5px 3px;font-size:10px;color:#64748b">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
+  var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 3px;font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+c.label+'</td><td style="padding:5px 3px;font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees).toLocaleString()+'</td><td style="padding:5px 3px;font-size:10px;color:#94a3b8">\u2014</td></tr>';}).join('');
   document.getElementById('mrprint').innerHTML=
     '<div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px">'+
     '<div style="display:flex;align-items:center;justify-content:center;gap:8px"><img src="'+LOGO_DATA+'" style="height:26px;width:26px;object-fit:contain"><div style="font-size:17px;font-weight:bold;color:#0f172a;letter-spacing:2px">DNS CLASSES</div></div>'+
@@ -4929,13 +4939,13 @@ function openMR(sid){
     '<div><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(s.name)+'</span></div><div style="text-align:right"><b>Class:</b> '+(s.grade||'Other')+'</div>'+
     '<div><b>Subject:</b> '+getSubjects(s)+'</div><div style="text-align:right"><b>Fee:</b> \u20b9'+Number(s.fees).toLocaleString()+'/mo</div>'+
     '<div><b>Joined:</b> '+fmtD(s.joiningDate)+'</div><div style="text-align:right"><b>Due Day:</b> '+ord(getDueDay(s))+' every month</div></div>'+
-    (paid.length?'<div style="font-size:13px;font-weight:bold;color:#16a34a;margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">PAID ON</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:center">MODE</th><th style="padding:4px 3px;font-size:10px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table>':'')+
-    (unpaid.length?'<div style="font-size:13px;font-weight:bold;color:#ef4444;margin-bottom:5px">\u26a0\ufe0f PENDING ('+unpaid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#fef2f2;border-bottom:2px solid #fca5a5"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">STATUS</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:left">NOTE</th></tr></thead><tbody>'+uRows+'</tbody></table>':'')+
+    (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">PAID ON</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:center">MODE</th><th style="padding:4px 3px;font-size:10px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table>':'')+
+    (unpaid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:5px">\u26a0\ufe0f PENDING ('+unpaid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#fef2f2;border-bottom:2px solid #fca5a5"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">STATUS</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:left">NOTE</th></tr></thead><tbody>'+uRows+'</tbody></table>':'')+
     '<div style="border-top:2px solid #0f172a;padding-top:10px">'+
     '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0"><span>Total Billed ('+cycles.length+' months)</span><span style="font-weight:bold">\u20b9'+(tPaid+tPend).toLocaleString()+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0;color:#16a34a"><span>Total Paid ('+paid.length+' months)</span><span style="font-weight:bold">\u20b9'+tPaid.toLocaleString()+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0;color:'+(isDark?'#4ade80':'#16a34a')+'"><span>Total Paid ('+paid.length+' months)</span><span style="font-weight:bold">\u20b9'+tPaid.toLocaleString()+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:'+(tPend>0?'#ef4444':'#16a34a')+';font-weight:bold"><span>Outstanding</span><span>\u20b9'+tPend.toLocaleString()+'</span></div></div>'+
-    '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:#16a34a">\u2705 Present: '+ts.present+'</span>'+'<span style="color:#ef4444">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()
+    '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:'+(isDark?'#4ade80':'#16a34a')+'">\u2705 Present: '+ts.present+'</span>'+'<span style="color:'+(isDark?'#f87171':'#ef4444')+'">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()
   openM('mrec-modal');
 }
 
@@ -5256,7 +5266,7 @@ function renderTaEntries(){
       '<div style="display:flex;gap:6px;align-items:center;margin-bottom:'+(e.topics.length?'8px':'0')+'">'+
       '<input type="date" value="'+e.date+'" oninput="updateTaEntry('+e.id+',\'date\',this.value)" style="width:130px;padding:8px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;flex-shrink:0">'+
       '<button onclick="openTaChapterPicker('+e.id+')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;min-width:0;text-align:left;cursor:pointer">+ Add chapter...</button>'+
-      (_taEntries.length>1?'<button onclick="removeTaEntry('+e.id+')" style="flex-shrink:0;padding:8px 10px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:#ef4444;font-size:13px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>':'')+
+      (_taEntries.length>1?'<button onclick="removeTaEntry('+e.id+')" style="flex-shrink:0;padding:8px 10px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:13px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>':'')+
       '</div>'+
       (e.topics.length?'<div>'+chips+'</div>':'<div style="font-size:11px;color:var(--sub)">No chapters added yet \u2014 pick one or more above</div>')+
       '</div>';
@@ -5683,7 +5693,7 @@ function addPhRow(num,tag){
   var c=document.getElementById('phone-rows'),d=document.createElement('div');
   d.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center';
   var opts=PTAGS.map(function(t){return '<option'+(t===tag?' selected':'')+'>'+t+'</option>';}).join('');
-  d.innerHTML='<input type="text" value="'+(num||'')+'" placeholder="9876543210" class="pnum"><select style="width:110px" class="ptag">'+opts+'</select><button onclick="this.parentElement.remove()" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:7px 11px;border-radius:6px"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>';
+  d.innerHTML='<input type="text" value="'+(num||'')+'" placeholder="9876543210" class="pnum"><select style="width:110px" class="ptag">'+opts+'</select><button onclick="this.parentElement.remove()" style="background:rgba(239,68,68,.15);color:'+(isDark?'#f87171':'#ef4444')+';border:1px solid rgba(239,68,68,.3);padding:7px 11px;border-radius:6px"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>';
   c.appendChild(d);
 }
 function initSubjectChips(selected){
@@ -6076,7 +6086,7 @@ function runGlobalSearch(){
       var fullMonName=MO[cyMoIdx]?MO[cyMoIdx].toLowerCase():'';
       if(rid.indexOf(q)>=0||mon.indexOf(q)>=0||fullMonName.indexOf(q)>=0||amt.indexOf(q)>=0||mode.indexOf(q)>=0||pdon.indexOf(q)>=0){
         payCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
-          '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(s.name)+'</div><div style="font-weight:bold;color:#16a34a">\u20b9'+getAmt(s,rec).toLocaleString()+'</div></div>'+
+          '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(s.name)+'</div><div style="font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+'">\u20b9'+getAmt(s,rec).toLocaleString()+'</div></div>'+
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(cy.label)+(rec.receiptId?' \u2022 Receipt #'+esc(rec.receiptId):'')+(rec.paidOn?' \u2022 '+esc(fmtD(rec.paidOn)):'')+'</div>'+
           '</div>');
       }
@@ -6091,7 +6101,7 @@ function runGlobalSearch(){
     if(fields.some(function(f){return String(f).toLowerCase().indexOf(q)>=0;})){
       var d=e.date?e.date.split('-'):null;
       expCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();_gsGoToManager(\''+e.date+'\',\''+e.id+'\')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
-        '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(catName||'Expense')+(e.note?' \u2014 '+esc(e.note):'')+'</div><div style="font-weight:bold;color:#ef4444">\u20b9'+Number(e.amount||0).toLocaleString()+'</div></div>'+
+        '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(catName||'Expense')+(e.note?' \u2014 '+esc(e.note):'')+'</div><div style="font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+'">\u20b9'+Number(e.amount||0).toLocaleString()+'</div></div>'+
         '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(fmtD(e.date||''))+'</div>'+
         '</div>');
     }
@@ -6693,7 +6703,7 @@ function renderMarkToday() {
           +(_ch?' <span style="font-size:10px;color:#f59e0b">('+_ch+' holiday)</span>':'')+'</div>'
         + '<button data-act="chol" data-grade="'+g+'" data-loc="'+loc+'" style="padding:3px 8px;border-radius:10px;font-size:13px;font-weight:bold;border:1px solid '+(_isClsH?'#f59e0b':'var(--sub)')+';background:'+(_isClsH?'rgba(245,158,11,.25)':'transparent')+';color:'+(_isClsH?'#f59e0b':'var(--sub)')+'"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:4px">beach_access</span>'+(_isClsH?'OFF':'Holiday')+'</button>'
         + '<button data-act="mall"  data-sids="'+sids+'" style="'+_btnBase+'background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3);'+_fade+'"><span>All P</span><span style="font-size:13px;font-weight:bold">'+_cp+'</span></button>'
-        + '<button data-act="malla" data-sids="'+sids+'" style="'+_btnBase+'background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);'+_fade+'"><span>All A</span><span style="font-size:13px;font-weight:bold">'+_ca+'</span></button>'
+        + '<button data-act="malla" data-sids="'+sids+'" style="'+_btnBase+'background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';border:1px solid rgba(239,68,68,.3);'+_fade+'"><span>All A</span><span style="font-size:13px;font-weight:bold">'+_ca+'</span></button>'
         + '<button data-act="malll" data-sids="'+sids+'" style="'+_btnBase+'background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.3);'+_fade+'"><span>All L</span><span style="font-size:13px;font-weight:bold">'+_cl+'</span></button>'
         + '</div>';
             byG[g].forEach(function(s) {
@@ -6702,7 +6712,7 @@ function renderMarkToday() {
         var bs = 'padding:5px 12px;border-radius:18px;font-size:12px;font-weight:bold;margin-right:4px;cursor:pointer;';
         var hS = 'padding:5px 8px;border-radius:18px;font-size:12px;font-weight:bold;margin-right:4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:36px;'+(status==='holiday'?'background:#f59e0b;color:#fff;border:none;':'background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.35);')+_fade;
         var pS = bs+(status==='present'?'background:#22c55e;color:#fff;border:none;':'background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);')+_fade;
-        var aS = bs+(status==='absent' ?'background:#ef4444;color:#fff;border:none;':'background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);')+_fade;
+        var aS = bs+(status==='absent' ?'background:#ef4444;color:#fff;border:none;':'background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';border:1px solid rgba(239,68,68,.3);')+_fade;
         var lS = bs+(status==='late'   ?'background:#f59e0b;color:#000;border:none;':'background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.3);')+_fade;
         var minVal = att&&att.minutes ? att.minutes : '';
         var lIn = status==='late'
@@ -6994,7 +7004,7 @@ function renderAttendHistory() {
             :'<span style="color:var(--sub);font-size:10px">\u00b7</span>';
           if(_gh.indexOf(d)<0&&att) {
             if(att.status==='present') dot='<span style="color:#22c55e;font-size:16px">\u25cf</span>';
-            else if(att.status==='absent') dot='<span style="color:#ef4444;font-size:16px">\u25cf</span>';
+            else if(att.status==='absent') dot='<span style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:16px">\u25cf</span>';
             else if(att.status==='late') {
               var mins=att.minutes?String(att.minutes):'';
               dot='<span data-late="1" data-mins="'+mins+'" data-nm="'+esc(s.name)+'" data-dt="'+d+'" style="color:#f59e0b;font-size:16px;cursor:pointer">\u25cf</span>';
@@ -7119,7 +7129,7 @@ function buildAttendBadge(s) {
     ?'<div style="margin-bottom:4px">'
       +'<span style="font-size:10px;color:var(--sub);font-weight:bold;letter-spacing:.5px">'+moName.toUpperCase()+' </span>'
       +'<span style="font-size:12px;font-weight:bold;color:#22c55e">P '+mo.present+'</span>'
-      +'<span style="font-size:12px;font-weight:bold;color:#ef4444;margin-left:6px">A '+mo.absent+'</span>'
+      +'<span style="font-size:12px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';margin-left:6px">A '+mo.absent+'</span>'
       +'<span style="font-size:12px;font-weight:bold;color:#f59e0b;margin-left:6px">L '+mo.late+'</span>'
       +'<span style="font-size:13px;font-weight:bold;color:'+moCol+';margin-left:6px">'+mo.pct+'%</span>'
       +'</div>'
@@ -7128,7 +7138,7 @@ function buildAttendBadge(s) {
     ?'<div>'
       +'<span style="font-size:10px;color:var(--sub);font-weight:bold;letter-spacing:.5px">OVERALL </span>'
       +'<span style="font-size:12px;font-weight:bold;color:#22c55e">P '+ov.present+'</span>'
-      +'<span style="font-size:12px;font-weight:bold;color:#ef4444;margin-left:6px">A '+ov.absent+'</span>'
+      +'<span style="font-size:12px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';margin-left:6px">A '+ov.absent+'</span>'
       +'<span style="font-size:12px;font-weight:bold;color:#f59e0b;margin-left:6px">L '+ov.late+'</span>'
       +'<span style="font-size:13px;font-weight:bold;color:'+ovCol+';margin-left:6px">'+ov.pct+'%</span>'
       +'</div>'
@@ -7487,9 +7497,9 @@ function renderDashCollections(){
   }
   var drop='<button onclick="openMonthPicker()" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;border:1px solid '+(isDark?'rgba(251,191,36,.4)':'rgba(180,83,9,.4)')+';background:var(--card);color:'+(isDark?'#fbbf24':'#b45309')+';cursor:pointer;display:flex;align-items:center;gap:4px">'+moLabel+' <span class="material-symbols-outlined" style="font-size:14px">expand_more</span></button>';
   var html='<div style="background:'+cBg()+';border-radius:13px;padding:13px;border:1px solid rgba(180,83,9,.25);margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:bold;font-size:14px;color:'+(isDark?'#fbbf24':'#b45309')+'"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">payments</span>COLLECTIONS</div>'+drop+'</div>';
-  function locRow(loc,data,total){if(!total)return '';var icon=loc==='home'?'\ud83c\udfe0':'\ud83c\udfd9\ufe0f',name=loc==='home'?'Home':'City';return '<div style="background:'+cBg()+';border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid '+(isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)')+'"><div style="font-weight:bold;font-size:15px;color:'+cTxt()+';margin-bottom:8px">'+icon+' '+name+'</div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="color:var(--sub)">\ud83d\udcb5 Cash</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.cash?'₹'+data.cash.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--sub)">\ud83d\udcf1 Online</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.online?'₹'+data.online.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:bold;border-top:1px solid var(--bdr);padding-top:6px"><span style="color:var(--sub)">Total</span><span style="color:#16a34a;font-weight:bold">₹'+total.toLocaleString()+'</span></div></div>';}
+  function locRow(loc,data,total){if(!total)return '';var icon=loc==='home'?'\ud83c\udfe0':'\ud83c\udfd9\ufe0f',name=loc==='home'?'Home':'City';return '<div style="background:'+cBg()+';border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid '+(isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)')+'"><div style="font-weight:bold;font-size:15px;color:'+cTxt()+';margin-bottom:8px">'+icon+' '+name+'</div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="color:var(--sub)">\ud83d\udcb5 Cash</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.cash?'₹'+data.cash.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--sub)">\ud83d\udcf1 Online</span><span style="font-weight:bold;color:'+cTxt()+'">'+(data.online?'₹'+data.online.toLocaleString():'—')+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:bold;border-top:1px solid var(--bdr);padding-top:6px"><span style="color:var(--sub)">Total</span><span style="color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold">₹'+total.toLocaleString()+'</span></div></div>';}
   html+=locRow('home',d.home,hT)+locRow('city',d.city,cT);
-  html+='<div style="border-top:2px solid rgba(180,83,9,.3);padding-top:8px"><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="color:var(--sub)">\ud83d\udcb5 Cash</span><span style="font-weight:bold;color:'+cTxt()+'">₹'+gC.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--sub)">\ud83d\udcf1 Online</span><span style="font-weight:bold;color:'+cTxt()+'">₹'+gO.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:15px"><span style="font-weight:bold;color:'+cTxt()+'">Grand Total</span><span style="font-weight:bold;color:#16a34a;font-weight:bold">₹'+g.toLocaleString()+'</span></div></div></div>';
+  html+='<div style="border-top:2px solid rgba(180,83,9,.3);padding-top:8px"><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="color:var(--sub)">\ud83d\udcb5 Cash</span><span style="font-weight:bold;color:'+cTxt()+'">₹'+gC.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--sub)">\ud83d\udcf1 Online</span><span style="font-weight:bold;color:'+cTxt()+'">₹'+gO.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;font-size:15px"><span style="font-weight:bold;color:'+cTxt()+'">Grand Total</span><span style="font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold">₹'+g.toLocaleString()+'</span></div></div></div>';
   block.innerHTML=html;
 }
 function dailyChangeDay(delta){
@@ -8018,7 +8028,7 @@ function showLockScreen() {
       '<div class="ldot" style="width:14px;height:14px;border-radius:50%;border:2px solid #475569;background:transparent;transition:background .15s"></div>' +
       '<div class="ldot" style="width:14px;height:14px;border-radius:50%;border:2px solid #475569;background:transparent;transition:background .15s"></div>' +
     '</div>' +
-    '<div id="lock-error" style="font-size:12px;color:#ef4444;margin-bottom:16px;min-height:16px"></div>' +
+    '<div id="lock-error" style="font-size:12px;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:16px;min-height:16px"></div>' +
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:260px;width:90%">' +
       ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(function(d) {
         if (d === '') return '<div></div>';
@@ -8683,7 +8693,7 @@ html+='<div style="background:var(--card);border-radius:10px;overflow:hidden;bor
       +(_isInactive?' <span style="font-size:10px;color:#94a3b8;font-weight:normal;background:#64748b22;padding:1px 6px;border-radius:10px">inactive</span>':'')
       +'</div></div>';
     html+='<input type="number" id="'+mk_id+'" placeholder="Marks" min="0" oninput="_onMarksInput(this)" style="width:72px;padding:7px 8px;font-size:15px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt)">';
-    html+='<label style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:bold;color:#ef4444;cursor:pointer;white-space:nowrap"><input type="checkbox" id="'+abs_id+'" data-sid="'+s.id+'" onchange="posterToggleInput(this)" style="width:18px;height:18px;accent-color:#ef4444;cursor:pointer"> AB</label>';
+    html+='<label style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';cursor:pointer;white-space:nowrap"><input type="checkbox" id="'+abs_id+'" data-sid="'+s.id+'" onchange="posterToggleInput(this)" style="width:18px;height:18px;accent-color:'+(isDark?'#f87171':'#ef4444')+';cursor:pointer"> AB</label>';
     html+='<label style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:bold;color:#f59e0b;cursor:pointer;white-space:nowrap"><input type="checkbox" id="'+np_id+'" data-sid="'+s.id+'" onchange="posterToggleInput(this)" style="width:18px;height:18px;accent-color:#f59e0b;cursor:pointer"> NP</label>';
     html+='<label style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:bold;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="'+ng_id+'" data-sid="'+s.id+'" onchange="posterToggleInput(this)" style="width:18px;height:18px;accent-color:#94a3b8;cursor:pointer"> NG</label>';
     html+='<label style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:bold;color:#64748b;cursor:pointer;white-space:nowrap"><input type="checkbox" id="'+na_id+'" data-sid="'+s.id+'" onchange="posterToggleInput(this)" style="width:18px;height:18px;accent-color:#64748b;cursor:pointer"> NA</label>';
@@ -8884,7 +8894,7 @@ function buildMgrMonthly(){
   var _cbCol=closingBal>=0?'#16a34a':'#dc2626';
   var _cbBg=closingBal>=0?'linear-gradient(135deg,#dcfce7,#bbf7d0)':'linear-gradient(135deg,#fee2e2,#fecaca)';
   var _cbBgDk=closingBal>=0?'linear-gradient(135deg,rgba(34,197,94,0.18),rgba(22,163,74,0.1))':'linear-gradient(135deg,rgba(239,68,68,0.18),rgba(220,38,38,0.1))';
-  var _isDk=!document.body.classList.contains('light');
+  var _isDark=!document.body.classList.contains('light');
   var _cbTrend=closingBal>=cfBal?'\u25b2':'\u25bc';
   // Headline block: the three at-a-glance cards, then the closing balance banner
   html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">';
@@ -8892,7 +8902,7 @@ function buildMgrMonthly(){
   html+=mgrCard('trending_down','Expense',fmt(totalExp),'#ef4444');
   html+=mgrCard('trending_up','Net Balance',fmt(savings),savCol);
   html+='</div>';
-  html+='<div style="border-radius:14px;background:'+(_isDk?_cbBgDk:_cbBg)+';padding:14px 16px;border:1px solid '+_cbCol+'33;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html+='<div style="border-radius:14px;background:'+(_isDark?_cbBgDk:_cbBg)+';padding:14px 16px;border:1px solid '+_cbCol+'33;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
   html+='<div style="display:flex;align-items:center;gap:10px">';
   html+='<div style="width:38px;height:38px;border-radius:11px;background:'+_cbCol+'22;display:flex;align-items:center;justify-content:center;font-size:16px;color:'+_cbCol+';flex-shrink:0">'+_cbTrend+'</div>';
   html+='<div><div style="font-size:11px;font-weight:800;color:'+_cbCol+';letter-spacing:0.02em">CLOSING BALANCE</div><div style="font-size:11px;font-weight:600;color:'+_cbCol+';opacity:0.7">(C/F)</div></div>';
@@ -8955,7 +8965,7 @@ function buildMgrMonthly(){
     // Category section — collapsible toggle
   html+='<div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid var(--bdr);overflow:hidden">';
   html+='<div onclick="toggleMgrCatSection()" style="display:flex;justify-content:space-between;align-items:center;padding:12px;cursor:pointer">';
-  html+='<div style="font-weight:bold;font-size:13px;color:#ef4444"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">trending_down</span>BY CATEGORY '+(catList.length?'('+catList.length+')':'')+'</div>';
+  html+='<div style="font-weight:bold;font-size:13px;color:'+(isDark?'#f87171':'#ef4444')+'"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">trending_down</span>BY CATEGORY '+(catList.length?'('+catList.length+')':'')+'</div>';
   html+='<div style="display:flex;align-items:center;gap:8px">';
   html+='<button onclick="event.stopPropagation();openMgrCategories()" style="font-size:11px;color:var(--acc);background:none;border:none;cursor:pointer;padding:2px 6px"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:4px">settings</span>Edit</button>';
   html+='<span style="font-size:14px;color:var(--sub)">'+(mgrCatOpen?'▲':'▼')+'</span>';
@@ -9028,7 +9038,7 @@ function buildMgrMonthly(){
       html+='<div style="font-size:12px;color:var(--sub)">'+dayLabel+'</div>';
       html+='</div>';
       // Daily totals pills
-      if(dayExp>0)html+='<div style="background:#ef444420;border:1px solid #ef444440;color:#ef4444;font-size:12px;font-weight:bold;padding:3px 9px;border-radius:20px;white-space:nowrap">'+fmt(dayExp)+'</div>';
+      if(dayExp>0)html+='<div style="background:#ef444420;border:1px solid #ef444440;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;padding:3px 9px;border-radius:20px;white-space:nowrap">'+fmt(dayExp)+'</div>';
       if(dayInc>0)html+='<div style="background:#22c55e20;border:1px solid #22c55e40;color:#22c55e;font-size:12px;font-weight:bold;padding:3px 9px;border-radius:20px;white-space:nowrap">'+fmt(dayInc)+'</div>';
       html+='</div>';
       // Transaction cards
@@ -9150,7 +9160,7 @@ function buildMgrYearly(){
   var catList=cats.filter(function(c){return catTotals[c.id]>0;}).sort(function(a,b){return catTotals[b.id]-catTotals[a.id];});
   if(catList.length){
     html+='<div style="background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid var(--bdr)">';
-    html+='<div style="font-weight:bold;font-size:15px;color:#ef4444;margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">emoji_events</span>TOP SPENDING CATEGORIES</div>';
+    html+='<div style="font-weight:bold;font-size:15px;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">emoji_events</span>TOP SPENDING CATEGORIES</div>';
     catList.slice(0,8).forEach(function(c,i){
       var amt=catTotals[c.id]||0;
       var pct=totalExp>0?Math.round(amt/totalExp*100):0;
@@ -9399,7 +9409,7 @@ function openMgrCategories(){
       +'<input type="color" id="cat-color-'+c.id+'" value="'+(c.color||'#f59e0b')+'" style="width:38px;height:34px;border-radius:6px;border:1px solid var(--ibdr);cursor:pointer;padding:2px">'
       +'<button onclick="saveMgrCatEdit(\''+c.id+'\')" style="padding:5px 10px;border-radius:6px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#22c55e;font-size:12px;font-weight:bold;cursor:pointer">Save</button>'
       +(MGR_DEFAULT_CATS.find(function(d){return d.id===c.id;})?''
-        :'<button onclick="deleteMgrCat(\''+c.id+'\')" style="padding:5px 8px;border-radius:6px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>')
+        :'<button onclick="deleteMgrCat(\''+c.id+'\')" style="padding:5px 8px;border-radius:6px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>')
       +'</div>';
   });
   html+='</div>';
@@ -9534,7 +9544,7 @@ function showMgrCatExpenses(catId,yr,mo){
       html+='<div onclick="openMgrEditExpense(\''+e.id+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr);cursor:pointer">'
         +'<div><div style="font-size:14px;font-weight:bold;color:var(--txt)">'+(e.note?esc(e.note):'Expense')+'</div>'
         +'<div style="font-size:12px;color:var(--sub)">'+mgrFmtDate(e.date)+'</div></div>'
-        +'<div style="font-weight:bold;font-size:15px;color:#ef4444">₹'+Number(e.amount).toLocaleString('en-IN')+'<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">edit</span></div>'
+        +'<div style="font-weight:bold;font-size:15px;color:'+(isDark?'#f87171':'#ef4444')+'">₹'+Number(e.amount).toLocaleString('en-IN')+'<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">edit</span></div>'
         +'</div>';
     });
   }
@@ -9627,7 +9637,7 @@ function runMgrSearch(){
         +'<div style="font-size:14px;font-weight:bold;color:var(--txt)">'+esc(cat.name)+(e.note?' <span style="font-size:12px;font-weight:normal;color:var(--sub)">· '+esc(e.note)+'</span>':'')+'</div>'
         +'<div style="font-size:12px;color:var(--sub)">'+mgrFmtDate(e.date)+'</div>'
         +'</div>'
-        +'<span style="font-weight:bold;color:#ef4444;font-size:15px;flex-shrink:0">'+fmt(e.amount)+'</span>'
+        +'<span style="font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';font-size:15px;flex-shrink:0">'+fmt(e.amount)+'</span>'
         +'</div>';
     } else {
       html+='<div onclick="openMgrEditIncome(\''+e.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;'+(i?'border-top:1px solid var(--bdr)':'')+';cursor:pointer">'
@@ -9784,7 +9794,7 @@ function renderSessionsView(){
       html+='<button data-sidx="'+idx+'" onclick="selectSession(db.sessions[parseInt(this.dataset.sidx)].id)" style="flex:1;padding:8px;border-radius:8px;background:var(--ibg);color:var(--txt);font-weight:bold;border:1px solid var(--ibdr);font-size:13px">Select</button>';
     }
     html+='<button data-sidx="'+idx+'" onclick="openEditSession(db.sessions[parseInt(this.dataset.sidx)].id)" style="padding:8px 12px;border-radius:8px;background:var(--ibg);color:var(--sub);border:1px solid var(--ibdr);font-size:13px">&#x270F;</button>';
-    html+='<button data-sidx="'+idx+'" onclick="deleteSession(db.sessions[parseInt(this.dataset.sidx)].id)" style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-size:13px">&#x1F5D1;</button>';
+    html+='<button data-sidx="'+idx+'" onclick="deleteSession(db.sessions[parseInt(this.dataset.sidx)].id)" style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';border:1px solid rgba(239,68,68,.3);font-size:13px">&#x1F5D1;</button>';
     html+='</div></div>';
   });
   cont.innerHTML=html;
@@ -10038,7 +10048,7 @@ function _invLockRender(el,entered,showForgot,errorMsg){
     '<div style="font-size:17px;font-weight:bold;color:'+_title+';margin-bottom:4px">Investments</div>'+
     '<div style="font-size:12px;color:'+_sub+';margin-bottom:28px">Enter PIN to view</div>'+
     '<div style="display:flex;gap:16px;margin-bottom:14px">'+dots+'</div>'+
-    '<div style="font-size:12px;color:#ef4444;min-height:18px;margin-bottom:4px">'+(errorMsg||'')+'</div>'+
+    '<div style="font-size:12px;color:'+(isDark?'#f87171':'#ef4444')+';min-height:18px;margin-bottom:4px">'+(errorMsg||'')+'</div>'+
     forgotBtn+
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:260px;width:90%;margin-top:20px">'+
     ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(function(d){
@@ -10089,7 +10099,7 @@ function _invLockForgot(){
     '<div style="font-weight:bold;font-size:16px;color:var(--txt);margin-bottom:8px">Recovery Phrase</div>'+
     '<div style="font-size:13px;color:var(--sub);margin-bottom:16px">Type the master recovery phrase to unlock and reset your investment PIN</div>'+
     '<input id="ilk-rec-inp" type="text" placeholder="Recovery phrase" autocomplete="off" style="width:100%;padding:11px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:15px;text-align:center;letter-spacing:2px;box-sizing:border-box;margin-bottom:10px">'+
-    '<div id="ilk-rec-err" style="font-size:12px;color:#ef4444;min-height:16px;margin-bottom:10px"></div>'+
+    '<div id="ilk-rec-err" style="font-size:12px;color:'+(isDark?'#f87171':'#ef4444')+';min-height:16px;margin-bottom:10px"></div>'+
     '<button onclick="_invLockRecovery()" style="width:100%;padding:11px;border-radius:8px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:15px;border:none;margin-bottom:8px;cursor:pointer">Unlock & Reset PIN</button>'+
     '<button id="ilk-cancel-btn" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--sub);font-size:14px;cursor:pointer">Cancel</button>'+
     '</div>';
@@ -10635,7 +10645,7 @@ function chRenderList(){
       +'<button onclick="chMoveByIdx(this,1)" data-cls="'+esc(cls)+'" data-school="'+esc(school)+'" data-idx="'+i+'"'+(i===chs.length-1?' disabled':'')+' style="padding:1px 6px;border-radius:6px;border:1px solid var(--ibdr);background:var(--ibg);color:'+(i===chs.length-1?'var(--sub)':'var(--txt)')+';font-size:10px;cursor:'+(i===chs.length-1?'default':'pointer')+';opacity:'+(i===chs.length-1?'0.4':'1')+'">▼</button>'
       +'</div>'
       +'<button onclick="chEditByIdx(this)" data-cls="'+esc(cls)+'" data-school="'+esc(school)+'" data-idx="'+i+'" style="padding:4px 10px;border-radius:20px;border:1.5px solid #3b82f6;background:transparent;color:#3b82f6;font-size:11px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">edit</span></button>'
-      +'<button onclick="chDeleteByIdx(this)" data-cls="'+esc(cls)+'" data-school="'+esc(school)+'" data-idx="'+i+'" style="padding:4px 10px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:11px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>'
+      +'<button onclick="chDeleteByIdx(this)" data-cls="'+esc(cls)+'" data-school="'+esc(school)+'" data-idx="'+i+'" style="padding:4px 10px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>'
       +'</div>';
   }).join('');
 }
@@ -10710,7 +10720,7 @@ function chEditByIdx(btn){
     +'<div style="font-size:16px;font-weight:bold;color:var(--txt);margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Chapter Name</div>'
     +'<label class="flabel">CHAPTER NAME</label>'
     +'<input id="ch-edit-name" type="text" value="'+esc(ch.name)+'" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:15px;margin-bottom:6px;box-sizing:border-box">'
-    +'<div id="ch-edit-err" style="color:#ef4444;font-size:12px;min-height:16px;margin-bottom:10px"></div>'
+    +'<div id="ch-edit-err" style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;min-height:16px;margin-bottom:10px"></div>'
     +'<div style="display:flex;gap:8px">'
     +'<button id="ch-edit-cancel" style="flex:1;padding:11px;border-radius:8px;background:var(--m3nav-chip);color:var(--m3nav-chiptxt);border:1px solid var(--navbdr);font-weight:bold;cursor:pointer">Cancel</button>'
     +'<button id="ch-edit-save" style="flex:1;padding:11px;border-radius:8px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:bold;cursor:pointer">Save</button>'
@@ -10992,7 +11002,7 @@ function renderMockList(sid){
       h+='<div style="font-size:20px">'+medal+'</div>';
       h+='<div style="font-size:16px;font-weight:800;color:'+col+'">'+e.marks+'/'+e.total+'</div>';
       h+='<button onclick="mockEditExam('+sid+','+e.id+')" style="background:rgba(99,102,241,.15);color:#6366f1;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\u270f\ufe0f</button>';
-      h+='<button onclick="mockDeleteExam('+sid+','+e.id+')" style="background:rgba(239,68,68,.15);color:#ef4444;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\u2715</button>';
+      h+='<button onclick="mockDeleteExam('+sid+','+e.id+')" style="background:rgba(239,68,68,.15);color:'+(isDark?'#f87171':'#ef4444')+';border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\u2715</button>';
       h+='</div>';
     });
     h+='</div>';
@@ -11048,7 +11058,7 @@ function pgEditCell(sid,chapter,tno){
     +'<div style="font-size:13px;color:var(--sub);margin-bottom:14px">'+esc(chapter)+' &middot; '+esc(tno)+'</div>'
     +'<label class="flabel">MARKS (max '+defTotal+')</label>'
     +'<input id="pg-cell-marks" type="number" inputmode="decimal" min="0" max="'+defTotal+'" step="any" value="'+curVal+'" placeholder="Enter marks" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;margin-bottom:6px">'
-    +'<div id="pg-cell-err" style="color:#ef4444;font-size:12px;min-height:16px;margin-bottom:8px"></div>'
+    +'<div id="pg-cell-err" style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;min-height:16px;margin-bottom:8px"></div>'
     +'<label class="flabel">OR MARK AS</label>'
     +'<div id="pg-cell-status-row" style="display:flex;gap:6px;margin-bottom:16px">'+statusBtnsHtml+'</div>'
     +'<button onclick="pgLoadAllMarksForTest('+sid+',\''+esc(chapter)+'\',\''+esc(tno)+'\')" style="width:100%;padding:10px;border-radius:10px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#6366f1;font-weight:bold;font-size:12px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">group</span>Load All Marks for this Test</button>'
@@ -11218,7 +11228,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
   function CS(e){
     if(!e)return '';
     var v=e.v;
-    if(v==='AB')return 'background:rgba(239,68,68,0.18);color:#ef4444;font-size:13px;font-weight:bold';
+    if(v==='AB')return 'background:rgba(239,68,68,0.18);color:'+(isDark?'#f87171':'#ef4444')+';font-size:13px;font-weight:bold';
     if(v==='NP')return 'background:rgba(245,158,11,0.18);color:#d97706;font-size:13px;font-weight:bold';
     if(v==='NG')return 'background:rgba(96,165,250,0.18);color:#60a5fa;font-size:13px;font-weight:bold';
     if(v==='NA')return 'background:rgba(100,116,139,0.1);color:#64748b;font-size:13px;font-style:italic';
@@ -13179,7 +13189,7 @@ function renderDashHwCharts(){
     h+='<button onclick="editHwChart('+idx+')" style="padding:5px 10px;border-radius:8px;border:1px solid var(--acc);background:rgba(251,191,36,.12);color:var(--acc);font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">edit</span>Edit</button>';
     h+='<button onclick="hwDashSave('+idx+')" style="padding:5px 10px;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,.12);color:#22c55e;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">download</span>Save</button>';
     h+='<button onclick="hwDashShare('+idx+')" style="padding:5px 10px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">share</span>Share</button>';
-    h+='<button onclick="hwDashRemove('+idx+')" style="padding:5px 6px;border-radius:8px;border:1px solid #ef4444;background:rgba(239,68,68,.12);color:#ef4444;font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>';
+    h+='<button onclick="hwDashRemove('+idx+')" style="padding:5px 6px;border-radius:8px;border:1px solid #ef4444;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>';
     h+='</div></div>';
     h+='<div onclick="openHwZoom(this.querySelector(\'img\').src)" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'"><img src="'+entry.imgData+'" style="width:100%;border-radius:8px;border:1px solid var(--ibdr)" alt="Homework Chart"></div>';
     h+='</div>';
@@ -13293,7 +13303,7 @@ function renderInvestments(){
     '<div style="display:flex;gap:0;margin-top:10px">'
     +'<div style="flex:1;border-right:1px solid '+_divdr+';padding-right:12px">'
     +'<div style="font-size:11px;color:'+_lbl+';letter-spacing:.5px;margin-bottom:2px"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:-2px;margin-right:4px">payments</span>CASH / IN HAND</div>'
-    +'<div style="font-size:18px;font-weight:bold;color:#16a34a">'+_invFmt(inHandWithMgr)+'</div>'
+    +'<div style="font-size:18px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+'">'+_invFmt(inHandWithMgr)+'</div>'
     +'<div style="font-size:11px;color:'+_sub2+';margin-top:2px">incl. '+_invFmt(mgrBal)+' from Manager</div>'
     +'<div style="font-size:11px;color:'+_sub2+';margin-top:1px">'+inHand.length+' account'+(inHand.length!==1?'s':'')+'</div>'
     +'</div>'
@@ -13737,7 +13747,7 @@ function _renderInvFormDetails(){
       +'style="flex:1.2;padding:8px 10px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px">';
     // Delete
     html+='<button data-idx="'+i+'" onclick="_invFdRemove(parseInt(this.dataset.idx))" '
-      +'style="padding:8px;border-radius:8px;background:rgba(239,68,68,.1);color:#ef4444;border:none;font-size:14px;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>';
+      +'style="padding:8px;border-radius:8px;background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';border:none;font-size:14px;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">close</span></button>';
     html+='</div>';
   });
   cont.innerHTML=html;
