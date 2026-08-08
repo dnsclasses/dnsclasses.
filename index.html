@@ -444,21 +444,21 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
     <button id="hs-az" onclick="setHistSort('az')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid var(--acc);background:var(--btn);color:var(--btntxt)">A&#8211;Z</button>
     <button id="hs-pres" onclick="setHistSort('present')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(34,197,94,.4);background:rgba(34,197,94,.12);color:#22c55e">&#9660; Present</button>
-    <button id="hs-abs" onclick="setHistSort('absent')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(239,68,68,.4);background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+'">&#9660; Absent</button>
+    <button id="hs-abs" onclick="setHistSort('absent')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(239,68,68,.4);background:rgba(239,68,68,.12);color:var(--m3-red)">&#9660; Absent</button>
     <button id="hs-pct" onclick="setHistSort('pct')" style="padding:5px 14px;border-radius:14px;font-size:12px;font-weight:bold;border:2px solid rgba(99,102,241,.4);background:rgba(99,102,241,.12);color:#818cf8">&#9660; %</button>
   </div>
   <div style="background:var(--ibg);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;margin-bottom:6px">
     <div style="font-size:11px;font-weight:bold;color:var(--sub);margin-bottom:8px;letter-spacing:0.02em;text-align:center">ALERT THRESHOLDS</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:16px">
       <div style="display:flex;align-items:center;gap:3px;flex:1">
-        <span style="font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold">&#128308; Absent&#8805;</span>
-        <button onclick="adjThresh('abs',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:'+(isDark?'#f87171':'#ef4444')+';font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
+        <span style="font-size:11px;color:var(--m3-red);font-weight:bold">&#128308; Absent&#8805;</span>
+        <button onclick="adjThresh('abs',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:var(--m3-red);font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
         <div id="thresh-abs-val" style="width:32px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--ibg);border-top:1px solid var(--ibdr);border-bottom:1px solid var(--ibdr);font-size:13px;font-weight:bold;color:var(--txt)">4</div>
         <button onclick="adjThresh('abs',1)" style="width:26px;height:26px;border-radius:0 5px 5px 0;border:1px solid var(--ibdr);background:var(--card);color:#22c55e;font-size:14px;font-weight:bold;cursor:pointer">+</button>
       </div>
       <div style="display:flex;align-items:center;gap:3px;flex:1">
         <span style="font-size:11px;color:#f59e0b;font-weight:bold">&#128993; Late&#8805;</span>
-        <button onclick="adjThresh('late',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:'+(isDark?'#f87171':'#ef4444')+';font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
+        <button onclick="adjThresh('late',-1)" style="width:26px;height:26px;border-radius:5px 0 0 5px;border:1px solid var(--ibdr);background:var(--card);color:var(--m3-red);font-size:14px;font-weight:bold;cursor:pointer">&#8722;</button>
         <div id="thresh-late-val" style="width:32px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--ibg);border-top:1px solid var(--ibdr);border-bottom:1px solid var(--ibdr);font-size:13px;font-weight:bold;color:var(--txt)">4</div>
         <button onclick="adjThresh('late',1)" style="width:26px;height:26px;border-radius:0 5px 5px 0;border:1px solid var(--ibdr);background:var(--card);color:#22c55e;font-size:14px;font-weight:bold;cursor:pointer">+</button>
       </div>
@@ -478,7 +478,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="pg-view-chapters">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">bar_chart</span>Score Chart</div>
-    <button onclick="resetScoreChart()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+    <button onclick="resetScoreChart()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
   </div>
 
   <!-- Row 1: Class + Location (select class FIRST) -->
@@ -543,7 +543,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div style="margin-top:24px">
     <div class="sec-hdr" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
       <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">bar_chart</span>STUDENT PROGRESS CHART</span>
-      <button onclick="pgResetProgress()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="pgResetProgress()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -807,8 +807,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 
   <div onclick="openReset()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:rgba(239,68,68,.08);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid rgba(239,68,68,.3)">
-    <span style="font-size:15px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+'"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">delete_forever</span>Reset Data</span>
-    <span style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:18px">›</span>
+    <span style="font-size:15px;font-weight:bold;color:var(--m3-red)"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">delete_forever</span>Reset Data</span>
+    <span style="color:var(--m3-red);font-size:18px">›</span>
   </div>
 </div>
 
@@ -849,7 +849,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <!-- Test Alert Generator Modal -->
 <div id="restore-confirm-modal" class="modal hidden" onclick="closeM('restore-confirm-modal')" style="z-index:350">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px">
-  <div style="font-weight:bold;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">warning</span>Confirm Restore</div>
+  <div style="font-weight:bold;font-size:16px;color:var(--m3-red);margin-bottom:10px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">warning</span>Confirm Restore</div>
   <div id="restore-confirm-text" style="font-size:14px;color:var(--txt);margin-bottom:16px;line-height:1.5"></div>
   <div style="display:flex;gap:10px">
     <button onclick="closeM('restore-confirm-modal')" style="flex:1;padding:12px;border-radius:10px;background:var(--ibg);color:var(--txt);font-weight:bold;font-size:14px;border:1px solid var(--ibdr);cursor:pointer">Cancel</button>
@@ -859,7 +859,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
 <div id="hw-delete-modal" class="modal hidden" onclick="closeM('hw-delete-modal')" style="z-index:2100">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:24px">
-  <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:'+(isDark?'#f87171':'#ef4444')+';display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+  <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:var(--m3-red);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
     <span class="material-symbols-outlined" style="font-size:32px">delete_forever</span>
   </div>
   <div style="font-weight:800;font-size:18px;color:var(--txt);margin-bottom:8px">Delete Chart?</div>
@@ -988,7 +988,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
 <div id="mgr-exp-modal" class="modal mbot hidden" onclick="closeM('mgr-exp-modal')">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
-  <div style="font-weight:bold;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">trending_down</span>Add Expense</div>
+  <div style="font-weight:bold;font-size:16px;color:var(--m3-red);margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">trending_down</span>Add Expense</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label class="flabel">DATE</label><input type="date" id="mgr-exp-date"></div>
     <div><label class="flabel">AMOUNT (₹)</label><input type="number" id="mgr-exp-amt" placeholder="0" min="0" onclick="openMgrCalc(this)"></div>
@@ -1011,8 +1011,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <div id="mgr-edit-exp-modal" class="modal mbot hidden" style="z-index:350" onclick="closeM('mgr-edit-exp-modal')">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-    <div style="font-weight:bold;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+'"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Expense</div>
-    <button onclick="deleteMgrExpense(window._editExpId);closeM('mgr-edit-exp-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
+    <div style="font-weight:bold;font-size:16px;color:var(--m3-red)"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Expense</div>
+    <button onclick="deleteMgrExpense(window._editExpId);closeM('mgr-edit-exp-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--m3-red);font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label class="flabel">DATE</label><input type="date" id="mgr-edit-exp-date"></div>
@@ -1053,7 +1053,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
     <div style="font-weight:bold;font-size:16px;color:#22c55e"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Income</div>
-    <button onclick="deleteMgrIncome(window._editIncId);closeM('mgr-edit-inc-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
+    <button onclick="deleteMgrIncome(window._editIncId);closeM('mgr-edit-inc-modal')" style="padding:5px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--m3-red);font-size:12px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">delete</span>Delete</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label class="flabel">DATE</label><input type="date" id="mgr-edit-inc-date"></div>
@@ -1075,7 +1075,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     <div id="calc-display" style="font-size:26px;font-weight:bold;color:var(--txt)">0</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px">
-    <button onclick="calcBtn('C')" style="grid-column:span 2;padding:18px;border-radius:10px;background:rgba(239,68,68,.15);color:'+(isDark?'#f87171':'#ef4444')+';font-size:19px;font-weight:bold;border:none;cursor:pointer">C</button>
+    <button onclick="calcBtn('C')" style="grid-column:span 2;padding:18px;border-radius:10px;background:rgba(239,68,68,.15);color:var(--m3-red);font-size:19px;font-weight:bold;border:none;cursor:pointer">C</button>
     <button onclick="calcBtn('←')" style="padding:18px;border-radius:10px;background:var(--ibg);color:var(--txt);font-size:22px;border:none;cursor:pointer">⌫</button>
     <button onclick="calcBtn('÷')" style="padding:18px;border-radius:10px;background:rgba(245,158,11,.15);color:#f59e0b;font-size:22px;font-weight:bold;border:none;cursor:pointer">÷</button>
     <button onclick="calcBtn('7')" style="padding:18px;border-radius:10px;background:var(--ibg);color:var(--txt);font-size:22px;font-weight:bold;border:none;cursor:pointer">7</button>
@@ -1127,7 +1127,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
 <div id="rm-modal" class="modal hidden"><div class="mbox" style="max-width:280px;text-align:center"><div class="material-symbols-outlined" style="font-size:32px;color:#f59e0b">help</div><div style="font-weight:bold;margin-top:8px;font-size:16px">Remove This Month?</div><div id="rm-desc" style="color:var(--sub);font-size:13px;margin-top:5px;line-height:1.5"></div><div style="display:flex;gap:10px;margin-top:16px"><button id="rm-ok" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Remove</button><button onclick="closeM('rm-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
 
-<div id="del-modal" class="modal hidden"><div class="mbox" style="max-width:280px;text-align:center"><div class="material-symbols-outlined" style="font-size:32px;color:'+(isDark?'#f87171':'#ef4444')+'">warning</div><div style="font-weight:bold;margin-top:8px;font-size:16px">Remove Student?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">All records deleted permanently.</div><div style="display:flex;gap:10px;margin-top:16px"><button id="del-ok" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Remove</button><button onclick="closeM('del-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
+<div id="del-modal" class="modal hidden"><div class="mbox" style="max-width:280px;text-align:center"><div class="material-symbols-outlined" style="font-size:32px;color:var(--m3-red)">warning</div><div style="font-weight:bold;margin-top:8px;font-size:16px">Remove Student?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">All records deleted permanently.</div><div style="display:flex;gap:10px;margin-top:16px"><button id="del-ok" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Remove</button><button onclick="closeM('del-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
 
 
 <!-- Backup Modal -->
@@ -1317,7 +1317,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 </div></div>
 
-<div id="rst-modal" class="modal hidden"><div class="mbox" style="max-width:290px;text-align:center"><div class="material-symbols-outlined" style="font-size:34px;color:'+(isDark?'#f87171':'#ef4444')+'">delete_forever</div><div style="font-weight:bold;margin-top:8px;font-size:16px;color:'+(isDark?'#f87171':'#ef4444')+'">Reset All Data?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">Permanently erases ALL students and records.</div><div style="margin-top:12px;text-align:left"><label class="flabel">ENTER INVESTMENT PIN</label><input id="rst-pin" type="password" inputmode="numeric" placeholder="PIN" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"><div style="font-size:11px;color:var(--sub);margin-top:4px">Hint: same PIN used to unlock Investments</div></div><div style="margin-top:12px"><label class="flabel">TYPE "RESET" TO CONFIRM</label><input id="rst-input" placeholder="RESET" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"></div><div style="display:flex;gap:10px;margin-top:14px"><button onclick="doReset()" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Erase All</button><button onclick="closeM('rst-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
+<div id="rst-modal" class="modal hidden"><div class="mbox" style="max-width:290px;text-align:center"><div class="material-symbols-outlined" style="font-size:34px;color:var(--m3-red)">delete_forever</div><div style="font-weight:bold;margin-top:8px;font-size:16px;color:var(--m3-red)">Reset All Data?</div><div style="color:var(--sub);font-size:13px;margin-top:5px">Permanently erases ALL students and records.</div><div style="margin-top:12px;text-align:left"><label class="flabel">ENTER INVESTMENT PIN</label><input id="rst-pin" type="password" inputmode="numeric" placeholder="PIN" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"><div style="font-size:11px;color:var(--sub);margin-top:4px">Hint: same PIN used to unlock Investments</div></div><div style="margin-top:12px"><label class="flabel">TYPE "RESET" TO CONFIRM</label><input id="rst-input" placeholder="RESET" style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:3px"></div><div style="display:flex;gap:10px;margin-top:14px"><button onclick="doReset()" style="flex:1;padding:10px;border-radius:8px;background:#ef4444;color:#fff;font-weight:bold">Erase All</button><button onclick="closeM('rst-modal')" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub)">Cancel</button></div></div></div>
 
 <!-- Attendance Export Modal -->
 <div id="att-export-modal" class="modal hidden" onclick="closeM('att-export-modal')">
@@ -1391,7 +1391,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-chart-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">show_chart</span>Progress Chart</div>
-      <button onclick="resetPrnChartForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="resetPrnChartForm()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -1427,7 +1427,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-mock-panel" class="hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">track_changes</span>Mock Record</div>
-      <button onclick="resetPrnMockForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="resetPrnMockForm()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -1450,7 +1450,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="prn-hw-panel" class="hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Homework Chart</div>
-      <button onclick="resetHwForm()" style="padding:5px 14px;border-radius:20px;border:1.5px solid #ef4444;background:transparent;color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="resetHwForm()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">NAME <span style="font-weight:400;opacity:0.7">(optional)</span></label>
@@ -1660,7 +1660,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 
   <div style="display:flex;gap:8px;margin-top:14px">
     <button id="inv-detail-edit-btn" onclick="if(window._invDetailId)openEditInvestment(window._invDetailId)" style="flex:1;padding:10px;border-radius:8px;background:rgba(129,140,248,.15);color:#818cf8;font-weight:bold;border:1px solid rgba(129,140,248,.3);font-size:13px">&#x270F; Edit</button>
-    <button id="inv-detail-del-btn" onclick="" style="padding:10px 16px;border-radius:8px;background:rgba(239,68,68,.1);color:'+(isDark?'#f87171':'#ef4444')+';border:1px solid rgba(239,68,68,.3);font-size:13px">&#x1F5D1;</button>
+    <button id="inv-detail-del-btn" onclick="" style="padding:10px 16px;border-radius:8px;background:rgba(239,68,68,.1);color:var(--m3-red);border:1px solid rgba(239,68,68,.3);font-size:13px">&#x1F5D1;</button>
   </div>
 </div></div>
 
@@ -13152,9 +13152,20 @@ function renderDashHwCharts(){
     cont.innerHTML='<div style="text-align:center;color:var(--sub);padding:14px;font-size:13px">No saved homework charts yet. Save a chart from Printables → Homework and it will appear here.</div>';
     return;
   }
+  // Calculate expired count
+  var expiredCount = 0;
+  var n = new Date();
+  var today = n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+  charts.forEach(function(entry){
+    if(entry.endDate && today > entry.endDate){
+      expiredCount++;
+    }
+  });
+  
   var h='';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
-  h+='<div style="font-weight:bold;font-size:13px;color:var(--acc);letter-spacing:.3px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">edit_note</span>ONGOING HOMEWORKS ('+charts.length+')</div>';
+  var expiredLabel = expiredCount > 0 ? ' • <span style="color:#ef4444;font-weight:900">'+expiredCount+' EXPIRED</span>' : '';
+  h+='<div style="font-weight:bold;font-size:13px;color:var(--acc);letter-spacing:.3px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">edit_note</span>ONGOING HOMEWORKS ('+charts.length+')'+expiredLabel+'</div>';
   h+='</div>';
   charts.forEach(function(entry,idx){
     var _hdrParts=[];
@@ -13166,22 +13177,45 @@ function renderDashHwCharts(){
     var dateParts=entry.createdAt?new Date(entry.createdAt):new Date();
     var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var dateStr=dateParts.getDate()+' '+mo[dateParts.getMonth()]+' '+dateParts.getFullYear();
-    h+='<div style="background:var(--card);border:1px solid var(--ibdr);border-radius:12px;padding:10px;margin-bottom:10px">';
+    
+    // Calculate homework status
+    var hwStatus = 'normal';
+    var statusBg = 'var(--card)';
+    var statusBorder = '1px solid var(--ibdr)';
+    var statusBadge = '';
+    
+    if(entry.endDate){
+      var n = new Date();
+      var today = n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+      
+      if(today > entry.endDate){
+        // Expired
+        hwStatus = 'expired';
+        statusBg = 'rgba(239, 68, 68, 0.12)';
+        statusBorder = '1.5px solid #ef4444';
+        statusBadge = '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;animation:pulse-red 2s infinite">EXPIRED</span>';
+      } else {
+        // Calculate days until end date
+        var endDateObj = new Date(entry.endDate+'T00:00:00');
+        var todayObj = new Date(today+'T00:00:00');
+        var daysLeft = Math.ceil((endDateObj - todayObj) / (1000 * 60 * 60 * 24));
+        
+        if(daysLeft >= 0 && daysLeft <= 2){
+          // Due Soon (0-2 days)
+          hwStatus = 'dueSoon';
+          statusBg = 'rgba(245, 158, 11, 0.12)';
+          statusBorder = '1.5px solid #f59e0b';
+          statusBadge = '<span style="background:#f59e0b;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">DUE SOON</span>';
+        }
+      }
+    }
+    
+    h+='<div style="background:'+statusBg+';border:'+statusBorder+';border-radius:12px;padding:10px;margin-bottom:10px">';
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
     h+='<div style="flex:1;min-width:0">';
     h+='<div style="display:flex;align-items:center;gap:6px">'+
       '<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(namePart)+'</div>'+
-      (function(){
-        if(!entry.endDate)return '';
-        var n = new Date();
-        var today = n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
-        if(today === entry.endDate){
-          return '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;animation:pulse-red 2s infinite">LAST DAY</span>';
-        } else if(today > entry.endDate){
-          return '<span style="background:#64748b;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">FINISHED</span>';
-        }
-        return '';
-      })()+
+      statusBadge+
       '</div>';
     h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+(entry.endDate?' <span style="color:var(--sub)">\u2022</span> Ends '+fmtD(entry.endDate):'')+'</div>';
     h+='</div>';
