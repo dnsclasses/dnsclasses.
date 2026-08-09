@@ -88,6 +88,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 /* Flash text: heading (class/student name) in light gold, body text in white */
 .dash-test-flash .fl-heading,.dash-test-flash .fl-day-label{color:#fbbf24 !important;text-shadow:0 1px 4px rgba(0,0,0,.7) !important}
 .dash-test-flash .fl-body{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.6) !important}
+.dash-test-flash .m3-stat-num,
+.dash-test-flash .m3-stat-label,
+.dash-test-flash .material-symbols-outlined {
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+.dash-test-flash .m3-stat-icon {
+  background: rgba(255,255,255,0.2) !important;
+}
 /* Buttons inside flash area get white background except WhatsApp button */
 .dash-test-flash button:not(.wa-btn){background:#fff !important;color:#1e293b !important;text-shadow:none !important}
 input,select,textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;outline:none;font-family:'Inter',sans-serif}
@@ -271,7 +280,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     <div class="m3-fade" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px">
       <div onclick="toggleDashSection('hw')" id="fc-dash-hw" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(239,68,68,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-red);font-size:17px">edit_note</span></div>
-        <div id="s-dash-hw" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px">Ongoing HW</div>
+        <div id="s-dash-hw" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px">Ongoing HW<span id="dash-hw-badge"></span></div>
       </div>
       <div onclick="toggleDashSection('collect')" id="fc-dash-collect" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(245,158,11,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-orange);font-size:17px">payments</span></div>
@@ -8635,6 +8644,7 @@ function _populateSchoolSelect(grade){
 }
 
 function posterLoadStudents(){
+  if(typeof _posterSaveCache==='function') _posterSaveCache();
   var grade=document.getElementById('pr-class').value;
   var loc=document.getElementById('pr-loc').value;
   // Read school BEFORE _populateSchoolSelect to avoid losing selection during rebuild
@@ -10446,6 +10456,7 @@ function prPopulateChapters(cls,school){
 function _prPopulateChaptersInner(cls,school){
   var el=document.getElementById('pr-topic');
   if(!el)return;
+  var oldVal=el.value;
   if(!cls){
     el.innerHTML='<option value="">Select class first...</option>';
     el.disabled=true;
@@ -10473,6 +10484,11 @@ function _prPopulateChaptersInner(cls,school){
   if(_comb.length){
     el.innerHTML+='<option disabled>--- Combined Tests ---</option>';
     _comb.forEach(function(c){el.innerHTML+='<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>';});
+  }
+  if(oldVal){
+    for(var i=0;i<el.options.length;i++){
+      if(el.options[i].value===oldVal){el.value=oldVal;break;}
+    }
   }
 }
 function openPrTopicPicker(){
@@ -13082,9 +13098,40 @@ function autoParseHwText() {
 }
 function _updateDashHwCount(){
   var el=document.getElementById('s-dash-hw');
+  var badge=document.getElementById('dash-hw-badge');
+  var card=document.getElementById('fc-dash-hw');
   if(!el)return;
   var charts=(db.settings&&db.settings.savedHwCharts)||[];
   el.textContent=charts.length;
+  
+  var expiredCount=0;
+  var endsTodayCount=0;
+  var n=new Date();
+  var today=n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+  charts.forEach(function(entry){
+    if(entry.endDate){
+      if(today > entry.endDate) expiredCount++;
+      else if(today === entry.endDate) endsTodayCount++;
+    }
+  });
+  
+  if(badge){
+    var totalUrgent = expiredCount + endsTodayCount;
+    badge.innerHTML=totalUrgent?' <span class="dash-test-flash" style="display:inline-block;background:#9f1239;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">'+totalUrgent+'</span>':'';
+  }
+  
+  if(card){
+    var shouldFlash = expiredCount > 0 || endsTodayCount > 0;
+    var _light = document.body.classList.contains('light');
+    var hwRgb = _light ? '220,38,38' : '248,113,113';
+    
+    if(shouldFlash){
+      card.classList.add('dash-test-flash');
+      card.style.setProperty('--flash-rgb', hwRgb);
+    } else {
+      card.classList.remove('dash-test-flash');
+    }
+  }
 }
 function hwDashSave(idx){
   var charts=(db.settings&&db.settings.savedHwCharts)||[];
@@ -13148,6 +13195,7 @@ function renderDashHwCharts(){
   var cont=document.getElementById('dash-hw-content');
   if(!cont)return;
   var charts=(db.settings&&db.settings.savedHwCharts)||[];
+  var isDark=!document.body.classList.contains('light');
   if(!charts.length){
     cont.innerHTML='<div style="text-align:center;color:var(--sub);padding:14px;font-size:13px">No saved homework charts yet. Save a chart from Printables → Homework and it will appear here.</div>';
     return;
@@ -13191,19 +13239,25 @@ function renderDashHwCharts(){
       if(today > entry.endDate){
         // Expired
         hwStatus = 'expired';
-        statusBg = 'rgba(239, 68, 68, 0.12)';
+        statusBg = isDark ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.12)';
         statusBorder = '1.5px solid #ef4444';
         statusBadge = '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;animation:pulse-red 2s infinite">EXPIRED</span>';
+      } else if(today === entry.endDate){
+        // Ends Today
+        hwStatus = 'endsToday';
+        statusBg = isDark ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.12)';
+        statusBorder = '1.5px solid #ef4444';
+        statusBadge = '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;animation:pulse-red 2s infinite">ENDS TODAY</span>';
       } else {
         // Calculate days until end date
         var endDateObj = new Date(entry.endDate+'T00:00:00');
         var todayObj = new Date(today+'T00:00:00');
         var daysLeft = Math.ceil((endDateObj - todayObj) / (1000 * 60 * 60 * 24));
         
-        if(daysLeft >= 0 && daysLeft <= 2){
-          // Due Soon (0-2 days)
+        if(daysLeft > 0 && daysLeft <= 2){
+          // Due Soon (1-2 days)
           hwStatus = 'dueSoon';
-          statusBg = 'rgba(245, 158, 11, 0.12)';
+          statusBg = isDark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.12)';
           statusBorder = '1.5px solid #f59e0b';
           statusBadge = '<span style="background:#f59e0b;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">DUE SOON</span>';
         }
