@@ -13254,13 +13254,34 @@ function renderDashHwCharts(){
         var todayObj = new Date(today+'T00:00:00');
         var daysLeft = Math.ceil((endDateObj - todayObj) / (1000 * 60 * 60 * 24));
         
-        if(daysLeft > 0 && daysLeft <= 2){
-          // Due Soon (1-2 days)
+        if(daysLeft === 1){
+          // 1 day left - pure red with white text
+          hwStatus = 'dueSoon';
+          statusBg = isDark ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.12)';
+          statusBorder = '1.5px solid #ef4444';
+          statusBadge = '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">1 DAY LEFT</span>';
+        } else if(daysLeft <= 3){
+          // 2-3 days left - yellow tone
           hwStatus = 'dueSoon';
           statusBg = isDark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.12)';
           statusBorder = '1.5px solid #f59e0b';
-          statusBadge = '<span style="background:#f59e0b;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">DUE SOON</span>';
+          statusBadge = '<span style="background:#f59e0b;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">'+daysLeft+' DAYS LEFT</span>';
+        } else {
+          // More than 3 days left - green bubble
+          hwStatus = 'onTrack';
+          statusBg = isDark ? 'rgba(34, 197, 94, 0.22)' : 'rgba(34, 197, 94, 0.12)';
+          statusBorder = '1.5px solid #22c55e';
+          statusBadge = '<span style="background:#22c55e;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px">'+daysLeft+' DAYS LEFT</span>';
         }
+      }
+    }
+    
+    var expiredBadge='';
+    if(entry.endDate){
+      var n = new Date();
+      var today = n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+      if(today > entry.endDate){
+        expiredBadge=' <span style="font-size:9px;font-weight:900;color:#ef4444;letter-spacing:0.5px">EXPIRED</span>';
       }
     }
     
@@ -13269,7 +13290,7 @@ function renderDashHwCharts(){
     h+='<div style="flex:1;min-width:0">';
     h+='<div style="display:flex;align-items:center;gap:6px">'+
       '<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(namePart)+'</div>'+
-      statusBadge+
+      (statusBadge||expiredBadge)+
       '</div>';
     h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+(entry.endDate?' <span style="color:var(--sub)">\u2022</span> Ends '+fmtD(entry.endDate):'')+'</div>';
     h+='</div>';
