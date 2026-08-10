@@ -88,11 +88,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 /* Flash text: heading (class/student name) in light gold, body text in white */
 .dash-test-flash .fl-heading,.dash-test-flash .fl-day-label{color:#fbbf24 !important;text-shadow:0 1px 4px rgba(0,0,0,.7) !important}
 .dash-test-flash .fl-body{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.6) !important}
-.dash-test-flash .m3-stat-num,
-.dash-test-flash .m3-stat-label,
-.dash-test-flash .material-symbols-outlined {
+/* Flash text on DARK fills (red): white for contrast */
+.dash-test-flash.dark-fill .m3-stat-num,
+.dash-test-flash.dark-fill .m3-stat-label,
+.dash-test-flash.dark-fill .material-symbols-outlined {
   color: #fff !important;
   text-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+/* Flash text on LIGHT fills (yellow/orange): dark brown so the amount stays
+   easy to read against the bright background — never force white here. */
+.dash-test-flash.light-fill .m3-stat-num,
+.dash-test-flash.light-fill .m3-stat-label {
+  color: #78350f !important;
+  text-shadow: none !important;
+}
+.dash-test-flash.light-fill .material-symbols-outlined {
+  color: #78350f !important;
+  text-shadow: none !important;
+}
+/* Direct fallback: any stat element marked as a LIGHT fill always keeps dark
+   text, no matter what other CSS rules try to paint it white (e.g. during a
+   flash) — the ₹ amount must stay easy to read on yellow/orange backgrounds. */
+.m3-stat-num[data-fill-mode="light"],
+.m3-stat-label[data-fill-mode="light"]{
+  color: #78350f !important;
+  text-shadow: none !important;
+}
+.m3-stat-num[data-fill-mode="dark"],
+.m3-stat-label[data-fill-mode="dark"]{
+  color: #fff !important;
 }
 .dash-test-flash .m3-stat-icon {
   background: rgba(255,255,255,0.2) !important;
@@ -2619,11 +2643,17 @@ function _updateDashSmallCards(){
       // unrelated click elsewhere forces the browser to repaint.
       void card.offsetWidth;
       card.classList.add('dash-test-flash');
-      // Clear any static inline background set earlier in this same render
-      // (before this class existed) — otherwise it sits on top of the
-      // animation's background-color and hides it, since a static
-      // background-image always paints over an animated background-color.
-      card.style.background='';
+      // Fill-aware text colour: light fills (yellow/orange pending) must keep
+      // dark text while flashing, dark fills (red) use white.
+      var _flashRatio = parseFloat(card.dataset.pendingRatio || '1');
+      card.classList.toggle('light-fill', _flashRatio > 0 && _flashRatio < 0.5);
+      card.classList.toggle('dark-fill', _flashRatio >= 0.5);
+      // Keep the card's own severity tint: the flash paints itself through a
+      // ::before pseudo-element layered on top of the card, so removing the
+      // inline background would leave nothing visible on devices that don't
+      // support the pseudo/animation. Only clear the background if the card
+      // has no severity tint of its own.
+      if(!card.dataset.severityRgb) card.style.background='';
       void card.offsetWidth;
     } else if(!shouldFlash){
       card.classList.remove('dash-test-flash');
@@ -2638,13 +2668,10 @@ function _updateDashSmallCards(){
     // hue as the flash overlay itself, so the icon becomes invisible at
     // the flash's bright phase unless we override it here too.
     var iconEl=card.querySelector('.m3-stat-icon .material-symbols-outlined');
-    if(iconEl){
+    if(iconEl && !card.classList.contains('light-fill')){
       if(shouldFlash){
         if(iconEl.dataset.origColor===undefined)iconEl.dataset.origColor=iconEl.style.color||'';
-        // If the card has a severity ratio (like Pending), check if the background is light
-        var ratio = parseFloat(card.dataset.pendingRatio || '1');
-        var isLightFlash = (ratio > 0 && ratio < 0.5);
-        iconEl.style.color = isLightFlash ? '#78350f' : '#fff';
+        iconEl.style.color = '#fff';
       } else if(iconEl.dataset.origColor!==undefined){
         iconEl.style.color=iconEl.dataset.origColor;
         delete iconEl.dataset.origColor;
@@ -3026,37 +3053,54 @@ function renderDash(){
   }
   var pendRgbStr=pr+','+pg+','+pb;
   var _pendStaticFill=(pendingRatio>0&&pendingRatio<0.2);
+  var _pendHasPending=(pendingRatio>0);
   if(pendCard){
     var _pendIsSel=(dashFilter==='pending');
     var _pendIcon=pendCard.querySelector('.m3-stat-icon');
     var _pendIconSymbol=pendCard.querySelector('.material-symbols-outlined');
     if(_pendIcon){
-      _pendIcon.style.background=_pendStaticFill?'rgba(120,53,15,.18)':('rgba('+pendRgbStr+',.14)');
+      // Always tint the icon badge toward the severity colour when there is pending money
+      _pendIcon.style.background=_pendHasPending?('rgba('+pendRgbStr+',.28)'):('rgba('+pendRgbStr+',.14)');
     }
     if(_pendIconSymbol){
-      _pendIconSymbol.style.color=_pendStaticFill?'#78350f':('rgb('+pendRgbStr+')');
+      // On light fills keep dark icon for contrast; on dark red fill use white
+      _pendIconSymbol.style.color=_pendHasPending?(pendingRatio>=0.5?'#fff':'#78350f'):('rgb('+pendRgbStr+')');
       delete _pendIconSymbol.dataset.origColor;
     }
     pendCard.style.borderColor=_pendIsSel?('rgb('+pendRgbStr+')'):'rgba('+pendRgbStr+',.5)';
     pendCard.style.borderWidth=_pendIsSel?'2px':'1px';
     pendCard.style.boxShadow=_pendIsSel?('0 0 0 3px rgba('+pendRgbStr+',.15)'):'none';
-    pendCard.style.background=_pendStaticFill?('rgba('+pendRgbStr+',.85)'):'';
+    // ROBUST FILL: whenever there is ANY pending amount, paint a solid
+    // severity-tinted background directly on the card. Before, only the
+    // small-yellow zone (<20%) got a static fill and the rest relied solely
+    // on the ::before flash pseudo-element, which some devices/browsers do
+    // not render — leaving the card looking colourless even with ₹10,800
+    // pending. The flash animation (if supported) still layers on top.
+    pendCard.style.background=_pendHasPending?('rgba('+pendRgbStr+',.85)'):'';
     pendCard.dataset.severityRgb=pendRgbStr;
     pendCard.dataset.pendingRatio=pendingRatio.toFixed(3);
+    // Keep the card's own fill-marker classes in sync with the ratio, even
+    // when the flash animation class has been added on top.
+    pendCard.classList.toggle('light-fill', _pendHasPending && pendingRatio < 0.5);
+    pendCard.classList.toggle('dark-fill', _pendHasPending && pendingRatio >= 0.5);
+    if(!_pendHasPending){ pendCard.classList.remove('light-fill','dark-fill','dash-test-flash'); }
   }
   var _isLightMode = document.body.classList.contains('light');
-  if(_pendStaticFill || (pendingRatio >= 0.2 && pendingRatio < 0.5)){
-    // Light background fill (Yellow/Orange) - always use dark text for visibility
-    if(numEl) numEl.style.color = '#78350f';
-    if(lblEl) lblEl.style.color = '#78350f';
-  } else if (pendingRatio >= 0.5) {
-    // Dark background fill (Red) - always use light text for visibility
-    if(numEl) numEl.style.color = '#fff';
-    if(lblEl) lblEl.style.color = '#fff';
+  if(_pendHasPending){
+    // There is a pending amount — text colour is picked by fill brightness:
+    // light yellow/orange fills get dark brown text, the dark red fill gets
+    // white text, so the amount is always legible. A dedicated class on the
+    // stat elements reinforces the colour so CSS animations never wash it out.
+    if(numEl){ numEl.style.color = pendingRatio>=0.5 ? '#fff' : '#78350f'; numEl.dataset.fillMode = pendingRatio>=0.5 ? 'dark' : 'light'; }
+    if(lblEl){ lblEl.style.color = pendingRatio>=0.5 ? '#fff' : '#78350f'; lblEl.dataset.fillMode = pendingRatio>=0.5 ? 'dark' : 'light'; }
   } else {
-    // No background fill - use theme default (handled by CSS variables)
-    if(numEl) numEl.style.color = '';
-    if(lblEl) lblEl.style.color = '';
+    // No pending money — clean neutral card, theme default text colours
+    if(numEl) { numEl.style.color = '#15803d'; delete numEl.dataset.fillMode; }
+    if(lblEl) { lblEl.style.color = ''; delete lblEl.dataset.fillMode; }
+    if(_pendIconSymbol) _pendIconSymbol.style.color='';
+    if(pendCard) pendCard.style.borderColor='var(--m3-bdr)';
+    if(pendCard) pendCard.style.borderWidth='1px';
+    if(pendCard) pendCard.style.boxShadow='none';
   }
   _updateDashSmallCards(); // re-check flash state now that the real pending amount is set
   var sca=document.getElementById('s-cont-absent');if(sca)sca.textContent=contAbsentList.length;
@@ -13128,8 +13172,28 @@ function _updateDashHwCount(){
     if(shouldFlash){
       card.classList.add('dash-test-flash');
       card.style.setProperty('--flash-rgb', hwRgb);
+      // The HW card flashes RED — text must be white for contrast while the
+      // red overlay pulses; force it on the stat elements directly.
+      var _hwNum=document.getElementById('s-dash-hw');
+      if(_hwNum){ _hwNum.style.color='#fff'; }
+      var _hwLbl=card.querySelector('.m3-stat-label');
+      if(_hwLbl){ _hwLbl.style.color='#fff'; }
+      var _hwIcon=card.querySelector('.material-symbols-outlined');
+      if(_hwIcon){ _hwIcon.style.color='#fff'; }
+      var _hwBadge=document.getElementById('dash-hw-badge');
+      if(_hwBadge && _hwBadge.firstChild){
+        var _hwBadgeSpan=_hwBadge.querySelector('span');
+        if(_hwBadgeSpan){ _hwBadgeSpan.style.color='#fff'; _hwBadgeSpan.style.background='#fff'; _hwBadgeSpan.style.color='#9f1239'; }
+      }
     } else {
       card.classList.remove('dash-test-flash');
+      // Restore theme colours when the flash stops.
+      var _hwNum=document.getElementById('s-dash-hw');
+      if(_hwNum){ _hwNum.style.color=''; }
+      var _hwLbl=card.querySelector('.m3-stat-label');
+      if(_hwLbl){ _hwLbl.style.color=''; }
+      var _hwIcon=card.querySelector('.material-symbols-outlined');
+      if(_hwIcon){ _hwIcon.style.color=''; }
     }
   }
 }
