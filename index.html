@@ -39,6 +39,11 @@ body.pitch-black .m3-dash,body:not(.light) .m3-dash{
 .m3-card:active{transform:scale(.97);box-shadow:var(--m3-shadow-hover)}
 @keyframes m3FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+@keyframes attend-pure-red-flash {
+  0%, 100% { background-color: #ff0000; color: #fff; border-color: #ff0000; }
+  50% { background-color: transparent; color: #ff0000; border-color: #ff0000; }
+}
+.attend-flash-active { animation: attend-pure-red-flash 0.8s infinite !important; font-weight: 900 !important; }
 .pulse-hw{animation:pulse-red 2s infinite}
 .zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.3s ease;padding:20px;touch-action:none;overscroll-behavior:none}
 .zoom-overlay.active{opacity:1;visibility:visible}
@@ -304,7 +309,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     <div class="m3-fade" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px">
       <div onclick="toggleDashSection('hw')" id="fc-dash-hw" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(239,68,68,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-red);font-size:17px">edit_note</span></div>
-        <div id="s-dash-hw" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px">Ongoing HW<span id="dash-hw-badge"></span></div>
+        <div id="s-dash-hw" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px;display:flex;flex-direction:column;align-items:center;gap:2px">Ongoing HW<span id="dash-hw-badge" style="display:inline-flex"></span></div>
       </div>
       <div onclick="toggleDashSection('collect')" id="fc-dash-collect" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(245,158,11,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-orange);font-size:17px">payments</span></div>
@@ -320,7 +325,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       </div>
       <div onclick="toggleDashSection('tests')" id="fc-dash-tests" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(139,92,246,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-purple);font-size:17px">edit_note</span></div>
-        <div id="s-dash-tests" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px">Tests<span id="dash-tests-badge"></span></div>
+        <div id="s-dash-tests" class="m3-stat-num" style="font-size:18px">0</div><div class="m3-stat-label" style="font-size:9px;display:flex;flex-direction:column;align-items:center;gap:2px">Tests<span id="dash-tests-badge" style="display:inline-flex"></span></div>
       </div>
     </div>
 
@@ -2626,9 +2631,6 @@ function _updateDashSmallCards(){
     card.style.boxShadow=isOpen?('0 0 0 3px rgba('+rgb+',.15)'):'none';
   });
 
-  // Update HW count
-  _updateDashHwCount();
-
   // Flashing: Tests card flashes whenever ANY upcoming test exists (not just today);
   // Pending card flashes continuously until the pending amount reaches zero.
   // Full-card color flash — the --flash-rgb variable lets the same animation
@@ -2688,6 +2690,10 @@ function _updateDashSmallCards(){
   var testCard=document.getElementById('fc-dash-tests');
   var testsRgb=_light?DASH_CARD_COLORS.tests:DASH_CARD_COLORS_DARK.tests;
   _applyCardFlash(testCard,testCount>0,'s-dash-tests',testsRgb);
+  
+  // Update HW and Test badges (after flashing state is determined)
+  _updateDashHwCount();
+  _updateDashTestsBadge();
   var pendingCard=document.getElementById('fc-pending');
   var pendingText=(document.getElementById('s-pending')||{}).textContent||'\u20b90';
   var pendingNum=parseFloat(pendingText.replace(/[^\d.]/g,''))||0;
@@ -2699,7 +2705,12 @@ function _updateDashTestsBadge(){
   if(!badge)return;
   var list=(db.settings&&db.settings.testReminders)||[];
   var todayCount=list.filter(function(r){return _testDaysUntil(r.date)===0&&!r.flashStopped;}).length;
-  badge.innerHTML=todayCount?' <span class="dash-test-flash" style="display:inline-block;background:#9f1239;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:4px">'+todayCount+'</span>':'';
+  if(!todayCount){ badge.innerHTML=''; return; }
+  var card=document.getElementById('fc-dash-tests');
+  var isFlashing=card&&card.classList.contains('dash-test-flash');
+  var st='display:inline-block;background:#9f1239;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;box-shadow:0 0 4px rgba(0,0,0,0.2);line-height:1.2;margin-top:2px';
+  if(isFlashing){ st='display:inline-block;background:#fff;color:#9f1239;font-size:10px;font-weight:900;padding:1px 7px;border-radius:10px;box-shadow:0 0 10px #fff'; }
+  badge.innerHTML='<span style="'+st+'">'+todayCount+'</span>';
 }
 var _editingReminderId=null;
 function editReminderDate(id){
@@ -2943,8 +2954,8 @@ function renderBirthdayAndClassCount(){
 }
 function renderDash(){
   var _st=_getSessionStudents();
-  _updateDashTestsBadge();
   _updateDashSmallCards();
+  _updateDashTestsBadge();
   _updateDashModeLabel();
   _updateAttendFlash();
   var _hasTodayTest=((db.settings&&db.settings.testReminders)||[]).some(function(r){return _testDaysUntil(r.date)===0&&!r.flashStopped;});
@@ -6500,28 +6511,21 @@ function _updateAttendFlash(){
       if(!(s.attendance&&s.attendance[todayStr])){shouldFlash=true;break;}
     }
   }
-  btn.style.setProperty('--flash-rgb','160,32,32');
-  var wasFlashing=btn.classList.contains('dash-test-flash');
+  var wasFlashing=btn.classList.contains('attend-flash-active');
   if(shouldFlash&&!wasFlashing){
-    void btn.offsetWidth;
-    btn.classList.add('dash-test-flash');
-    btn.style.color='#fff';
-    btn.style.fontWeight='900';
-    void btn.offsetWidth;
+    btn.classList.add('attend-flash-active');
   } else if(!shouldFlash&&wasFlashing){
-    btn.classList.remove('dash-test-flash');
-    void btn.offsetWidth;
+    btn.classList.remove('attend-flash-active');
     btn.style.color='';
     btn.style.fontWeight='';
     btn.style.backgroundColor='';
-    void btn.offsetWidth;
+    btn.style.borderColor='';
   } else if(!shouldFlash){
-    // Belt-and-braces: ensure a clean, non-flashing state even if the class
-    // was somehow already absent but leftover inline styles remained.
-    btn.classList.remove('dash-test-flash');
+    btn.classList.remove('attend-flash-active');
     btn.style.color='';
     btn.style.fontWeight='';
     btn.style.backgroundColor='';
+    btn.style.borderColor='';
   }
 }
 function toggleClassHoliday(dateStr,grade,loc){
@@ -13161,7 +13165,7 @@ function _updateDashHwCount(){
   
   if(badge){
     var totalUrgent = expiredCount + endsTodayCount;
-    badge.innerHTML=totalUrgent?' <span class="dash-test-flash" style="display:inline-block;background:#9f1239;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">'+totalUrgent+'</span>':'';
+    badge.innerHTML=totalUrgent?'<span style="display:inline-block;background:#9f1239;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;box-shadow:0 0 4px rgba(0,0,0,0.2);line-height:1.2;margin-top:2px">'+totalUrgent+'</span>':'';
   }
   
   if(card){
@@ -13183,7 +13187,7 @@ function _updateDashHwCount(){
       var _hwBadge=document.getElementById('dash-hw-badge');
       if(_hwBadge && _hwBadge.firstChild){
         var _hwBadgeSpan=_hwBadge.querySelector('span');
-        if(_hwBadgeSpan){ _hwBadgeSpan.style.color='#fff'; _hwBadgeSpan.style.background='#fff'; _hwBadgeSpan.style.color='#9f1239'; }
+        if(_hwBadgeSpan){ _hwBadgeSpan.style.background='#fff'; _hwBadgeSpan.style.color='#9f1239'; _hwBadgeSpan.style.boxShadow='0 0 10px #fff'; _hwBadgeSpan.style.fontWeight='900'; }
       }
     } else {
       card.classList.remove('dash-test-flash');
@@ -13349,12 +13353,14 @@ function renderDashHwCharts(){
       }
     }
     
-    h+='<div style="background:'+statusBg+';border:'+statusBorder+';border-radius:12px;padding:10px;margin-bottom:10px">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+    h+='<div style="background:'+statusBg+';border:'+statusBorder+';border-radius:12px;padding:10px;margin-bottom:10px;position:relative;'+((statusBadge||expiredBadge)?'padding-top:14px':'')+'">';
+    if(statusBadge||expiredBadge){
+      h+='<div style="position:absolute;top:8px;right:8px;z-index:10;margin-bottom:8px">'+(statusBadge||expiredBadge)+'</div>';
+    }
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'+((statusBadge||expiredBadge)?'margin-top:12px':'')+'">';
     h+='<div style="flex:1;min-width:0">';
     h+='<div style="display:flex;align-items:center;gap:6px">'+
-      '<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(namePart)+'</div>'+
-      (statusBadge||expiredBadge)+
+      '<div style="font-weight:800;font-size:14px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:20px">'+esc(namePart)+'</div>'+
       '</div>';
     h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">'+esc(hdrLine)+' <span style="color:var(--sub)">\u2022</span> '+dateStr+(entry.endDate?' <span style="color:var(--sub)">\u2022</span> Ends '+fmtD(entry.endDate):'')+'</div>';
     h+='</div>';
