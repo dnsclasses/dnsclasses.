@@ -419,7 +419,14 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       <div><label class="flabel">DATE OF BIRTH</label><input id="f-dob" type="date" placeholder="Optional"></div>
       <div><label class="flabel">MONTHLY FEES (₹) <span style="color:var(--sub);font-weight:normal">(0 for free / scholarship)</span></label><input id="f-fees" type="number" min="0" placeholder="1500"></div>
       <div><label class="flabel">CLASS</label><select id="f-grade"></select></div>
-      <div style="grid-column:span 2"><label class="flabel">SUBJECTS</label><div id="f-subject-boxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--ibdr);border-radius:8px;background:var(--ibg)"></div><input type="hidden" id="f-subject" value="Maths"></div>
+      <div style="grid-column:span 2"><label class="flabel">SUBJECTS</label>
+        <div id="f-subject-boxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--ibdr);border-radius:8px;background:var(--ibg)"></div>
+        <input type="hidden" id="f-subject" value="Maths">
+        <div id="f-other-subject-wrap" class="hidden" style="margin-top:8px">
+          <label class="flabel">SPECIFY OTHER SUBJECT(S)</label>
+          <input id="f-other-subject" oninput="_onOtherSubjInput()" placeholder="e.g. Art, Music" style="width:100%;box-sizing:border-box">
+        </div>
+      </div>
       <div><label class="flabel">LOCATION</label><select id="f-loc"><option value="Home">Home</option><option value="City">City</option></select></div><div style="grid-column:span 2"><label class="flabel">ADDRESS (optional)</label><input id="f-addr" placeholder="House no, Street, Area..." style="width:100%;box-sizing:border-box"></div>
     </div>
     <div style="margin-top:12px">
@@ -1776,7 +1783,7 @@ var LOGO_DATA=_LOGO;
 var SK='dns_v5';
 var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var GRADES=['Nursery','KG','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','Other'];
-var SUBJS=['Maths','Science','English','Hindi','SST','Physics','Chemistry','Biology','Accounts','Economics','Computer','Other'];
+var SUBJS=['Maths','Science','English','Hindi','Sanskrit','Urdu','SST','Physics','Chemistry','Biology','Accounts','Economics','Computer','Other'];
 var PTAGS=['Personal','Mother','Father','Brother','Sister','Guardian','Other'];
 var db={students:[]},curView='dash',profId=null,editId=null,dashFilter=null,isDark=true,pitchBlack=false;
 var _viewStack=[]; // Independent back-stack for edge-swipe-back, doesn't rely on native browser history
@@ -5801,26 +5808,64 @@ function addPhRow(num,tag){
 function initSubjectChips(selected){
   var wrap=document.getElementById('f-subject-boxes');
   var hidEl=document.getElementById('f-subject');
+  var otherWrap=document.getElementById('f-other-subject-wrap');
+  var otherInp=document.getElementById('f-other-subject');
   if(!wrap)return;
+  
   var selArr=(selected||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var otherVals = [];
+  var baseSel = [];
+  selArr.forEach(function(s){
+    if(SUBJS.indexOf(s)>=0 && s!=='Other') baseSel.push(s);
+    else if(s!=='Other') otherVals.push(s);
+  });
+  
   wrap.innerHTML='';
   SUBJS.forEach(function(subj){
-    var active=selArr.indexOf(subj)>=0;
+    var active = (subj==='Other') ? (otherVals.length>0 || selArr.indexOf('Other')>=0) : (baseSel.indexOf(subj)>=0);
     var label=document.createElement('label');
     label.style.cssText='display:flex;align-items:center;gap:5px;cursor:pointer;';
     var cb=document.createElement('input');
     cb.type='checkbox';cb.value=subj;cb.checked=active;
     cb.style.cssText='width:18px;height:18px;accent-color:#22c55e;flex-shrink:0;cursor:pointer;';
     cb.addEventListener('change',function(){
-      var all=wrap.querySelectorAll('input[type=checkbox]'),vals=[];
-      all.forEach(function(x){if(x.checked)vals.push(x.value);});
-      if(hidEl)hidEl.value=vals.join(', ');
+      _syncSubjectValue();
     });
     var span=document.createElement('span');
     span.textContent=subj;span.style.cssText='font-size:13px;color:var(--txt);';
     label.appendChild(cb);label.appendChild(span);wrap.appendChild(label);
   });
-  if(hidEl)hidEl.value=selArr.join(', ');
+  
+  if(otherInp) otherInp.value = otherVals.join(', ');
+  _syncSubjectValue();
+}
+
+function _syncSubjectValue(){
+  var wrap=document.getElementById('f-subject-boxes');
+  var hidEl=document.getElementById('f-subject');
+  var otherWrap=document.getElementById('f-other-subject-wrap');
+  var otherInp=document.getElementById('f-other-subject');
+  if(!wrap || !hidEl) return;
+  
+  var all=wrap.querySelectorAll('input[type=checkbox]'),vals=[];
+  var isOtherChecked = false;
+  all.forEach(function(x){
+    if(x.checked){
+      if(x.value==='Other') isOtherChecked = true;
+      else vals.push(x.value);
+    }
+  });
+  
+  if(otherWrap) otherWrap.classList.toggle('hidden', !isOtherChecked);
+  if(isOtherChecked && otherInp && otherInp.value.trim()){
+    vals.push(otherInp.value.trim());
+  }
+  
+  hidEl.value=vals.join(', ');
+}
+
+function _onOtherSubjInput(){
+  _syncSubjectValue();
 }
 
 function _refreshAllStudentDropdowns(){
@@ -5842,7 +5887,9 @@ function startAdd(){
   var _fa=document.getElementById('f-addr');if(_fa)_fa.value='';
   var _fadm=document.getElementById('f-adm-no');if(_fadm)_fadm.value='';
   var _fs=document.getElementById('f-school');if(_fs)_fs.value='';
-  document.getElementById('phone-rows').innerHTML='';addPhRow('','Personal');initSubjectChips('');go('add');_updateAdmissionFieldHint();}
+  document.getElementById('phone-rows').innerHTML='';addPhRow('','Personal');
+  var oInp=document.getElementById('f-other-subject');if(oInp)oInp.value='';
+  initSubjectChips('');go('add');_updateAdmissionFieldHint();}
 function startEdit(sid){
   var s=db.students.find(function(x){return x.id===sid;});if(!s)return;
   editId=sid;document.getElementById('form-title').innerHTML='<span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Student';document.getElementById('save-btn').textContent='Update';
