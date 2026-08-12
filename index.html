@@ -7346,7 +7346,42 @@ function adjThresh(which,delta){
   showToast('Absent='+_threshAbs+' Late='+_threshLate);
 }
 function saveThresh(){}
-function markAllClass(sidsStr,dateStr,status){pushUndo();var sids=sidsStr.split(',').map(Number);var targets=db.students.filter(function(s){return sids.indexOf(s.id)>=0;});var allSame=targets.every(function(s){var a=(s.attendance||{})[dateStr];return a&&a.status===status;});db.students=db.students.map(function(s){if(sids.indexOf(s.id)<0)return s;var att=Object.assign({},s.attendance||{});if(allSame){delete att[dateStr];}else{att[dateStr]={status:status};}return Object.assign({},s,{attendance:att});});saveDB();renderMarkToday();_updateAttendFlash();requestAnimationFrame(function(){_updateAttendFlash();});}
+function markAllClass(sidsStr,dateStr,status){
+  pushUndo();
+  var sids=sidsStr.split(',').map(Number);
+  var targets=db.students.filter(function(s){return sids.indexOf(s.id)>=0;});
+  
+  var unmarked = targets.filter(function(s){
+    return !(s.attendance && s.attendance[dateStr]);
+  });
+  var hasStatus = targets.filter(function(s){
+    var a = (s.attendance || {})[dateStr];
+    return a && a.status === status;
+  });
+
+  db.students=db.students.map(function(s){
+    if(sids.indexOf(s.id)<0)return s;
+    var att=Object.assign({},s.attendance||{});
+    
+    if(unmarked.length > 0){
+      // 1. If some are unmarked, only mark those as 'status'
+      if(!att[dateStr]) att[dateStr]={status:status};
+    } else if(hasStatus.length > 0){
+      // 2. Everyone is marked. If some have 'status', unmark them.
+      var a = att[dateStr];
+      if(a && a.status === status) delete att[dateStr];
+    } else {
+      // 3. Everyone is marked with something else, switch all to 'status'
+      att[dateStr]={status:status};
+    }
+    return Object.assign({},s,{attendance:att});
+  });
+  
+  saveDB();
+  renderMarkToday();
+  _updateAttendFlash();
+  requestAnimationFrame(function(){_updateAttendFlash();});
+}
 var _sibModalSid=null;
 function openSiblingModal(sid){
   _sibModalSid=sid;
