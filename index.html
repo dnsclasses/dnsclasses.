@@ -527,11 +527,12 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       </select>
     </div>
     <div><label class="flabel">LOCATION</label>
-      <select id="pr-loc" onchange="posterLoadStudents()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
-        <option value="">All</option>
-        <option value="Home">Home</option>
-        <option value="City">City</option>
-      </select>
+      <div class="m3seg" style="width:100%">
+        <button id="pr-loc-all" class="m3seg-btn on" onclick="setPrLoc('all')">All</button>
+        <button id="pr-loc-home" class="m3seg-btn" onclick="setPrLoc('home')">Home</button>
+        <button id="pr-loc-city" class="m3seg-btn" onclick="setPrLoc('city')">City</button>
+      </div>
+      <input type="hidden" id="pr-loc" value="">
     </div>
   </div>
   <!-- Bulk PDF: one chart per page, filtered by class + location. -->
@@ -946,6 +947,35 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
   <div id="ta-student-list" style="overflow-y:auto;flex:1;border:1px solid var(--ibdr);border-radius:10px;padding:8px;background:var(--ibg);color:var(--sub);font-size:13px">Select class first</div>
   <button onclick="closeTaStudentPicker()" style="margin-top:12px;padding:11px;border-radius:10px;border:none;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:14px;flex-shrink:0">Done</button>
+</div></div>
+
+<div id="hw-student-modal" class="modal hidden" onclick="closeM('hw-student-modal')" style="z-index:350">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column">
+  <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">person</span>Select Students</div>
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--ibdr);border-radius:10px;background:var(--ibg);margin-bottom:10px;flex-shrink:0">
+    <input type="checkbox" id="hw-whole-class" onchange="hwWholeClassToggled()" style="width:18px;height:18px;accent-color:#22c55e">
+    <label for="hw-whole-class" style="font-size:14px;font-weight:bold;color:var(--txt);cursor:pointer"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">groups</span>Whole Class</label>
+  </div>
+  <div id="hw-student-list" style="overflow-y:auto;flex:1;border:1px solid var(--ibdr);border-radius:10px;padding:8px;background:var(--ibg);color:var(--sub);font-size:13px">Select class first</div>
+  <button onclick="closeM('hw-student-modal')" style="margin-top:12px;padding:11px;border-radius:10px;border:none;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:14px;flex-shrink:0">Done</button>
+</div></div>
+
+<div id="hw-chapter-modal" class="modal hidden" onclick="closeM('hw-chapter-modal')" style="z-index:370">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column">
+  <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Select Chapter</div>
+  <div id="hw-chapter-list" style="overflow-y:auto;flex:1;border:1px solid var(--ibdr);border-radius:10px;padding:4px;background:var(--ibg)"></div>
+  <button onclick="closeM('hw-chapter-modal')" style="margin-top:12px;padding:11px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:bold;font-size:14px;flex-shrink:0">Cancel</button>
+</div></div>
+
+<div id="hw-tno-modal" class="modal hidden" onclick="closeM('hw-tno-modal')" style="z-index:380">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:320px">
+  <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:4px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">tag</span>Edit Test Number</div>
+  <div id="hw-tno-sub" style="font-size:12px;color:var(--sub);margin-bottom:12px"></div>
+  <input id="hw-tno-input" placeholder="e.g. T5" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;margin-bottom:14px;box-sizing:border-box;text-transform:uppercase">
+  <div style="display:flex;gap:8px">
+    <button onclick="closeM('hw-tno-modal')" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:bold;font-size:14px">Cancel</button>
+    <button onclick="_saveHwTnoEdit()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:14px">Save</button>
+  </div>
 </div></div>
 
 <div id="ta-tno-modal" class="modal hidden" onclick="closeM('ta-tno-modal')" style="z-index:360">
@@ -1419,17 +1449,17 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div style="font-weight:bold;font-size:18px;color:var(--acc);margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">print</span>Printables</div>
   <div style="display:flex;justify-content:center;margin-bottom:14px">
     <div class="m3seg" style="max-width:320px;width:100%">
-      <button id="prn-mode-chart" class="m3seg-btn on" onclick="setPrnMode('chart')"><span class="material-symbols-outlined">show_chart</span>Progress</button>
+      <button id="prn-mode-hw" class="m3seg-btn on" onclick="setPrnMode('hw')"><span class="material-symbols-outlined">edit_note</span>Homework</button>
+      <button id="prn-mode-chart" class="m3seg-btn" onclick="setPrnMode('chart')"><span class="material-symbols-outlined">show_chart</span>Progress</button>
       <button id="prn-mode-mock" class="m3seg-btn" onclick="setPrnMode('mock')"><span class="material-symbols-outlined">track_changes</span>Mock Record</button>
-      <button id="prn-mode-hw" class="m3seg-btn" onclick="setPrnMode('hw')"><span class="material-symbols-outlined">edit_note</span>Homework</button>
     </div>
   </div>
 
   <!-- PROGRESS CHART MODE -->
-  <div id="prn-chart-panel">
+  <div id="prn-chart-panel" class="hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">show_chart</span>Progress Chart</div>
-      <button onclick="resetPrnChartForm()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
+      <button onclick="renderPrnChart()" style="padding:5px 14px;border-radius:20px;border:none;background:var(--acc);color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Refresh</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
@@ -1485,17 +1515,25 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 
   <!-- HOMEWORK&nbsp;CHART MODE -->
-  <div id="prn-hw-panel" class="hidden">
+  <div id="prn-hw-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-weight:bold;font-size:16px;color:var(--acc)"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Homework Chart</div>
       <button onclick="resetHwForm()" style="padding:5px 14px;border-radius:20px;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">refresh</span>Reset</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <div><label class="flabel">NAME <span style="font-weight:400;opacity:0.7">(optional)</span></label>
-        <input id="prn-hw-name" oninput="syncHwChartLive()" placeholder="" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+      <div style="grid-column: span 2"><label class="flabel">1. SELECT CLASS</label>
+        <select id="prn-hw-class" onchange="hwClassChanged();_gpSync('prn-hw-class','prn-hw-class-btn');syncHwChartLive()" style="display:none"><option value="">Select class...</option></select>
+        <button type="button" id="prn-hw-class-btn" onclick="openGenericPicker('prn-hw-class')" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;text-align:left;cursor:pointer">Select class...</button>
       </div>
-      <div><label class="flabel">CLASS</label>
-        <input id="prn-hw-class" oninput="syncHwChartLive()" placeholder="e.g. 9" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+      <div style="grid-column: span 2"><label class="flabel">2. SELECT STUDENT(S) / FULL CLASS</label>
+        <div style="display:flex;gap:8px">
+          <button id="hw-for-btn" onclick="openHwStudentPicker()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" disabled>Select class first</button>
+          <button onclick="document.getElementById('hw-manual-name-wrap').classList.toggle('hidden')" style="padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px">edit</span></button>
+        </div>
+      </div>
+      <div id="hw-manual-name-wrap" class="hidden" style="grid-column: span 2">
+        <label class="flabel">MANUAL NAME <span style="font-weight:400;opacity:0.7">(optional)</span></label>
+        <input id="prn-hw-name" oninput="syncHwChartLive()" placeholder="Enter name manually..." style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div><label class="flabel">SCHOOL <span style="font-weight:400;opacity:0.7">(optional)</span></label>
         <input id="prn-hw-school" oninput="syncHwChartLive()" placeholder="e.g. DPS" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
@@ -2032,7 +2070,7 @@ function _restoreScoreState(){
     var useDraft=draft&&draft.cls===cls&&draft.chapter===chapter&&draft.tno===tno;
     var hasSaved=false;
     studs.forEach(function(s){
-      var source=useDraft?draft.entries[s.id]:(db.progress&&db.progress[s.id]&&db.progress[s.id][chapter]&&db.progress[s.id][chapter][tno]);
+      var source = (useDraft && draft.entries[s.id]) ? draft.entries[s.id] : (db.progress && db.progress[s.id] && db.progress[s.id][chapter] && db.progress[s.id][chapter][tno]);
       if(!source)return;
       hasSaved=true;
       var mk=document.getElementById('pm_'+s.id);
@@ -2532,7 +2570,7 @@ function renderDashTests(){
         var dayColor=urgent?'#ef4444':(soon?_amberClr:'var(--sub)');
         var flashTextColor=flashing?'#fff':null;
         var paperReady=r.paperMade===true;
-        var flashRgb=paperReady?'25,140,70':'160,32,32';
+        var flashRgb=paperReady?'25,140,70':'239,68,68';
         var flashBorder=paperReady?(isToday?'#15803d':'#15803d'):null;
         var paperBorder=paperReady&&!flashing?'2.5px solid #15803d':'1.5px solid '+(flashing?(paperReady?'#15803d':'rgb('+flashRgb+')'):border);
         h+='<div'+(flashing?' class="dash-test-flash"':'')+' style="background:'+(flashing?'':bg)+';border:'+paperBorder+';border-radius:10px;padding:11px 13px;margin-bottom:8px'+(flashing?';--flash-rgb:'+flashRgb:'')+'">';
@@ -8541,6 +8579,16 @@ function _posterSaveCache(){
 }
 function _posterRestoreCache(){
   // Restore saved state after rebuilding HTML
+  if(_posterCache.loc !== undefined){
+    var loc = _posterCache.loc;
+    var val = (loc === 'Home' ? 'home' : (loc === 'City' ? 'city' : 'all'));
+    var all=document.getElementById('pr-loc-all'), home=document.getElementById('pr-loc-home'), city=document.getElementById('pr-loc-city');
+    if(all) all.classList.toggle('on', val === 'all');
+    if(home) home.classList.toggle('on', val === 'home');
+    if(city) city.classList.toggle('on', val === 'city');
+    var inp = document.getElementById('pr-loc');
+    if(inp) inp.value = loc;
+  }
   if(_posterCache.topic){var tp=document.getElementById('pr-topic');if(tp)tp.value=_posterCache.topic;_prUpdateTopicBtn();}
   if(_posterCache.tno){var tn=document.getElementById('pr-tno');if(tn)tn.value=_posterCache.tno;}
   if(_posterCache.total){var tt=document.getElementById('pr-total');if(tt)tt.value=_posterCache.total;}
@@ -8689,6 +8737,22 @@ function _populateSchoolSelect(grade){
     row.style.display='none';
     sel.value='';
   }
+}
+
+function setPrLoc(loc){
+  var val = (loc === 'home' ? 'Home' : (loc === 'city' ? 'City' : ''));
+  var inp = document.getElementById('pr-loc');
+  if(inp) inp.value = val;
+  
+  // Update UI immediately
+  var all=document.getElementById('pr-loc-all'), home=document.getElementById('pr-loc-home'), city=document.getElementById('pr-loc-city');
+  if(all) all.classList.toggle('on', loc === 'all');
+  if(home) home.classList.toggle('on', loc === 'home');
+  if(city) city.classList.toggle('on', loc === 'city');
+  
+  posterLoadStudents();
+  // Force marks restoration after location switch
+  if(typeof _restoreScoreState === 'function') _restoreScoreState();
 }
 
 function posterLoadStudents(){
@@ -10422,7 +10486,7 @@ function _pgPopulateClasses(){
   var grades=[...new Set(db.students.map(function(s){return s.grade||'';}).filter(Boolean))];
   // Natural sort so Class 8,9,10,11 appear in numeric order
   grades.sort(function(a,b){var na=parseInt(a)||0,nb=parseInt(b)||0;return na!==nb?na-nb:a.localeCompare(b);});
-  ['pr-class','pg-class','ch-class','mock-class','prn-class','prn-mock-class','ta-class'].forEach(function(id){
+  ['pr-class','pg-class','ch-class','mock-class','prn-class','prn-mock-class','ta-class','prn-hw-class'].forEach(function(id){
     var el=document.getElementById(id);
     if(!el)return;
     var cur=el.value;
@@ -10439,6 +10503,7 @@ function _pgPopulateClasses(){
   if(typeof _gpSync==="function"){
     _gpSync('prn-class','prn-class-btn');
     _gpSync('prn-mock-class','prn-mock-class-btn');
+    _gpSync('prn-hw-class','prn-hw-class-btn');
     _gpSync('mock-class','mock-class-btn');
     _gpSync('mock-student','mock-student-btn');
     _gpSync('prn-loc','prn-loc-btn');
@@ -11867,7 +11932,7 @@ function getMgrClosingBalance(){
   return Math.max(0,total);
 }
 // ═══ PRINTABLES ═══
-var prnMode='chart';
+var prnMode='hw';
 function renderPrintables(){
   _initChapters();
   _pgPopulateClasses();
@@ -12492,11 +12557,13 @@ function _hwCheckTest(i){
   var dateTd=document.getElementById('hw-date-'+i);
   var hwTd=document.getElementById('hw-td-'+i);
   if(!inp||!dateTd||!hwTd)return;
-  var isExam=/\bexam\b/i.test(inp.value);
-  var isTest=!isExam&&/\btest\b/i.test(inp.value);
+  
+  var val = inp.value;
+  var isExam=/\bexam\b/i.test(val);
+  var isTest=!isExam&&/\btest\b/i.test(val);
   var bg=isExam?'#fecaca':(isTest?'#bbf7d0':'');
   var bold=isExam||isTest;
-  // Highlight the entire row
+  
   var row=dateTd.parentElement;
   if(row){
     row.style.background=bg;
@@ -12507,6 +12574,248 @@ function _hwCheckTest(i){
   dateTd.style.fontWeight=bold?'800':'700';
   inp.style.fontWeight=bold?'800':'';
   inp.style.background='transparent';
+
+  // Smart TEST Logic
+  var container = document.getElementById('hw-test-extra-'+i);
+  if(isTest && (val.toUpperCase().indexOf('TEST') >= 0)){
+    if(!container){
+      container = document.createElement('div');
+      container.id = 'hw-test-extra-'+i;
+      container.style.marginTop = '4px';
+      container.style.padding = '8px';
+      container.style.borderRadius = '8px';
+      container.style.background = 'rgba(255,255,255,0.8)';
+      container.style.border = '1.5px dashed #22c55e';
+      hwTd.appendChild(container);
+    }
+    container.classList.remove('hidden');
+    _hwRenderTestOptions(i, container);
+  } else {
+    if(container) container.classList.add('hidden');
+  }
+}
+
+function _hwRenderTestOptions(i, container){
+  var cls=document.getElementById('prn-hw-class').value;
+  if(!cls){
+    container.innerHTML = '<div style="font-size:10px;color:#ef4444">Select class first</div>';
+    return;
+  }
+  
+  if(!_hwSmartTestData[i]) _hwSmartTestData[i] = {chapter:'', tno:'', mode:'rev'};
+  var data = _hwSmartTestData[i];
+
+  var h = '<div style="font-size:10px;font-weight:bold;margin-bottom:6px;color:#15803d;letter-spacing:0.5px;text-transform:uppercase">Smart Test Setup</div>';
+  
+  // Chapter Selection Button (Modal based)
+  h += '<button onclick="openHwChapterPicker('+i+')" style="width:100%;padding:6px;border-radius:8px;border:1px solid #22c55e;background:#fff;color:'+(data.chapter?'#000':'var(--sub)')+';font-size:11px;text-align:left;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
+       '<span class="material-symbols-outlined" style="font-size:14px">menu_book</span>'+(data.chapter?esc(data.chapter):'Select Chapter...')+'</button>';
+
+  // Test Number Row
+  h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">';
+  h += '<button onclick="openHwTnoEdit('+i+')" style="flex:1;padding:6px;border-radius:8px;border:1px solid #22c55e;background:#fff;color:'+(data.tno?'#000':'var(--sub)')+';font-size:11px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:4px">'+
+       '<span class="material-symbols-outlined" style="font-size:14px">tag</span>'+(data.tno?esc(data.tno):'Test No...')+'</button>';
+  
+  // Revision / Preparing
+  h += '<div style="display:flex;gap:6px">';
+  h += '<label style="font-size:10px;display:flex;align-items:center;gap:2px;cursor:pointer;color:#1e293b"><input type="radio" name="hw-test-mode-'+i+'" value="rev" onchange="_hwSetMode('+i+',\'rev\')" '+(data.mode==='rev'?'checked':'')+'> Rev.</label>';
+  h += '<label style="font-size:10px;display:flex;align-items:center;gap:2px;cursor:pointer;color:#1e293b"><input type="radio" name="hw-test-mode-'+i+'" value="prep" onchange="_hwSetMode('+i+',\'prep\')" '+(data.mode==='prep'?'checked':'')+'> Prep.</label>';
+  h += '</div></div>';
+  
+  container.innerHTML = h;
+}
+
+function _hwSetMode(i, mode){
+  if(!_hwSmartTestData[i]) _hwSmartTestData[i] = {chapter:'', tno:'', mode:'rev'};
+  _hwSmartTestData[i].mode = mode;
+  _hwSyncTestToDash(i);
+}
+
+function openHwChapterPicker(i){
+  var cls=document.getElementById('prn-hw-class').value;
+  if(!cls) return;
+  _initChapters();
+  var chs = [];
+  if(_hwSelectedStudents.length){
+    for(var j=0;j<_hwSelectedStudents.length;j++){
+      var stu=db.students.find(function(s){return s.id===_hwSelectedStudents[j];});
+      if(!stu)continue;
+      var key=_chKeyCls(stu.grade||'Other',stu.school||'');
+      var list=db.chapters[key]||[];
+      if(list.length){chs=list;break;}
+    }
+  }
+  if(!chs.length){
+    var key=_chKeyCls(cls,'');
+    chs = db.chapters[key] || db.chapters[cls] || [];
+  }
+  
+  var listEl = document.getElementById('hw-chapter-list');
+  if(!listEl) return;
+  listEl.innerHTML = chs.map(function(c){
+    var display = (c.num ? 'Ch. ' + c.num + ' ' : '') + c.name;
+    return '<div onclick="selectHwChapter('+i+',\''+esc(c.name)+'\','+(c.num||'null')+')" style="padding:12px 10px;border-bottom:1px solid var(--ibdr);cursor:pointer;font-size:14px;color:var(--txt);font-weight:600">'+esc(display)+'</div>';
+  }).join('');
+  if(!chs.length) listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--sub)">No chapters found for this class.</div>';
+  openM('hw-chapter-modal');
+}
+
+function selectHwChapter(i, name, num){
+  if(!_hwSmartTestData[i]) _hwSmartTestData[i] = {chapter:'', tno:'', mode:'rev', rawName:'', chNum:null};
+  _hwSmartTestData[i].rawName = name;
+  _hwSmartTestData[i].chNum = num;
+  _hwSmartTestData[i].chapter = (num ? 'Ch. ' + num + ' ' : '') + name;
+  
+  // Always auto-calculate test number when chapter changes to ensure it's correct for the new chapter
+  _hwSmartTestData[i].tno = _hwGetNextTno(document.getElementById('prn-hw-class').value, name);
+  
+  closeM('hw-chapter-modal');
+  var container = document.getElementById('hw-test-extra-'+i);
+  if(container) _hwRenderTestOptions(i, container);
+  _hwSyncTestToDash(i);
+}
+
+function _hwGetNextTno(cls, chapterName){
+  try {
+    if(!cls || !chapterName) return 'T1';
+    var used = new Set();
+    // 1. Count tests already recorded in progress
+    (db.students||[]).forEach(function(s){
+      if(String(s.grade||'')===String(cls)){
+        var cp=(db.progress&&db.progress[s.id]&&db.progress[s.id][chapterName])||{};
+        Object.keys(cp).forEach(function(t){ if(/^T[0-9]+$/i.test(t)) used.add(t.toUpperCase()); });
+      }
+    });
+    // 2. Count tests already scheduled in reminders
+    ((db.settings&&db.settings.testReminders)||[]).forEach(function(r){
+      if(String(r.cls)===String(cls) && r.topics.some(function(t){ 
+        // Match "Chapter Name --T1" or "Ch. 5 Chapter Name --T1"
+        return t.indexOf(chapterName) >= 0; 
+      })){
+        r.topics.forEach(function(t){
+          // Extract T number from strings like "... --T2"
+          var match = t.match(/--T(\d+)$/i);
+          if(match) used.add('T' + match[1]);
+          else if(/^T[0-9]+$/i.test(t)) used.add(t.toUpperCase());
+        });
+      }
+    });
+    
+    // Determine next number based on highest existing T number
+    var max = 0;
+    used.forEach(function(t){
+      var n = parseInt(t.substring(1));
+      if(!isNaN(n) && n > max) max = n;
+    });
+    
+    return 'T' + (max + 1);
+  } catch(e){ return 'T1'; }
+}
+
+var _hwTnoPendingRow = null;
+function openHwTnoEdit(i){
+  _hwTnoPendingRow = i;
+  var data = _hwSmartTestData[i] || {chapter:'', tno:'', mode:'rev'};
+  var sub = document.getElementById('hw-tno-sub');
+  if(sub) sub.textContent = data.chapter || 'Select chapter first';
+  var inp = document.getElementById('hw-tno-input');
+  if(inp) inp.value = data.tno || '';
+  openM('hw-tno-modal');
+}
+
+function _saveHwTnoEdit(){
+  var i = _hwTnoPendingRow;
+  if(i === null) return;
+  var inp = document.getElementById('hw-tno-input');
+  if(inp){
+    var val = inp.value.trim();
+    if(val){
+      if(!/^T/i.test(val)) val = 'T' + val;
+      val = val.toUpperCase();
+      if(!_hwSmartTestData[i]) _hwSmartTestData[i] = {chapter:'', tno:'', mode:'rev'};
+      _hwSmartTestData[i].tno = val;
+      var container = document.getElementById('hw-test-extra-'+i);
+      if(container) _hwRenderTestOptions(i, container);
+      _hwSyncTestToDash(i);
+    }
+  }
+  _hwTnoPendingRow = null;
+  closeM('hw-tno-modal');
+}
+
+function _hwSyncTestToDash(i){
+  var data = _hwSmartTestData[i];
+  if(!data || !data.chapter) return;
+  
+  var dateTd = document.getElementById('hw-date-'+i);
+  var dateStr = dateTd.textContent.trim(); // "29 Jul 2026 (Wednesday)"
+  var parts = dateStr.split(' ');
+  var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var month = ('0' + (monthNames.indexOf(parts[1]) + 1)).slice(-2);
+  var isoDate = parts[2] + '-' + month + '-' + ('0'+parts[0]).slice(-2);
+  
+  var cls = document.getElementById('prn-hw-class').value;
+  var manualName = (document.getElementById('prn-hw-name').value||'').trim();
+  var forWho = manualName;
+  if(!forWho){
+    if(_hwWholeClass) forWho = 'Class ' + cls;
+    else if(_hwSelectedStudents.length){
+      var names=_hwSelectedStudents.map(function(sid){
+        var stu=db.students.find(function(s){return s.id===sid;});
+        return stu?stu.name:null;
+      }).filter(Boolean);
+      forWho = names.join(', ');
+    } else {
+      forWho = 'Homework Chart';
+    }
+  }
+
+  if(!db.settings) db.settings = {};
+  if(!db.settings.testReminders) db.settings.testReminders = [];
+  
+  var existingIdx = db.settings.testReminders.findIndex(function(r){
+    return r.date === isoDate && r.forWho === forWho && r.id.indexOf('tr-hw-'+i) === 0;
+  });
+  
+  // Format for Dashboard: "Chapter Name --Tno"
+  var dashTopic = data.chapter + (data.tno ? ' --' + data.tno : '');
+  
+  var newTest = {
+    id: 'tr-hw-' + i + '-' + Date.now(),
+    date: isoDate,
+    topics: [dashTopic],
+    forWho: forWho,
+    cls: cls,
+    isStudent: !_hwWholeClass && _hwSelectedStudents.length > 0,
+    mode: data.mode,
+    flashStopped: false
+  };
+
+  if(existingIdx >= 0) db.settings.testReminders[existingIdx] = newTest;
+  else db.settings.testReminders.push(newTest);
+  
+  saveDB();
+  
+  // Update Homework Cell Text
+  var inp = document.getElementById('hw-cell-'+i);
+  if(inp){
+    // Remove existing TEST lines or the trigger word "TEST" to avoid duplication
+    var lines = inp.value.split('\n');
+    var filtered = lines.filter(function(line){
+      var l = line.trim().toUpperCase();
+      return l !== 'TEST' && !l.startsWith('TEST:');
+    });
+    var baseText = filtered.join('\n').trim();
+    
+    // Format for Chart: "TEST: Chapter Name --- Tno" (No Revision/Preparing)
+    var testText = 'TEST: ' + data.chapter + (data.tno ? ' --- ' + data.tno : '');
+    
+    inp.value = (baseText ? baseText + '\n' : '') + testText;
+    _hwAutoSizeCell(inp);
+  }
+
+  showToast('Test synced to Dashboard!');
+  if(typeof renderDashTests === 'function') renderDashTests();
 }
 function _hwAutoSizeCell(el){
   if(!el)return;
@@ -12558,6 +12867,76 @@ function _hwRefreshLiveLayout(){
   preview.dataset.hwLayout=JSON.stringify(meta);
 }
 var _hwSavedData={};
+var _hwSelectedStudents=[];
+var _hwWholeClass=false;
+var _hwSmartTestData={}; // Tracks {chapter, tno, mode} per row
+
+function hwClassChanged(){
+  var cls=document.getElementById('prn-hw-class').value;
+  var wcCb=document.getElementById('hw-whole-class');
+  var list=document.getElementById('hw-student-list');
+  var forBtn=document.getElementById('hw-for-btn');
+  _hwSelectedStudents=[];
+  _hwWholeClass=false;
+  if(wcCb)wcCb.checked=false;
+  if(!cls){
+    if(wcCb)wcCb.disabled=true;
+    if(list)list.innerHTML='Select class first';
+    if(forBtn){forBtn.disabled=true;forBtn.textContent='Select class first';forBtn.style.color='var(--sub)';}
+    return;
+  }
+  // Enable student selection only after class is selected
+  if(wcCb)wcCb.disabled=false;
+  if(forBtn){forBtn.disabled=false;forBtn.textContent='Tap to select students';forBtn.style.color='var(--txt)';}
+  var studs=db.students.filter(function(s){return (s.grade||'')===cls&&s.status!=='inactive';});
+  studs.sort(function(a,b){return a.name.localeCompare(b.name);});
+  if(!list)return;
+  if(!studs.length){
+    list.innerHTML='No active students in this class';
+  } else {
+    list.innerHTML=studs.map(function(s){
+      return '<label style="display:flex;align-items:center;gap:12px;padding:11px 6px;cursor:pointer;border-bottom:1px solid var(--ibdr)">'
+        +'<input type="checkbox" class="hw-stu-cb" value="'+s.id+'" onchange="hwStudentCheckChanged()" style="width:22px;height:22px;accent-color:#22c55e;flex-shrink:0">'
+        +'<span style="color:var(--txt);font-size:16px;font-weight:600">'+esc(s.name)+(s.school?' <span style="color:var(--sub);font-size:13px;font-weight:400">('+esc(s.school)+')</span>':'')+'</span>'
+        +'</label>';
+    }).join('');
+  }
+}
+
+function hwWholeClassToggled(){
+  var wcCb=document.getElementById('hw-whole-class');
+  _hwWholeClass=wcCb.checked;
+  document.querySelectorAll('.hw-stu-cb').forEach(function(cb){cb.checked=false;cb.disabled=_hwWholeClass;});
+  if(_hwWholeClass)_hwSelectedStudents=[];
+  _hwUpdateForBtn();
+  syncHwChartLive();
+}
+
+function hwStudentCheckChanged(){
+  var cbs=document.querySelectorAll('.hw-stu-cb:checked');
+  _hwSelectedStudents=Array.prototype.map.call(cbs,function(cb){return parseInt(cb.value);});
+  _hwUpdateForBtn();
+  syncHwChartLive();
+}
+
+function _hwUpdateForBtn(){
+  var forBtn=document.getElementById('hw-for-btn');
+  if(!forBtn||forBtn.disabled)return;
+  if(_hwWholeClass){forBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">groups</span>Whole Class';forBtn.style.color='var(--txt)';return;}
+  if(!_hwSelectedStudents.length){forBtn.textContent='Tap to select students';forBtn.style.color='var(--sub)';return;}
+  if(_hwSelectedStudents.length===1){
+    var stu=db.students.find(function(s){return s.id===_hwSelectedStudents[0];});
+    forBtn.textContent=stu?stu.name:_hwSelectedStudents.length+' selected';
+  } else {
+    forBtn.textContent=_hwSelectedStudents.length+' students selected';
+  }
+  forBtn.style.color='var(--txt)';
+}
+
+function openHwStudentPicker(){
+  openM('hw-student-modal');
+}
+
 function _hwRememberCurrentInputs(){
   var preview=document.getElementById('prn-hw-preview');
   if(!preview||!preview.dataset.count)return 0;
@@ -12589,6 +12968,12 @@ function resetHwForm(){
   var autoParse = document.getElementById('hw-auto-parse');
   if(autoParse) autoParse.value='';
   _hwSavedData={};
+  _hwSelectedStudents=[];
+  _hwWholeClass=false;
+  _hwUpdateForBtn();
+  if(typeof _gpSync === 'function') _gpSync('prn-hw-class','prn-hw-class-btn');
+  var manualWrap = document.getElementById('hw-manual-name-wrap');
+  if(manualWrap) manualWrap.classList.add('hidden');
   var preview=document.getElementById('prn-hw-preview');
   if(preview){preview.innerHTML='';preview.dataset.count='0';preview.dataset.name='';preview.dataset.cls='';preview.dataset.school='';preview.dataset.subject='';preview.dataset.labels='';}
   showToast('Homework chart reset');
@@ -12598,8 +12983,19 @@ function updateHwFromTo(){
   generateHwChart();
 }
 function generateHwChart(){
-  var name=(document.getElementById('prn-hw-name').value||'').trim();
+  var manualName=(document.getElementById('prn-hw-name').value||'').trim();
   var cls=(document.getElementById('prn-hw-class').value||'').trim();
+  var name = manualName;
+  if(!name){
+    if(_hwWholeClass) name = 'Class ' + cls;
+    else if(_hwSelectedStudents.length){
+      var names=_hwSelectedStudents.map(function(sid){
+        var stu=db.students.find(function(s){return s.id===sid;});
+        return stu?stu.name:null;
+      }).filter(Boolean);
+      name = names.join(', ');
+    }
+  }
   var school=(document.getElementById('prn-hw-school').value||'').trim();
   var subject=(document.getElementById('prn-hw-subject').value||'').trim();
   var fromV=document.getElementById('prn-hw-from').value;
