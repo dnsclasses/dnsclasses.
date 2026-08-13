@@ -2026,6 +2026,27 @@ function _tieBreakByHistory(a,b,fromYm){
   return a.name.localeCompare(b.name);
 }
 var _selectedRankMonth=null;
+var _rankTopN=0;
+function _loadRankTopN(){
+  var n=parseInt(localStorage.getItem('dns_rank_top_n')||'0',10);
+  return isNaN(n)||n<1?0:Math.min(n,9999);
+}
+function setRankTopN(value){
+  var n=parseInt(value,10);
+  if(isNaN(n)||n<1)n=0;
+  _rankTopN=Math.min(n,9999);
+  localStorage.setItem('dns_rank_top_n',String(_rankTopN));
+  renderRankings();
+}
+function setRankTopNLive(value){
+  var n=parseInt(value,10);
+  _rankTopN=isNaN(n)||n<1?0:Math.min(n,9999);
+  localStorage.setItem('dns_rank_top_n',String(_rankTopN));
+}
+function applyRankTopCustom(){
+  var el=document.getElementById('pr-ranktop-custom');
+  setRankTopN(el?el.value:0);
+}
 // Reconstructs any month's marks for a student: live data for the current month,
 // or (next month's archived baseline − this month's archived baseline) for past months.
 function _getMonthlyFigures(s,ym){
@@ -3489,6 +3510,7 @@ function renderRankings(){
   var block=document.getElementById('bc-rank-content');
   if(!block)return;
   // Get all active students
+  _rankTopN=_loadRankTopN();
   var studs=(db.students||[]).filter(function(s){return s.status!=='inactive'&&!s.rankExcluded;});
   var _rankExclCount=(db.students||[]).filter(function(s){return s.status!=='inactive'&&s.rankExcluded;}).length;
   if(!studs.length){block.innerHTML='<div style="text-align:center;color:var(--sub);padding:30px">No students yet.</div>';return;}
@@ -3513,6 +3535,7 @@ function renderRankings(){
   var _histKeys=Object.keys((db.settings&&db.settings.rankHistory)||{}).sort().reverse();
   if(!_selectedRankMonth||(_histKeys.indexOf(_selectedRankMonth)<0&&_selectedRankMonth!==_curYm&&_selectedRankMonth!=='ALL'))_selectedRankMonth=_curYm;
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">';
+  h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0">';
   h+='<select id="pr-rankmonth" data-label="Select Month" onchange="_selectedRankMonth=this.value;renderRankings();" style="font-size:11px;font-weight:800;color:var(--acc);background:var(--card);border:1px solid var(--ibdr);border-radius:20px;padding:5px 12px;letter-spacing:0.5px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1">';
   _histKeys.forEach(function(ym){
     var parts=ym.split('-');var mLbl=_MONTHS[parseInt(parts[1])-1]+' '+parts[0];
@@ -3521,8 +3544,10 @@ function renderRankings(){
   });
   h+='<option value="ALL"'+(_selectedRankMonth==='ALL'?' selected':'')+'>\ud83c\udfc6 Overall (All Time)</option>';
   h+='</select>';
+  h+='<label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--sub);white-space:nowrap">Top <input id="pr-ranktop-custom" type="number" min="1" max="9999" inputmode="numeric" placeholder="____" value="'+(_rankTopN>0?_rankTopN:'')+'" oninput="setRankTopNLive(this.value)" onchange="setRankTopN(this.value)" onkeydown="if(event.key===\'Enter\'){setRankTopN(this.value);this.blur();}" style="width:70px;font-size:13px;font-weight:800;color:var(--txt);background:var(--card);border:1px solid var(--ibdr);border-radius:9px;padding:6px 8px;box-sizing:border-box;text-align:center"></label>';
   h+='<button onclick="openRankExcludeModal()" style="padding:7px 16px;border-radius:10px;font-size:13px;font-weight:700;background:var(--ibg);color:var(--txt);border:1px solid var(--ibdr);cursor:pointer;touch-action:manipulation;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:13px">person_off</span>Exclude<span id="rank-excl-count-badge" style="'+(_rankExclCount>0?'':'display:none;')+'background:#ef4444;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 7px;min-width:8px;text-align:center">'+_rankExclCount+'</span></button>';
-  h+='<button onclick="showPrintRankMenu()" style="padding:7px 16px;border-radius:10px;font-size:13px;font-weight:700;background:#22c55e;color:#fff;border:none;cursor:pointer;touch-action:manipulation;flex-shrink:0;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">print</span>Print</button>';
+  h+='</div>';
+  h+='<button onclick="showPrintRankMenu()" style="margin-left:auto;padding:7px 16px;border-radius:10px;font-size:13px;font-weight:700;background:#22c55e;color:#fff;border:none;cursor:pointer;touch-action:manipulation;flex-shrink:0;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">print</span>Print</button>';
   h+='</div>';
   grades.forEach(function(g){
    var _subGroups=_splitBySyllabus(byGrade[g]);
@@ -3544,6 +3569,8 @@ function renderRankings(){
       if(a.data.monthScore!==b.data.monthScore)return b.data.monthScore-a.data.monthScore;
       return _tieBreakByHistory(a.s,b.s,_selectedRankMonth);
     });
+    if(_rankTopN>0)students=students.slice(0,_rankTopN);
+    if(!students.length)return;
     var _gradeStArr=students.map(function(it){return it.s;});
     var _prevRankMap=_computeGradeRankMap(_gradeStArr,_prevYmStr(_selectedRankMonth));
     var _groupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthMax||0;})));
@@ -3727,6 +3754,7 @@ function showPrintRankMenu(){
 function printNoticeBoard(filterGrade,filterLoc,monthYm){
   var studs=_getSessionStudents().filter(function(s){return !s.rankExcluded;});
   if(!studs.length)return;
+  var _printTopN=_loadRankTopN();
   var byGrade={};
   studs.forEach(function(s){
     var g=s.grade||'Other';
@@ -3815,6 +3843,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       if(a.d.monthScore!==b.d.monthScore)return b.d.monthScore-a.d.monthScore;
       return _tieBreakByHistory(a.s,b.s,monthYm);
     });
+    if(_printTopN>0)students=students.slice(0,_printTopN);
     var _grSt=students.map(function(it){return it.s;});
     var _prevRankMap=_computeGradeRankMap(_grSt,_prevYmStr(monthYm));
     var _nbGroupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.d.monthMax||0;})));
@@ -3893,6 +3922,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
 function printRankings(filterGrade,filterLoc,monthYm){
   var studs=_getSessionStudents().filter(function(s){return !s.rankExcluded;});
   if(!studs.length)return;
+  var _printTopN=_loadRankTopN();
   var byGrade={};
   studs.forEach(function(s){
     var g=s.grade||'Other';
@@ -3977,6 +4007,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
       if(a.data.monthScore!==b.data.monthScore)return b.data.monthScore-a.data.monthScore;
       return _tieBreakByHistory(a.s,b.s,monthYm);
     });
+    if(_printTopN>0)students=students.slice(0,_printTopN);
     var _pGrSt=students.map(function(it){return it.s;});
     var _prevRankMap=_computeGradeRankMap(_pGrSt,_prevYmStr(monthYm));
     var _pGroupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthMax||0;})));
@@ -12463,10 +12494,9 @@ function hwCopyAll(){
   var lines=[];
   for(var i=0;i<count;i++){
     var inp=document.getElementById('hw-cell-'+i);
-    var dateLbl=document.getElementById('hw-date-'+i);
-    if(inp&&dateLbl){
+    if(inp){
       var val=inp.value||'';
-      lines.push(dateLbl.textContent.trim()+'\t'+val);
+      lines.push(val);
     }
   }
   var text=lines.join('\n');
@@ -12962,6 +12992,7 @@ function hwClassChanged(){
   _hwWholeClass=false;
   if(wcCb)wcCb.checked=false;
   if(!cls){
+    _hwAutofillSchool();
     if(wcCb)wcCb.disabled=true;
     if(list)list.innerHTML='Select class first';
     if(forBtn){forBtn.disabled=true;forBtn.textContent='Select class first';forBtn.style.color='var(--sub)';}
@@ -12972,6 +13003,7 @@ function hwClassChanged(){
   if(forBtn){forBtn.disabled=false;forBtn.textContent='Tap to select students';forBtn.style.color='var(--txt)';}
   var studs=db.students.filter(function(s){return (s.grade||'')===cls&&s.status!=='inactive';});
   studs.sort(function(a,b){return a.name.localeCompare(b.name);});
+  _hwAutofillSchool(studs);
   if(!list)return;
   if(!studs.length){
     list.innerHTML='No active students in this class';
@@ -12991,6 +13023,7 @@ function hwWholeClassToggled(){
   document.querySelectorAll('.hw-stu-cb').forEach(function(cb){cb.checked=false;cb.disabled=_hwWholeClass;});
   if(_hwWholeClass)_hwSelectedStudents=[];
   _hwUpdateForBtn();
+  _hwAutofillSchool();
   syncHwChartLive();
 }
 
@@ -12998,7 +13031,30 @@ function hwStudentCheckChanged(){
   var cbs=document.querySelectorAll('.hw-stu-cb:checked');
   _hwSelectedStudents=Array.prototype.map.call(cbs,function(cb){return parseInt(cb.value);});
   _hwUpdateForBtn();
+  _hwAutofillSchool();
   syncHwChartLive();
+}
+
+function _hwAutofillSchool(classStudents){
+  var schoolEl=document.getElementById('prn-hw-school');
+  if(!schoolEl)return;
+  var cls=(document.getElementById('prn-hw-class')||{}).value||'';
+  var students=[];
+  if(_hwSelectedStudents.length){
+    students=_hwSelectedStudents.map(function(sid){
+      return db.students.find(function(s){return s.id===sid;});
+    }).filter(Boolean);
+  } else if(cls){
+    students=classStudents||db.students.filter(function(s){return (s.grade||'')===cls&&s.status!=='inactive';});
+  }
+  var schools=[];
+  students.forEach(function(stu){
+    var school=String(stu.school||'').trim();
+    if(school&&schools.indexOf(school)===-1)schools.push(school);
+  });
+  // Use the first saved school immediately. This covers individual students and
+  // class selections; the user can still edit the field for a mixed-school class.
+  schoolEl.value=schools.length?schools[0]:'';
 }
 
 function _hwUpdateForBtn(){
