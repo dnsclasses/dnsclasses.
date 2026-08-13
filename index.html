@@ -12772,6 +12772,57 @@ function openHwChapterPicker(i){
   openM('hw-chapter-modal');
 }
 
+function _hwGetChapterList(){
+  _initChapters();
+  var cls=(document.getElementById('prn-hw-class')||{}).value||'';
+  if(!cls)return [];
+  var chs=[];
+  if(_hwSelectedStudents.length){
+    for(var i=0;i<_hwSelectedStudents.length;i++){
+      var stu=db.students.find(function(s){return s.id===_hwSelectedStudents[i];});
+      if(!stu)continue;
+      var selectedList=db.chapters[_chKeyCls(stu.grade||cls,stu.school||'')]||[];
+      if(selectedList.length){chs=selectedList;break;}
+    }
+  }
+  if(!chs.length){
+    var schools=[];
+    (db.students||[]).filter(function(s){return String(s.grade||'')===String(cls)&&s.status!=='inactive';}).forEach(function(s){
+      var school=String(s.school||'').trim();
+      if(schools.indexOf(school)===-1)schools.push(school);
+    });
+    if(schools.indexOf('')===-1)schools.push('');
+    for(var j=0;j<schools.length;j++){
+      var classList=db.chapters[_chKeyCls(cls,schools[j])]||[];
+      if(classList.length){chs=classList;break;}
+    }
+  }
+  return chs.filter(function(c){return c&&c.name;}).map(function(c,idx){
+    return {name:String(c.name),num:(c.num===undefined||c.num===null)?idx+1:c.num};
+  });
+}
+
+function openHwChapterPicker(i){
+  var cls=(document.getElementById('prn-hw-class')||{}).value||'';
+  if(!cls)return;
+  var chs=_hwGetChapterList();
+  window._hwChapterPickerItems=chs;
+  var listEl=document.getElementById('hw-chapter-list');
+  if(!listEl)return;
+  listEl.innerHTML=chs.map(function(c,idx){
+    var display=(c.num?'Ch. '+c.num+' ':'')+c.name;
+    return '<button type="button" onclick="selectHwChapterFromPicker('+i+','+idx+')" style="display:block;width:100%;padding:12px 10px;border:0;border-bottom:1px solid var(--ibdr);background:transparent;cursor:pointer;font-size:14px;color:var(--txt);font-weight:600;text-align:left;font-family:inherit">'+esc(display)+'</button>';
+  }).join('');
+  if(!chs.length)listEl.innerHTML='<div style="padding:20px;text-align:center;color:var(--sub)">No chapters found for this class.</div>';
+  openM('hw-chapter-modal');
+}
+
+function selectHwChapterFromPicker(i,idx){
+  var chapter=(window._hwChapterPickerItems||[])[parseInt(idx)];
+  if(!chapter)return;
+  selectHwChapter(i,chapter.name,chapter.num);
+}
+
 function selectHwChapter(i, name, num){
   if(!_hwSmartTestData[i]) _hwSmartTestData[i] = {chapter:'', tno:'', mode:'rev', rawName:'', chNum:null};
   _hwSmartTestData[i].rawName = name;
