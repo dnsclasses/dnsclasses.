@@ -543,8 +543,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     </div>
   </div>
   <!-- Bulk PDF: one chart per page, filtered by class + location. -->
-  <div style="display:flex;justify-content:center;margin-bottom:10px">
-    <button id="pr-pdf-bulk-btn" onclick="generateTestRecordsBulkPDF()" style="width:min(100%,340px);padding:10px 16px;border-radius:10px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">picture_as_pdf</span>Progress Chart (All)</button>
+  <div style="display:flex;justify-content:flex-end;align-items:center;margin:-2px 0 14px">
+    <button id="pr-pdf-bulk-btn" onclick="generateTestRecordsBulkPDF()" style="width:auto;min-width:210px;padding:9px 14px;border-radius:10px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;font-size:12px;letter-spacing:.2px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">picture_as_pdf</span>Progress Chart (All)</button>
   </div>
   <!-- School row (only for class < 9) -->
   <div id="pr-school-row" style="display:none;margin-bottom:10px">
@@ -2074,12 +2074,36 @@ function _getMonthlyFigures(s,ym){
 
 
 
+function _compareTestRecordStudents(a,b){
+  return String((a&&a.name)||'').trim().localeCompare(String((b&&b.name)||'').trim(),undefined,{sensitivity:'base',numeric:true});
+}
+function _sortTestRecordStudents(students){
+  return (students||[]).sort(_compareTestRecordStudents);
+}
+function _ensureTestRecordAlphabeticalOrder(){
+  var cont=document.getElementById('pr-students');
+  if(!cont)return;
+  var list=document.getElementById('pr-students-list');
+  if(list){
+    Array.prototype.slice.call(list.children).sort(function(rowA,rowB){
+      return String(rowA.dataset.studentName||'').trim().localeCompare(String(rowB.dataset.studentName||'').trim(),undefined,{sensitivity:'base',numeric:true});
+    }).forEach(function(row){list.appendChild(row);});
+  }
+  if(cont.dataset.studs){
+    try{
+      var entries=JSON.parse(cont.dataset.studs);
+      _sortTestRecordStudents(entries);
+      cont.dataset.studs=JSON.stringify(entries);
+    }catch(e){}
+  }
+}
 function _restoreScoreState(){
   try{
     var cls=document.getElementById('pr-class').value;
     var chapter=document.getElementById('pr-topic').value;
     var tno=(document.getElementById('pr-tno').value||'').trim();
     if(!chapter||!tno)return;
+    _ensureTestRecordAlphabeticalOrder();
     var sr=document.getElementById('pr-students').dataset.studs;
     if(!sr)return;
     var studs=JSON.parse(sr);
@@ -2112,7 +2136,7 @@ function _restoreScoreState(){
       else if(v==='AB'&&ab){ab.checked=true;if(mk){mk.value='';mk.disabled=true;mk.style.opacity='0.3';mk.style.background='var(--ibdr)';}[np,ng,na].forEach(function(o){if(o){o.disabled=true;if(o.parentElement){o.parentElement.style.opacity='0.3';o.parentElement.style.pointerEvents='none';}}});}
       else if(v==='NP'&&np){np.checked=true;if(mk){mk.value='';mk.disabled=true;mk.style.opacity='0.3';mk.style.background='var(--ibdr)';}[ab,ng,na].forEach(function(o){if(o){o.disabled=true;if(o.parentElement){o.parentElement.style.opacity='0.3';o.parentElement.style.pointerEvents='none';}}});}
       else if(v==='NG'&&ng){ng.checked=true;if(mk){mk.value='';mk.disabled=true;mk.style.opacity='0.3';mk.style.background='var(--ibdr)';}[ab,np,na].forEach(function(o){if(o){o.disabled=true;if(o.parentElement){o.parentElement.style.opacity='0.3';o.parentElement.style.pointerEvents='none';}}});}
-      else if(typeof v==='number'&&mk){
+      else if((typeof v==='number'||(typeof v==='string'&&v.trim()!==''&&!isNaN(Number(v))))&&mk){
         mk.value=v;
         [ab,np,ng,na].forEach(function(o){if(o){o.disabled=true;o.checked=false;if(o.parentElement){o.parentElement.style.opacity='0.35';o.parentElement.style.pointerEvents='none';}}});
       }
@@ -5304,7 +5328,7 @@ function taClassChanged(){
   if(wcCb)wcCb.disabled=false;
   if(forBtn){forBtn.disabled=false;forBtn.textContent='Tap to select students';forBtn.style.color='var(--txt)';}
   var studs=db.students.filter(function(s){return (s.grade||'')===cls&&s.status!=='inactive';});
-  studs.sort(function(a,b){return a.name.localeCompare(b.name);});
+  _sortTestRecordStudents(studs);
   if(!list)return;
   if(!studs.length){
     list.innerHTML='No active students in this class';
@@ -8829,6 +8853,7 @@ function _populateSchoolSelect(grade){
   var sel=document.getElementById('pr-school');
   if(!row||!sel)return;
   var num=_parseGradeNum(grade);
+  var forcedSchool=String(sel.dataset.progressContextSchool||'').trim();
   if(num<9&&grade){
     // Collect unique schools from students of this grade
     var schools=[...new Set(
@@ -8845,6 +8870,22 @@ function _populateSchoolSelect(grade){
       sel.innerHTML+='<option value="'+esc(sc)+'">'+esc(sc)+'</option>';
     });
     if(prevVal)sel.value=prevVal;// restore selected school
+    if(forcedSchool){
+      var forcedOpt=Array.prototype.find.call(sel.options,function(opt){return String(opt.value||'').trim().toLowerCase()===forcedSchool.toLowerCase();});
+      if(!forcedOpt){
+        forcedOpt=document.createElement('option');
+        forcedOpt.value=forcedSchool;forcedOpt.textContent=forcedSchool;sel.appendChild(forcedOpt);
+      }
+      sel.value=forcedOpt.value;
+    }
+    row.style.display='block';
+  } else if(forcedSchool){
+    // Progress Chart can load a saved school for any class. Keep it visible
+    // rather than clearing it through the usual primary-class-only rule.
+    sel.innerHTML='<option value="">Select school...</option>';
+    var savedOpt=document.createElement('option');
+    savedOpt.value=forcedSchool;savedOpt.textContent=forcedSchool;sel.appendChild(savedOpt);
+    sel.value=forcedSchool;
     row.style.display='block';
   } else {
     row.style.display='none';
@@ -8874,7 +8915,8 @@ function posterLoadStudents(){
   var loc=document.getElementById('pr-loc').value;
   // Read school BEFORE _populateSchoolSelect to avoid losing selection during rebuild
   var _schoolEl=document.getElementById('pr-school');
-  var school=(_parseGradeNum(grade)<9&&grade)?(_schoolEl?_schoolEl.value.trim():''):'';
+  var _forcedSchool=_schoolEl?String(_schoolEl.dataset.progressContextSchool||'').trim():'';
+  var school=((_parseGradeNum(grade)<9&&grade)||_forcedSchool)?(_schoolEl?_schoolEl.value.trim():''):'';
   _populateSchoolSelect(grade);
   // Restore school value in case it got reset during populate
   if(school&&_schoolEl&&_schoolEl.value!==school){_schoolEl.value=school;}
@@ -8911,6 +8953,7 @@ function posterLoadStudents(){
     var schoolMatch=!school||(s.school||'').trim().toLowerCase()===school.trim().toLowerCase();
     return gradeMatch&&locMatch&&schoolMatch;
   });
+  _sortTestRecordStudents(studs);
   if(!studs.length){cont.innerHTML='<div style="color:var(--sub);padding:10px;text-align:center;font-size:13px">No active students</div>';return;}
     var html='<div style="font-size:11px;font-weight:bold;color:var(--sub);margin-bottom:8px;display:flex;align-items:center;gap:0">'
     +'<span>ENTER MARKS</span>'
@@ -8918,10 +8961,10 @@ function posterLoadStudents(){
     +'<span id="pr-marks-marked" style="color:#22c55e;font-weight:bold;margin-left:8px"></span>'
     +'</div>';
 html+='<div id="pr-edit-banner" style="display:none;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.4);color:#60a5fa;font-size:12px;font-weight:bold;border-radius:8px;padding:8px 10px;margin-bottom:8px"></div>';
-html+='<div style="background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--ibdr)">';
+html+='<div id="pr-students-list" style="background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--ibdr)">';
   studs.forEach(function(s,i){
     var abs_id='pa_'+s.id, np_id='pnp_'+s.id, mk_id='pm_'+s.id, ng_id='png_'+s.id, na_id='pna_'+s.id;
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:11px 12px;'+(i?'border-top:1px solid var(--ibdr)':'')+'">';
+    html+='<div data-student-id="'+s.id+'" data-student-name="'+esc(String(s.name||'').trim())+'" style="display:flex;align-items:center;gap:8px;padding:11px 12px;'+(i?'border-top:1px solid var(--ibdr)':'')+'">';
     var _isInactive=(s.status||'active')==='discontinued';
     html+='<div style="flex:1">'
       +'<div style="font-size:16px;font-weight:bold;color:'+(_isInactive?'#ef4444':'var(--txt)')+'">'+esc(s.name)
@@ -8937,6 +8980,7 @@ html+='<div style="background:var(--card);border-radius:10px;overflow:hidden;bor
   html+='</div>';
   cont.innerHTML=html;
   cont.dataset.studs=JSON.stringify(studs.map(function(s){return {id:s.id,name:s.name};}));
+  _ensureTestRecordAlphabeticalOrder();
   _posterRestoreCache();
   // Restore saved state from db.progress / draft for current chapter+test
   _restoreScoreState();
@@ -10787,11 +10831,12 @@ function _recordProgressMarks(){
       if(!db.progress[s.id])db.progress[s.id]={};
       if(!db.progress[s.id][chapter])db.progress[s.id][chapter]={};
       var isNA=document.getElementById('pna_'+s.id)&&document.getElementById('pna_'+s.id).checked;
-      if(isNA)db.progress[s.id][chapter][tno]={v:'NA',total:total};
-      else if(isAbs)db.progress[s.id][chapter][tno]={v:'AB',total:total};
-      else if(isNP)db.progress[s.id][chapter][tno]={v:'NP',total:total};
-      else if(isNG)db.progress[s.id][chapter][tno]={v:'NG',total:total};
-      else if(val!=='')db.progress[s.id][chapter][tno]={v:parseFloat(val),total:total};
+      var progressContext={total:total,school:String(s.school||s.schoolName||s.school_name||'').trim(),grade:String(s.grade||'').trim(),location:String(s.location||'Home').trim()};
+      if(isNA)db.progress[s.id][chapter][tno]=Object.assign({v:'NA'},progressContext);
+      else if(isAbs)db.progress[s.id][chapter][tno]=Object.assign({v:'AB'},progressContext);
+      else if(isNP)db.progress[s.id][chapter][tno]=Object.assign({v:'NP'},progressContext);
+      else if(isNG)db.progress[s.id][chapter][tno]=Object.assign({v:'NG'},progressContext);
+      else if(val!=='')db.progress[s.id][chapter][tno]=Object.assign({v:parseFloat(val)},progressContext);
       else if(db.progress[s.id]&&db.progress[s.id][chapter])delete db.progress[s.id][chapter][tno];
     });
     saveDB();
@@ -11079,7 +11124,7 @@ function mockLoadStudents(){
     return;
   }
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
-  studs.sort(function(a,b){return a.name.localeCompare(b.name);});
+  _sortTestRecordStudents(studs);
   el.innerHTML='<option value="">Select student...</option>';
   studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
   el.disabled=!studs.length;
@@ -11262,7 +11307,7 @@ function pgLoadStudents(){
   el.innerHTML='<option value="">Select student</option>';
   if(!cls)return;
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
-  studs.sort(function(a,b){return a.name.localeCompare(b.name);});
+  _sortTestRecordStudents(studs);
   studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+'</option>';});
 }
 
@@ -11379,6 +11424,36 @@ function pgEditCell(sid,chapter,tno){
 function pgLoadAllMarksForTest(sid, chapter, tno) {
   var stu = db.students.find(function(s){return s.id === sid;});
   if(!stu) return;
+  // The chart cell can carry display-normalized text. Resolve the actual
+  // saved keys first so every field below uses the same progress record.
+  var normalizeProgressKey=function(value){
+    return String(value==null?'':value).replace(/\s+/g,' ').trim().toLowerCase();
+  };
+  var studentProgress=(db.progress&&db.progress[sid])||{};
+  var chapterKey=Object.keys(studentProgress).find(function(key){return key===String(chapter||'');})
+    ||Object.keys(studentProgress).find(function(key){return normalizeProgressKey(key)===normalizeProgressKey(chapter);})
+    ||String(chapter||'').trim();
+  var chapterTests=studentProgress[chapterKey]||{};
+  var testKey=Object.keys(chapterTests).find(function(key){return key===String(tno||'');})
+    ||Object.keys(chapterTests).find(function(key){return normalizeProgressKey(key)===normalizeProgressKey(tno);})
+    ||String(tno||'').trim();
+  var savedTest=chapterTests[testKey]||null;
+  var savedTotal=savedTest&&savedTest.total!=null?savedTest.total:_pgInferTotal(chapterKey,testKey,20);
+  // A first test may have no prior Score Chart state. Resolve the school from
+  // the student profile first, then the saved entry, then its chapter record.
+  var savedSchoolFromChapters='';
+  var gradeForSchool=String(stu.grade||'').trim();
+  Object.keys(db.chapters||{}).some(function(key){
+    var splitAt=key.indexOf('::');if(splitAt<0)return false;
+    var keyGrade=key.slice(0,splitAt),keySchool=key.slice(splitAt+2).trim();
+    var sameGrade=(_parseGradeNum(keyGrade)===_parseGradeNum(gradeForSchool))||normalizeProgressKey(keyGrade)===normalizeProgressKey(gradeForSchool);
+    var hasChapter=(db.chapters[key]||[]).some(function(item){
+      var chapterName=(item&&typeof item==='object')?(item.name||item.chapter||item.title):item;
+      return normalizeProgressKey(chapterName)===normalizeProgressKey(chapterKey);
+    });
+    if(sameGrade&&keySchool&&hasChapter){savedSchoolFromChapters=keySchool;return true;}
+    return false;
+  });
   
   // Close current modal
   var ex = document.querySelector('[data-pg-edit-modal]');
@@ -11388,45 +11463,147 @@ function pgLoadAllMarksForTest(sid, chapter, tno) {
   go('poster');
   pgSwitchView('chapters');
   
-  // Fill Class
-  var clsEl = document.getElementById('pr-class');
-  if(clsEl) {
-    clsEl.value = stu.grade || '';
-    // Trigger load students and chapters
-    posterLoadStudents();
+  // Apply class, location, and school in order. The school selector is rebuilt
+  // when the class changes, so it must be selected only after that first load.
+  var wantedGrade=String(stu.grade||savedTest&&savedTest.grade||'').trim();
+  var wantedLocation=String(stu.location||savedTest&&savedTest.location||'Home').trim();
+  var profileSchool=stu.school||stu.schoolName||stu.school_name||stu.schoolname
+    ||(stu.profile&&(stu.profile.school||stu.profile.schoolName))
+    ||(stu.schoolDetails&&(stu.schoolDetails.name||stu.schoolDetails.school))||'';
+  // A first test created before its progress entry stored a school can still
+  // be linked to the class's known school when that class has one unambiguous
+  // school. This is especially useful immediately after adding a student.
+  var classSchools=[...new Set((db.students||[]).filter(function(x){
+    return ((_parseGradeNum(x.grade||'')===_parseGradeNum(wantedGrade))||normalizeProgressKey(x.grade)===normalizeProgressKey(wantedGrade))
+      &&String(x.school||x.schoolName||x.school_name||'').trim();
+  }).map(function(x){return String(x.school||x.schoolName||x.school_name||'').trim();}))];
+  var classSchoolFallback=classSchools.length===1?classSchools[0]:'';
+  var wantedSchool=String(profileSchool||savedTest&&savedTest.school||savedSchoolFromChapters||classSchoolFallback||'').trim();
+  function applyLoadedSchoolContext(){
+    if(!wantedSchool)return;
+    var schoolField=document.getElementById('pr-school');
+    var schoolRow=document.getElementById('pr-school-row');
+    if(!schoolField)return;
+    schoolField.dataset.progressContextSchool=wantedSchool;
+    var matchingOption=Array.prototype.find.call(schoolField.options||[],function(opt){
+      return String(opt.value||'').trim().toLowerCase()===wantedSchool.toLowerCase();
+    });
+    if(!matchingOption){
+      matchingOption=document.createElement('option');
+      matchingOption.value=wantedSchool;
+      matchingOption.textContent=wantedSchool;
+      schoolField.appendChild(matchingOption);
+    }
+    schoolField.value=matchingOption.value;
+    if(schoolRow)schoolRow.style.display='block';
   }
-  
-  // Fill Location (default to student's location)
+  var clsEl = document.getElementById('pr-class');
+  if(clsEl) clsEl.value=wantedGrade;
   var locEl = document.getElementById('pr-loc');
-  if(locEl) locEl.value = stu.location || 'Home';
-  
-  // Fill School (if applicable)
-  var schEl = document.getElementById('pr-school');
-  if(schEl && stu.school) schEl.value = stu.school;
-
-  // Re-trigger student load after setting loc/school
+  if(locEl){
+    var locOption=Array.prototype.find.call(locEl.options||[],function(opt){
+      return String(opt.value||'').trim().toLowerCase()===wantedLocation.toLowerCase();
+    });
+    locEl.value=locOption?locOption.value:wantedLocation;
+  }
+  // Set this before loading students. It prevents the normal class logic from
+  // clearing a saved school for a higher class before it can be displayed.
+  var preloadSchoolEl=document.getElementById('pr-school');
+  if(preloadSchoolEl){
+    if(wantedSchool)preloadSchoolEl.dataset.progressContextSchool=wantedSchool;
+    else delete preloadSchoolEl.dataset.progressContextSchool;
+  }
   posterLoadStudents();
+
+  applyLoadedSchoolContext();
+  // Primary classes use the school as a filter, so load once more after it is set.
+  if(_parseGradeNum(wantedGrade)<9)posterLoadStudents();
 
   // Fill Chapter
   setTimeout(function() {
+    // Reapply after the view and cached Score Chart state finish loading.
+    // This is essential for a newly added student's first saved test.
+    applyLoadedSchoolContext();
+    if(wantedSchool)posterLoadStudents();
+    applyLoadedSchoolContext();
     var topicEl = document.getElementById('pr-topic');
     if(topicEl) {
-      topicEl.value = chapter;
+      // A saved test can exist before its chapter appears in the current
+      // school-filtered dropdown. Keep the exact saved chapter selectable so
+      // the marks restoration below never exits with an empty chapter value.
+      var savedChapter=chapterKey;
+      if(savedChapter){
+        var hasSavedChapter=Array.prototype.some.call(topicEl.options||[],function(opt){return opt.value===savedChapter;});
+        if(!hasSavedChapter){
+          var savedOpt=document.createElement('option');
+          savedOpt.value=savedChapter;
+          savedOpt.textContent=savedChapter;
+          topicEl.appendChild(savedOpt);
+        }
+        topicEl.disabled=false;
+      }
+      topicEl.value = savedChapter;
       if(typeof _prUpdateTopicBtn === 'function') _prUpdateTopicBtn();
       
+      // Fill Total Marks before restoring the selected test.
+      var totalEl = document.getElementById('pr-total');
+      if(totalEl) totalEl.value = savedTotal;
+
       // Fill Test No
       var tnoEl = document.getElementById('pr-tno');
       if(tnoEl) {
-        tnoEl.value = tno;
+        tnoEl.value = testKey;
         // Restore saved marks for this test
         if(typeof _restoreScoreState === 'function') _restoreScoreState();
+        // This route finishes asynchronously after switching from the Progress Chart.
+        // Sort the exact visible marks rows once that restoration has completed.
+        if(typeof _ensureTestRecordAlphabeticalOrder === 'function') _ensureTestRecordAlphabeticalOrder();
+        setTimeout(function(){
+          if(typeof _ensureTestRecordAlphabeticalOrder === 'function') _ensureTestRecordAlphabeticalOrder();
+        }, 0);
       }
+
+      // Keep the selected Progress Chart record visible independently of the
+      // normal class/school filters, so every loaded detail can be confirmed.
+      var marksPanel=document.getElementById('pr-students');
+      if(marksPanel){
+        var oldContext=document.getElementById('pr-loaded-test-context');
+        if(oldContext)oldContext.remove();
+        var context=document.createElement('div');
+        context.id='pr-loaded-test-context';
+        context.style.cssText='margin:0 0 10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(59,130,246,.42);background:rgba(59,130,246,.10);color:var(--txt);font-size:12px;line-height:1.55';
+        context.innerHTML='<b style="color:#60a5fa">Loaded Test Details</b><br><b>Student:</b> '+esc(stu.name||'—')+' &nbsp;•&nbsp; <b>School:</b> '+esc(wantedSchool||'—')+' &nbsp;•&nbsp; <b>Class:</b> '+esc(wantedGrade||'—')+' &nbsp;•&nbsp; <b>Location:</b> '+esc(wantedLocation||'—')+'<br><b>Chapter:</b> '+esc(savedChapter||'—')+' &nbsp;•&nbsp; <b>Test:</b> '+esc(testKey||'—')+' &nbsp;•&nbsp; <b>Total:</b> '+esc(String(savedTotal));
+        marksPanel.insertBefore(context,marksPanel.firstChild);
+      }
+      setTimeout(applyLoadedSchoolContext,0);
+      // The Score Chart view may finish restoring its own cached state after
+      // this bridge runs. Render the exact selected Progress Chart record one
+      // final time so a newly added student's first test cannot be replaced
+      // by the previous class, school, chapter, or empty marks list.
+      setTimeout(function(){
+        applyLoadedSchoolContext();
+        if(wantedSchool)posterLoadStudents();
+        applyLoadedSchoolContext();
+        var finalTopic=document.getElementById('pr-topic');
+        if(finalTopic){
+          var finalHasChapter=Array.prototype.some.call(finalTopic.options||[],function(opt){return opt.value===savedChapter;});
+          if(!finalHasChapter&&savedChapter){
+            var finalChapterOption=document.createElement('option');
+            finalChapterOption.value=savedChapter;
+            finalChapterOption.textContent=savedChapter;
+            finalTopic.appendChild(finalChapterOption);
+          }
+          finalTopic.value=savedChapter;
+          if(typeof _prUpdateTopicBtn==='function')_prUpdateTopicBtn();
+        }
+        var finalTotal=document.getElementById('pr-total');
+        if(finalTotal)finalTotal.value=savedTotal;
+        var finalTno=document.getElementById('pr-tno');
+        if(finalTno)finalTno.value=testKey;
+        if(typeof _restoreScoreState==='function')_restoreScoreState();
+        if(typeof _ensureTestRecordAlphabeticalOrder==='function')_ensureTestRecordAlphabeticalOrder();
+      },350);
       
-      // Set Total Marks (try to infer from existing data)
-      var totalEl = document.getElementById('pr-total');
-      if(totalEl) {
-        totalEl.value = _pgInferTotal(chapter, tno, 20);
-      }
     }
   }, 100);
 }
