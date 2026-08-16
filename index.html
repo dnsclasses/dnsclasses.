@@ -4419,11 +4419,8 @@ function _reportCaptureImage(cardId,headingText,cb){
     var fullW=liveScrollWrap.scrollWidth;
     var achW=achRow?achRow.scrollWidth:0;
     if(achW>fullW)fullW=achW;
-    // Give columns extra breathing room so longer decimal scores (e.g.
-    // "19.5/20") don't sit flush against the cell edges - columns are
-    // percentage-widths of the table, so widening the table itself widens
-    // every column proportionally.
-    fullW=Math.round(fullW*1.18);
+    // Use the chart's measured full width so the saved report image does not
+    // add an artificial empty margin at the right edge.
     scrollWrap.style.overflowX='visible';
     scrollWrap.style.width=fullW+'px';
     if(achRowClone){achRowClone.style.overflowX='visible';achRowClone.style.width=fullW+'px';}
@@ -11665,7 +11662,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
     var v=e.v;
     if(v==='NA')return 'N/A';
     if(typeof v==='string')return v;
-    return v+(e.total?'/'+e.total:'');
+    return e.total ? String(v)+'/'+String(e.total) : String(v);
   }
 
   var dk=!document.body.classList.contains('light');
@@ -11680,23 +11677,25 @@ function buildChapterProgressChart(sid,cls,includeHeader){
   var tot=nT+3;
   var agW=8,nsW=16;
   var CH_MIN=24;// chapter column minimum %
-  var scW=Math.floor((100-CH_MIN-agW-nsW)/Math.max(nT,1));
-  if(scW<6)scW=6;
-  var chW=100-agW-nsW-(scW*nT);// absorbs remainder, always>=CH_MIN
+  var chWpx = 180;
+  var scWpx = 68;
+  var agWpx = 56;
+  var nsWpx = 110;
+  var tableTotalW = chWpx + (nT * scWpx) + agWpx + nsWpx + 20;
   var rp=dk
     ?['rgba(37,99,235,0.18)','rgba(124,58,237,0.18)','rgba(5,150,105,0.18)','rgba(194,65,12,0.18)','rgba(100,116,139,0.18)']
     :['rgba(219,234,254,0.7)','rgba(237,233,254,0.7)','rgba(209,250,229,0.7)','rgba(255,237,213,0.7)','rgba(241,245,249,0.7)'];
   var RH='52px';
-  var TD='border:1px solid '+bd+';border-radius:6px;height:'+RH+';overflow:hidden;vertical-align:middle;text-align:center;font-size:11px;font-weight:600';
-  var IN='display:flex;align-items:center;justify-content:center;height:'+RH+';overflow:hidden;padding:2px 3px';
+  var TD='border:1px solid '+bd+';border-radius:6px;height:'+RH+';overflow:hidden;vertical-align:middle;text-align:center;font-size:11px;font-weight:500;letter-spacing:0.02em';
+  var IN='display:flex;align-items:center;justify-content:center;height:'+RH+';padding:2px 4px;white-space:nowrap';
   var H='<td colspan="'+tot+'" style="text-align:center;background:'+bg+';border:none;padding:';
 
   var h='<div id="pg-chart-card" style="'+ff+';background:'+bg+';border-radius:12px;padding:6px">';
   h+='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch" data-no-swipe="1">';
-  h+='<table style="width:100%;min-width:'+(nT*55+240)+'px;border-collapse:separate;border-spacing:3px;table-layout:fixed">';
-  h+='<colgroup><col style="width:'+chW+'%">';
-  for(var i=0;i<nT;i++)h+='<col style="width:'+scW+'%">';
-  h+='<col style="width:'+agW+'%"><col style="width:'+nsW+'%"></colgroup>';
+  h+='<table style="width:'+tableTotalW+'px;min-width:'+tableTotalW+'px;border-collapse:separate;border-spacing:3px;table-layout:fixed">';
+  h+='<colgroup><col style="width:'+chWpx+'px">';
+  for(var i=0;i<nT;i++)h+='<col style="width:'+scWpx+'px">';
+  h+='<col style="width:'+agWpx+'px"><col style="width:'+nsWpx+'px"></colgroup>';
 
   if(includeHeader){
   h+='<tr>'+H+'10px 0 5px"><div style="display:inline-flex;align-items:center;gap:9px">';
@@ -11809,7 +11808,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
     if(avg!==null){
       if(avg>=100){aB='#15803d';aC2='#fff';}else if(avg>=90){aB='#16a34a';aC2='#fff';}
       else if(avg>=75){aB='#22c55e';aC2='#fff';}else if(avg>=60){aB='#65a30d';aC2='#fff';}
-      else if(avg>=45){aB='#d97706';aC2='#1a1a00';}else if(avg>=30){aB='#fb923c';aC2='#fff';}
+      else if(avg>=45){aB='#d97706';aC2='#fff';}else if(avg>=30){aB='#fb923c';aC2='#fff';}
       else{aB='#ef4444';aC2='#fff';}
     }
     var rB=rp[ci%rp.length];
@@ -11823,13 +11822,13 @@ function buildChapterProgressChart(sid,cls,includeHeader){
     h+='<td style="'+TD+';background:'+_tdBg+';border-left:3px solid '+_tdBdr+';text-align:left;padding:0 7px">';
     h+='<div style="height:'+RH+';overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:1px">';
     if(_icr){
-      var _bdgBg=dk?'#ffffff':'#111111';
-      var _bdgTx=dk?'#111111':'#ffffff';
-      h+='<span style="font-size:8px;font-weight:800;color:'+_bdgTx+';background:'+_bdgBg+';border-radius:3px;padding:1px 3px;width:fit-content;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:9px;vertical-align:middle">link</span>COMBINED</span>';
+      var _bdgBg='#000000';
+      var _bdgTx='#ffffff';
+      h+='<span style="font-size:8px;font-weight:900;color:'+_bdgTx+';background:'+_bdgBg+';border-radius:3px;padding:3px 6px;display:inline-flex;align-self:flex-start;align-items:center;justify-content:center;gap:2px;box-sizing:border-box;max-width:100%;overflow:hidden;white-space:nowrap;line-height:1.15;margin-bottom:2px"><span class="material-symbols-outlined" style="font-size:10px;line-height:1;flex:0 0 auto">link</span><span style="display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">COMBINED</span></span>';
     } else {
       h+='<span style="font-size:9px;font-weight:800;color:'+ac+'">Ch.'+(ci+1)+'</span>';
     }
-    h+='<span style="font-size:11px;font-weight:600;color:'+(_icr?_combColor:tx)+';line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+esc(_dName)+'</span>';
+    h+='<span style="font-size:11px;font-weight:600;color:'+(_icr?_combColor:tx)+';line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:left;letter-spacing:0.01em;word-spacing:normal;white-space:normal;word-break:normal;overflow-wrap:normal;text-rendering:auto">'+esc(_dName)+'</span>';
     h+='</div></td>';
     tests.forEach(function(t){
       var e=cp[t]||null;
@@ -12032,11 +12031,8 @@ function _pgCaptureChart(cb,targetEl){
   var fullW=sd?sd.scrollWidth:el.scrollWidth;
   var achW=achRowLive?achRowLive.scrollWidth:0;
   if(achW>fullW)fullW=achW;
-  // Give columns extra breathing room so longer decimal scores (e.g.
-  // "19.5/20") don't sit flush against the cell edges - columns are
-  // percentage-widths of the table, so widening the table itself widens
-  // every column proportionally.
-  fullW=Math.round(fullW*1.18);
+  // Use measured width directly without artificial right margin expansion.
+  fullW=Math.round(fullW);
 
   // Clone card into a fresh wrapper positioned off-screen at (0,0)
   // Counteract the header's A+/A- zoom (document.body.style.zoom) — since
