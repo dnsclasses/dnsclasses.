@@ -412,7 +412,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       <button onclick="pasteAllFields()" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:12px;font-weight:bold;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">content_paste</span>Paste All</button>
     </div>
     <div class="fg2">
-      <div><label class="flabel">NAME *</label><input id="f-name" placeholder="Rahul Sharma"></div>
+      <div><label class="flabel">FIRST NAME *</label><input id="f-name" placeholder="Rahul"></div>
+      <div><label class="flabel">SURNAME <span style="font-weight:400;opacity:0.7">(optional)</span></label><input id="f-surname" placeholder="Sharma"></div>
       <div><label class="flabel">ADMISSION NO. <span style="font-weight:400;opacity:0.7">(auto)</span></label><input id="f-adm-no" type="number" placeholder="Auto-assigned"></div>
       <div><label class="flabel">SCHOOL NAME</label><input id="f-school" placeholder="Delhi Public School"></div>
       <div><label class="flabel">JOINING DATE *</label><input id="f-date" type="date"></div>
@@ -510,7 +511,10 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     </div>
   </div>
 </div>
-<button onclick="showAttExportModal()" style="width:100%;padding:9px;border-radius:10px;border:1px solid rgba(52,211,153,.4);background:rgba(52,211,153,.08);color:#34d399;font-weight:bold;font-size:13px;margin-bottom:10px">&#128229; Export Attendance CSV</button>
+<div style="display:flex;gap:8px;align-items:stretch;width:calc(100% - 20px);max-width:520px;margin:4px auto 12px">
+<button onclick="showAttExportModal()" style="flex:1;min-width:0;padding:10px 8px;border-radius:11px;border:1px solid rgba(52,211,153,.38);background:linear-gradient(135deg,rgba(52,211,153,.16),rgba(16,185,129,.08));color:#34d399;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(16,185,129,.08)"><span class="material-symbols-outlined" style="font-size:16px">file_download</span><span>Export CSV</span></button>
+<button id="bulk-att-report-btn" aria-label="Send Attendance Report on WhatsApp" title="Send Attendance Report on WhatsApp" onclick="sendBulkAttendanceReport()" style="flex:1.55;min-width:0;width:auto;max-width:none;margin:0;padding:10px 9px;border-radius:11px;border:1px solid rgba(134,239,172,.45);background:linear-gradient(135deg,#25d366 0%,#128c7e 55%,#075e54 100%);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;white-space:nowrap;overflow:hidden;box-shadow:0 4px 12px rgba(18,140,126,.24),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .15s ease,box-shadow .15s ease" onmouseenter="this.style.transform='translateY(-1px)';this.style.boxShadow='0 7px 16px rgba(18,140,126,.34),inset 0 1px 0 rgba(255,255,255,.3)'" onmouseleave="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(18,140,126,.24),inset 0 1px 0 rgba(255,255,255,.25)'"><span class="material-symbols-outlined" style="font-size:16px;flex:0 0 auto">send</span><span style="overflow:hidden;text-overflow:ellipsis">WhatsApp Report</span></button>
+</div>
 <div id="att-content"></div>
 </div>
 
@@ -1186,6 +1190,35 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   </div>
 </div></div>
 
+<div id="bulk-att-modal" class="modal hidden" onclick="closeM('bulk-att-modal')"><div class="mbox" onclick="event.stopPropagation()" style="max-width:410px;max-height:82vh;display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;color:#25d366;font-size:17px;font-weight:800"><span class="material-symbols-outlined" style="font-size:20px">send</span>Attendance Report</div>
+  <div style="font-size:12px;color:var(--sub);margin-bottom:14px">Choose one or more classes and the attendance location.</div>
+  <div style="font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.04em;margin-bottom:6px">LOCATION</div>
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button id="bulk-att-loc-all" onclick="setBulkAttLoc('all')" style="flex:1;padding:9px 6px;border-radius:9px;border:2px solid #25d366;background:rgba(37,211,102,.14);color:#25d366;font-weight:800;font-size:12px">All</button>
+    <button id="bulk-att-loc-home" onclick="setBulkAttLoc('Home')" style="flex:1;padding:9px 6px;border-radius:9px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:800;font-size:12px">Home</button>
+    <button id="bulk-att-loc-city" onclick="setBulkAttLoc('City')" style="flex:1;padding:9px 6px;border-radius:9px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:800;font-size:12px">City</button>
+  </div>
+  <div style="font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.04em;margin-bottom:6px">PERIOD</div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px">
+    <button id="bulk-att-period-overall" onclick="setBulkAttPeriod('overall')" style="flex:1;padding:9px 6px;border-radius:9px;border:2px solid #25d366;background:rgba(37,211,102,.14);color:#25d366;font-weight:800;font-size:12px">Overall</button>
+    <button id="bulk-att-period-month" onclick="setBulkAttPeriod('month')" style="flex:1;padding:9px 6px;border-radius:9px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:800;font-size:12px">Month</button>
+    <button id="bulk-att-month-choice" onclick="openBulkAttMonthPicker()" style="display:none;flex:1.35;min-width:0;padding:9px 7px;border-radius:9px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:12px;font-weight:700">Choose month</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <div style="font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.04em">CLASSES</div>
+    <div style="display:flex;gap:5px"><button onclick="setBulkAttClasses(true)" style="padding:5px 9px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:11px;font-weight:700">Select all</button><button onclick="setBulkAttClasses(false)" style="padding:5px 9px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:11px;font-weight:700">Clear</button></div>
+  </div>
+  <div id="bulk-att-class-list" style="overflow-y:auto;max-height:260px;border:1px solid var(--ibdr);border-radius:10px;background:var(--ibg);padding:4px"></div>
+  <div id="bulk-att-selection-note" style="font-size:12px;color:var(--sub);text-align:center;margin:9px 0 4px"></div>
+  <div style="display:flex;gap:8px;margin-top:8px"><button onclick="closeM('bulk-att-modal')" style="flex:1;padding:11px;border-radius:9px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);font-weight:700;font-size:13px">Cancel</button><button onclick="sendBulkAttendanceReportNow()" style="flex:1;padding:11px;border-radius:9px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:800;font-size:13px">Open WhatsApp</button></div>
+</div></div>
+<div id="bulk-att-month-modal" class="modal hidden" style="z-index:310" onclick="closeM('bulk-att-month-modal')"><div class="mbox" onclick="event.stopPropagation()" style="max-width:360px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><button onclick="bulkAttShiftMonthYear(-1)" style="width:34px;height:34px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:18px">‹</button><div id="bulk-att-month-year" style="font-size:17px;font-weight:800;color:var(--txt)"></div><button onclick="bulkAttShiftMonthYear(1)" style="width:34px;height:34px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:18px">›</button></div>
+  <div id="bulk-att-month-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+  <div id="bulk-att-month-selection" style="font-size:12px;color:var(--sub);text-align:center;margin-top:12px;min-height:16px">No months selected</div>
+  <div style="display:flex;gap:8px;margin-top:8px"><button onclick="closeM('bulk-att-month-modal')" style="flex:1;padding:10px;border-radius:9px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);font-weight:700">Cancel</button><button onclick="bulkAttDoneMonths()" style="flex:1;padding:10px;border-radius:9px;border:none;background:#25d366;color:#fff;font-weight:800">Done</button></div>
+</div></div>
 <div id="wa-modal" class="modal mbot hidden" onclick="closeM('wa-modal')"><div class="mbox" onclick="event.stopPropagation()"><div id="wa-title" style="font-weight:bold;font-size:16px;color:#25d366;margin-bottom:12px"></div><div id="wa-body"></div><button onclick="closeM('wa-modal')" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);margin-top:8px;font-size:15px">Cancel</button></div></div>
 
 <div id="pay-modal" class="modal hidden"><div class="mbox" style="max-width:320px"><div id="pay-title" style="font-weight:bold;font-size:16px;color:var(--txt);margin-bottom:4px">Log Payment</div><div id="pay-desc" style="font-size:13px;color:var(--sub);margin-bottom:12px"></div><div style="margin-bottom:10px"><label class="flabel">DATE RECEIVED</label><input type="date" id="pay-date"></div><div style="margin-bottom:14px"><label class="flabel">AMOUNT (₹)</label><input type="number" id="pay-amt"><div style="font-size:11px;color:var(--sub);margin-top:3px">Leave blank to use default fees</div></div><div style="margin-bottom:14px"><label class="flabel">PAYMENT MODE</label><div style="display:flex;gap:8px"><button id="pay-mode-cash" onclick="setPayMode('cash')" style="flex:1;padding:10px;border-radius:8px;border:2px solid #22c55e;background:#22c55e;color:#000;font-weight:bold"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">payments</span>Cash</button><button id="pay-mode-online" onclick="setPayMode('online')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--ibdr);background:transparent;color:var(--sub);font-weight:bold"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">smartphone</span>Online</button></div></div><div style="display:flex;gap:10px"><button id="pay-ok" style="flex:1;padding:11px;border-radius:8px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:15px">Save</button><button onclick="closeM('pay-modal')" style="flex:1;padding:11px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);font-size:15px">Cancel</button></div></div></div>
@@ -2285,6 +2318,7 @@ function doUndo(){
   if(curView==='attend'){
     if(attMode==='mark')renderMarkToday();else renderAttendHistory();
   }else{refresh();}
+  if(typeof _refreshChapterSelectors==='function')_refreshChapterSelectors();
   // Refresh detail modal if open after undo
   if(_invDetailId&&!document.getElementById('inv-detail-modal').classList.contains('hidden')){
     var _udi=db.investments.find(function(x){return x.id===_invDetailId;});
@@ -2305,12 +2339,28 @@ function doRedo(){
   if(curView==='attend'){
     if(attMode==='mark')renderMarkToday();else renderAttendHistory();
   }else{refresh();}
+  if(typeof _refreshChapterSelectors==='function')_refreshChapterSelectors();
   if(_invDetailId&&!document.getElementById('inv-detail-modal').classList.contains('hidden')){
     var _rdi=db.investments.find(function(x){return x.id===_invDetailId;});
     if(_rdi)_renderInvDetails(_rdi); else closeM('inv-detail-modal');
   }
   showToast('Redone!');
   if(curView==='dash'){renderDashTests();renderDashHwCharts();}
+}
+function _refreshChapterSelectors(){
+  try{
+    var clsEl=document.getElementById('pr-class');
+    var schoolEl=document.getElementById('pr-school');
+    if(clsEl&&typeof prPopulateChapters==='function'){
+      prPopulateChapters(clsEl.value,schoolEl?schoolEl.value:'');
+    }
+    if(typeof chRenderList==='function'){
+      var chModal=document.getElementById('ch-mgr-modal');
+      if(chModal&&!chModal.classList.contains('hidden'))chRenderList();
+    }
+    var topicModal=document.getElementById('pr-topic-modal');
+    if(topicModal&&!topicModal.classList.contains('hidden')&&typeof openPrTopicPicker==='function')openPrTopicPicker();
+  }catch(e){console.warn('chapter selector refresh:',e);}
 }
 function refreshUndoUI(){
   var hasUndo=undoStack.length>0,hasRedo=redoStack.length>0;
@@ -2328,6 +2378,13 @@ function dkey(y,m,d){return y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d).slice(-2);}
 function phones(s){if(s.phones&&s.phones.length)return s.phones;if(s.phone)return s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;});return[];}
 function getAmt(s,rec){return(rec&&rec.customAmount)?Number(rec.customAmount):Number(s.fees||0);}
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function _studentDisplayName(s,forceSurname){
+  var base=String(s&&s.name||'').trim(),surname=String(s&&s.surname||'').trim();
+  if(!base)return surname;
+  if(forceSurname&&surname)return base+' '+surname;
+  var duplicate=Array.isArray(db.students)&&db.students.some(function(x){return x&&x.id!==s.id&&String(x.name||'').trim().toLowerCase()===base.toLowerCase();});
+  return duplicate&&surname?(base+' '+surname):base;
+}
 var _waIconN=0;
 function _waIcon(size,bg,grad){
   size=size||18;
@@ -2586,7 +2643,7 @@ function renderDashAdmissions(){
   } else {
     list.forEach(function(s){
       h+='<div onclick="openProf('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
-        '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(s.name)+(s.admissionNo?' <span style="font-size:11px;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
+        '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(_studentDisplayName(s))+(s.admissionNo?' <span style="font-size:11px;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
         '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class '+esc(s.grade||'')+(s.school?' \u2022 '+esc(s.school):'')+' \u2022 Joined '+esc(fmtD(s.joiningDate))+'</div>'+
         '</div>';
     });
@@ -2975,7 +3032,7 @@ function absentCard(s,badge,waUrgent,streak){
   var _waClr=document.body.classList.contains('light')?'#b45309':'#f59e0b';
   return '<div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px" onclick="openHistForStudent('+s.id+')">'
     +'<div style="flex:1;min-width:0;cursor:pointer">'
-    +'<div style="font-weight:bold;font-size:15px;color:'+(_disc?'#ef4444':cTxt())+'">'+esc(s.name)+(_disc?' <span style="font-size:10px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';background:rgba(239,68,68,.15);padding:1px 5px;border-radius:6px"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:-2px;margin-right:4px">cancel</span>LEFT</span>':'')+' </div>'
+    +'<div style="font-weight:bold;font-size:15px;color:'+(_disc?'#ef4444':cTxt())+'">'+esc(_studentDisplayName(s))+(_disc?' <span style="font-size:10px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';background:rgba(239,68,68,.15);padding:1px 5px;border-radius:6px"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:-2px;margin-right:4px">cancel</span>LEFT</span>':'')+' </div>'
     +'<div style="font-size:12px;color:var(--sub)">Class '+esc(s.grade||'-')+'</div>'
     +'<div style="font-size:13px;color:#dc2626;font-weight:bold;margin-top:2px">'+badge+'</div>'
     +'</div>'
@@ -3008,7 +3065,7 @@ function renderBirthdayAndClassCount(){
           return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
             +'<div onclick="openProf('+s.id+')" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:6px">'
             +'<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">cake</span>'
-            +'<div><div style="font-size:14px;font-weight:bold;color:'+cTxt()+';text-decoration:underline;text-decoration-color:rgba(251,191,36,.5)">'+esc(s.name)+'</div>'
+            +'<div><div style="font-size:14px;font-weight:bold;color:'+cTxt()+';text-decoration:underline;text-decoration-color:rgba(251,191,36,.5)">'+esc(_studentDisplayName(s))+'</div>'
             +'<div style="font-size:12px;color:var(--sub)">Class '+esc(s.grade||'-')+(age?' · Turning '+age:'')+'</div></div>'
             +'</div>'
             +(ph2.length?'<button onclick="event.stopPropagation();openBirthdayWA('+s.id+')" style="padding:6px;border-radius:6px;border:none;background:linear-gradient(135deg,#fbbf24,#b45309);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+_waIcon(18,'transparent')+'</button>':'')
@@ -3303,7 +3360,7 @@ function renderDash(){
         return '<div onclick="openProf('+s.id+')" style="background:'+(_disc?'rgba(239,68,68,.08)':'var(--card)')+';border:1px solid '+(_disc?'rgba(239,68,68,.35)':'var(--bdr)')+';border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer">'
           +'<div style="width:36px;height:36px;border-radius:50%;background:'+ci.color+'20;border:1.5px solid '+ci.color+';display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;color:'+ci.color+';flex-shrink:0">'+(ci.isPaid?'\u2713':'\u20b9')+'</div>'
           +'<div style="flex:1;min-width:0">'
-          +'<div style="font-weight:bold;font-size:15px;color:'+cTxt()+'">'+esc(s.name)+'</div>'
+          +'<div style="font-weight:bold;font-size:15px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+'</div>'
           +'<div style="font-size:12px;color:var(--sub)">'+esc(getSubjects(s))+'</div>'
           +'</div>'
           +'<div style="text-align:right;flex-shrink:0">'
@@ -3341,7 +3398,7 @@ function alertCard(s,c,color,text,overrideAmt){
     '<div style="cursor:pointer;flex:1;min-width:0;display:flex;align-items:center;gap:10px" onclick="openProf('+s.id+')">'+
     '<div style="width:38px;height:38px;border-radius:50%;background:'+color+'35;border:2px solid '+color+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:'+color+';flex-shrink:0;box-shadow:0 1px 3px '+color+'40">'+_initial+'</div>'+
     '<div style="flex:1;min-width:0">'+
-    '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(s.name)+'</div>'+
+    '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+'</div>'+
     '<div style="font-size:13px;color:'+cSub()+'">'+esc(getSubjects(s))+(s.grade?' \u2022 Class '+esc(s.grade):'')+'</div>'+
     '<div style="font-size:13px;color:'+color+';font-weight:bold">'+text+'</div>'+
     '</div></div>'+
@@ -3362,7 +3419,7 @@ function miniCard(s){
   return '<div class="card" style="border-color:'+ci.color+'33;margin-bottom:6px">'+
     '<div onclick="openProf('+s.id+')" style="width:40px;height:40px;border-radius:50%;background:'+ci.color+'15;border:1px solid '+ci.color+';display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;font-weight:bold;color:'+ci.color+'">'+(ci.isPaid?'✓':ci.isPartial?'½':'₹')+'</div>'+
     '<div style="flex:1;min-width:0;cursor:pointer" onclick="openProf('+s.id+')">'+
-    '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(s.name)+'</div>'+
+    '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+'</div>'+
     '<div style="font-size:13px;color:'+cSub()+'">'+esc(getSubjects(s))+(s.grade?' \u2022 Class '+esc(s.grade):'')+(s.location?' \u2022 '+s.location:'')+'</div>'+
     '<div style="font-size:13px;color:'+ci.color+';font-weight:bold;margin-top:1px">'+ci.text+'</div>'+
     '</div>'+
@@ -3500,7 +3557,7 @@ function openRankExcludeModal(){
       var checked=s.rankExcluded?'checked':'';
       bodyHtml+='<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr);cursor:pointer">'
         +'<input type="checkbox" data-sid="'+s.id+'" onchange="toggleRankExclude('+s.id+',this.checked)" '+checked+' style="width:18px;height:18px;flex-shrink:0">'
-        +'<span style="font-size:13px;color:var(--txt);flex:1">'+esc(s.name)+'</span>'
+        +'<span style="font-size:13px;color:var(--txt);flex:1">'+esc(_studentDisplayName(s))+'</span>'
         +'<span id="rank-excl-badge-'+s.id+'">'+(s.rankExcluded?'<span style="font-size:10px;font-weight:700;color:'+(isDark?'#f87171':'#ef4444')+'">EXCLUDED</span>':'')+'</span>'
         +'</label>';
     });
@@ -3616,7 +3673,7 @@ function renderRankings(){
       h+='<div style="flex:1;min-width:0;padding-top:'+(i<3&&d.pct!==null?'14':'0')+'px">';
       var _ac=_getRankAchievements(s,_gradeStArr);
       var _trendBadge=(_selectedRankMonth!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,11):'';
-      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden"><span style="font-weight:700;font-size:15px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s.name)+'</span>'+_trendBadge+'</div>'+(d.pct!==null?'<div style="width:44px;flex-shrink:0">'+_buildGaugeMeter(d.pct,44,false)+'</div>':'')+'</div>';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden"><span style="font-weight:700;font-size:15px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(_studentDisplayName(s))+'</span>'+_trendBadge+'</div>'+(d.pct!==null?'<div style="width:44px;flex-shrink:0">'+_buildGaugeMeter(d.pct,44,false)+'</div>':'')+'</div>';
       if(d.pct!==null){
         h+='<div style="margin-top:6px;height:5px;background:var(--ibdr);border-radius:3px;overflow:hidden">';
         h+='<div style="height:100%;width:'+barW+'%;background:'+overallColor+';border-radius:3px;transition:width 0.4s"></div></div>';
@@ -3910,7 +3967,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var _nbRkSz=d.pct!==null&&i<3?'100px':'36px';
       var _nbRkLeft=d.pct!==null&&i<3?'-34px':'0px';
       var _trendBadge=(monthYm&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26):'';
-      h+='<div class="top"><div class="rank" style="font-size:'+_nbRkSz+';line-height:1;position:relative;left:'+_nbRkLeft+'">'+rk+'</div><div class="name" style="display:flex;align-items:center;gap:14px"><span style="flex:1;min-width:0">'+esc(s.name)+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:155px;flex-shrink:0">'+_buildGaugeMeter(d.pct,155,true)+'</div>':'')+'</div><div style="flex-shrink:0;text-align:right">';
+      h+='<div class="top"><div class="rank" style="font-size:'+_nbRkSz+';line-height:1;position:relative;left:'+_nbRkLeft+'">'+rk+'</div><div class="name" style="display:flex;align-items:center;gap:14px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:155px;flex-shrink:0">'+_buildGaugeMeter(d.pct,155,true)+'</div>':'')+'</div><div style="flex-shrink:0;text-align:right">';
       h+='<div class="pct" style="color:'+col+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:24px;font-weight:600;color:#888">/'+_nbGroupMaxPossible+'</span>':'--')+'</div>';
       if(d.pct!==null)h+='<div style="font-size:36px;font-weight:800;color:'+overallCol+';margin-top:3px">'+d.pct+'%</div>';
       h+='</div></div>';
@@ -4085,7 +4142,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
       h+='<div class="rank" style="font-size:'+_rankSz+';line-height:1;position:relative;left:'+_rankLeft+'">'+rankTxt+'</div>';
       var _nSz=d.pct!==null&&i<3?'30px':'26px';
       var _trendBadge=(monthYm&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,17):'';
-      h+='<div class="name" style="font-size:'+_nSz+';display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0">'+esc(s.name)+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:85px;flex-shrink:0">'+_buildGaugeMeter(d.pct,85,false)+'</div>':'')+'</div>';
+      h+='<div class="name" style="font-size:'+_nSz+';display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:85px;flex-shrink:0">'+_buildGaugeMeter(d.pct,85,false)+'</div>':'')+'</div>';
       h+='<div style="flex-shrink:0;text-align:right">';
       h+='<div class="pct" style="color:'+pctColor+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:16px;font-weight:600;color:#888">/'+_pGroupMaxPossible+'</span>':'--')+'</div>';
       if(d.pct!==null)h+='<div style="font-size:24px;font-weight:800;color:'+overallColor+';margin-top:2px">'+d.pct+'%</div>';
@@ -4199,7 +4256,7 @@ function generateReport(sid){
   h+='</div>';
   // Right: student info
   h+='<div style="text-align:right">';
-  h+='<div style="font-size:16px;font-weight:800;color:'+txt+';margin-bottom:1px">'+esc(s.name)+'</div>';
+  h+='<div style="font-size:16px;font-weight:800;color:'+txt+';margin-bottom:1px">'+esc(_studentDisplayName(s))+'</div>';
   var _sess=(db.sessions||[]).find(function(x){return x.id===(s.sessionId||curSession);});
   if(_sess)h+='<div style="font-size:10px;color:'+sub+';font-weight:600;margin-bottom:3px">'+esc(_sess.label)+'</div>';
   h+='<div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">';
@@ -4486,7 +4543,7 @@ function _reportSaveImage(cardId,headingText,fnamePrefix){
   _reportCaptureImage(cardId,headingText,function(blob,s){
     var blobUrl=URL.createObjectURL(blob);
     var a=document.createElement('a');
-    a.href=blobUrl;a.download=fnamePrefix+' - '+s.name+'.png';
+    a.href=blobUrl;a.download=fnamePrefix+' - '+_studentDisplayName(s)+'.png';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(blobUrl);},1500);
     showToast('Image saved!');
@@ -4496,7 +4553,7 @@ function _reportSendImage(cardId,headingText,fnamePrefix,caption){
   _reportCaptureImage(cardId,headingText,function(blob,s){
     var ph=phones(s);
     if(!ph.length||!ph[0].number){showToast('No phone number',true);return;}
-    showPhonePicker(ph,blob,fnamePrefix+' - '+s.name+'.png',caption + ' of ' + s.name);
+    showPhonePicker(ph,blob,fnamePrefix+' - '+_studentDisplayName(s)+'.png',caption + ' of ' + _studentDisplayName(s));
   });
 }
 function sendAttendanceImage(){_reportSendImage('rpt-attend-card',null,'Attendance Report','Attendance \ud83d\uddd3\ufe0f');}
@@ -4652,7 +4709,7 @@ function stuCard(s){
   return '<div class="card" style="opacity:'+(s.status==='discontinued'?.6:1)+';border-color:'+ci.color+'33">'+
     '<div onclick="openProf('+s.id+')" style="width:42px;height:42px;border-radius:50%;background:'+ci.color+'15;border:2px solid '+ci.color+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;cursor:pointer;font-weight:bold;color:'+ci.color+'">'+(ci.isPaid?'✓':'₹')+'</div>'+
     '<div style="flex:1;min-width:0;cursor:pointer" onclick="openProf('+s.id+')">'+
-    '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(s.name)+(s.admissionNo?' <span style="font-size:11px;font-weight:600;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
+    '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+(s.admissionNo?' <span style="font-size:11px;font-weight:600;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
     '<div style="font-size:13px;color:'+cSub()+'">'+esc(getSubjects(s))+(s.grade?' \u2022 Class '+esc(s.grade):'')+(s.location?' \u2022 '+s.location:'')+'</div>'+
     '<div style="font-size:13px;color:'+ci.color+';font-weight:bold;margin-top:1px">'+ci.text+'</div>'+
     '</div>'+
@@ -4674,7 +4731,7 @@ function openProf(id){
   var s=db.students.find(function(x){return x.id===id;});
   if(!s)return;
   var tab=document.getElementById('prof-tab');
-  if(tab){tab.textContent=s.name.split(' ')[0];tab.classList.remove('hidden');}
+  if(tab){tab.textContent=_studentDisplayName(s,true);tab.classList.remove('hidden');}
   go('profile');
 }
 
@@ -4693,7 +4750,7 @@ function renderProfile(){
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'+
     '<div style="flex:1">'+
     '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-    '<div style="font-size:19px;font-weight:bold;color:var(--acc)">'+esc(s.name)+'</div>'+
+    '<div style="font-size:19px;font-weight:bold;color:var(--acc)">'+esc(_studentDisplayName(s,true))+'</div>'+
     (s.admissionNo?'<span style="font-size:12px;font-weight:bold;padding:2px 8px;border-radius:10px;background:'+_admBg+';color:'+_admClr+'">Adm# '+s.admissionNo+'</span>':'')+
     '<span style="font-size:12px;font-weight:bold;padding:3px 10px;border-radius:10px;background:'+(s.status==='discontinued'?'#ef4444':'#22c55e')+';color:#fff">'+(s.status==='discontinued'?'LEFT':'ACTIVE')+'</span>'+
     '</div>'+
@@ -4711,7 +4768,7 @@ function renderProfile(){
     })()+
     (function(){
       var sib=s.siblingId?db.students.find(function(x){return x.id===s.siblingId;}):null;
-      return sib?'<span onclick="openProf('+sib.id+')" style="font-size:11px;color:'+(_admLight?'#4338ca':'#c7d2fe')+';background:rgba(79,70,229,.15);border:1px solid rgba(79,70,229,.35);padding:3px 9px;border-radius:10px;font-weight:600;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">link</span>'+esc(sib.name)+' (Class '+esc(sib.grade||'-')+')</span>':'';
+      return sib?'<span onclick="openProf('+sib.id+')" style="font-size:11px;color:'+(_admLight?'#4338ca':'#c7d2fe')+';background:rgba(79,70,229,.15);border:1px solid rgba(79,70,229,.35);padding:3px 9px;border-radius:10px;font-weight:600;cursor:pointer"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">link</span>'+esc(_studentDisplayName(sib,true))+' (Class '+esc(sib.grade||'-')+')</span>':'';
     })()+
     '</div>'+
     (ph.length?
@@ -5060,7 +5117,7 @@ function sendRecImg(){
   }).then(function(canvas){
     canvas.toBlob(function(blob){
       if(!blob){sendRecText();return;}
-      showPhonePicker(ph,blob,'dns_receipt.png', 'Fee Receipt of ' + s.name);
+      showPhonePicker(ph,blob,'dns_receipt.png', 'Fee Receipt of ' + _studentDisplayName(s));
     },'image/png',1.0);
   }).catch(function(){sendRecText();});
 }
@@ -5097,7 +5154,7 @@ function openMR(sid){
     '<div style="font-size:13px;font-weight:bold;margin-top:5px;border:1px solid #0f172a;display:inline-block;padding:2px 10px">\u2605 MASTER FEE STATEMENT \u2605</div></div>'+
     '<div style="font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:6px;color:#334155;border-bottom:1px dashed #e2e8f0;padding-bottom:10px;margin-bottom:10px">'+
     '<div><b>Receipt No:</b> '+mrNo+'</div><div style="text-align:right"><b>Date:</b> '+today+'</div>'+
-    '<div><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(s.name)+'</span></div><div style="text-align:right"><b>Class:</b> '+(s.grade||'Other')+'</div>'+
+    '<div><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(_studentDisplayName(s))+'</span></div><div style="text-align:right"><b>Class:</b> '+(s.grade||'Other')+'</div>'+
     '<div><b>Subject:</b> '+getSubjects(s)+'</div><div style="text-align:right"><b>Fee:</b> \u20b9'+Number(s.fees).toLocaleString()+'/mo</div>'+
     '<div><b>Joined:</b> '+fmtD(s.joiningDate)+'</div><div style="text-align:right"><b>Due Day:</b> '+ord(getDueDay(s))+' every month</div></div>'+
     (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">PAID ON</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:center">MODE</th><th style="padding:4px 3px;font-size:10px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table>':'')+
@@ -5139,7 +5196,7 @@ function sendMRImg(){
   }).then(function(canvas){
     canvas.toBlob(function(blob){
       if(!blob){sendMRText();return;}
-      showPhonePicker(ph,blob,'dns_master_receipt.png', 'Fee Statement of ' + s.name);
+      showPhonePicker(ph,blob,'dns_master_receipt.png', 'Fee Statement of ' + _studentDisplayName(s));
     },'image/png',1.0);
   }).catch(function(){sendMRText();});
 }
@@ -5333,7 +5390,7 @@ function taClassChanged(){
     list.innerHTML=studs.map(function(s){
       return '<label style="display:flex;align-items:center;gap:12px;padding:11px 6px;cursor:pointer;border-bottom:1px solid var(--ibdr)">'
         +'<input type="checkbox" class="ta-stu-cb" value="'+s.id+'" onchange="taStudentCheckChanged()" style="width:22px;height:22px;accent-color:#22c55e;flex-shrink:0">'
-        +'<span style="color:var(--txt);font-size:16px;font-weight:600">'+esc(s.name)+(s.school?' <span style="color:var(--sub);font-size:13px;font-weight:400">('+esc(s.school)+')</span>':'')+'</span>'
+        +'<span style="color:var(--txt);font-size:16px;font-weight:600">'+esc(_studentDisplayName(s))+(s.school?' <span style="color:var(--sub);font-size:13px;font-weight:400">('+esc(s.school)+')</span>':'')+'</span>'
         +'</label>';
     }).join('');
   }
@@ -5681,9 +5738,9 @@ function openWA(sid){
     var div=document.createElement('div');
     div.style.cssText='background:rgba(30,58,95,.15);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(30,58,95,.3)';
     div.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:13px;font-weight:bold;color:var(--acc)">\ud83d\udcf1 '+esc(p.number)+'</span><span style="font-size:13px;color:var(--sub)">['+p.tag+']</span><a href="tel:'+p.number.replace(/\D/g,'')+'" style="padding:3px 10px;border-radius:14px;border:1px solid #22c55e;background:rgba(34,197,94,.1);color:#22c55e;font-size:12px;font-weight:bold;text-decoration:none">\ud83d\udcf2 Call</a></div>';
-    var simpleMsg='Dear *'+s.name+'* \ud83e\uddd1\u200d🎓\nKindly submit your tuition fees at the earliest.'+(maxOD>0?'\n(Pending from *'+maxOD+' day'+(maxOD>1?'s':'')+'*)':'');
+    var simpleMsg='Dear *'+_studentDisplayName(s)+'* \ud83e\uddd1\u200d🎓\nKindly submit your tuition fees at the earliest.'+(maxOD>0?'\n(Pending from *'+maxOD+' day'+(maxOD>1?'s':'')+'*)':'');
     div.innerHTML+=waBtn('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">mail</span>Simple Reminder','Quick reminder','#64748b',p.number,simpleMsg);
-    if(hasUnpaid&&!hasOverdue){var reminderMsg='Dear *'+s.name+'* \ud83e\uddd1\u200d🎓\nKindly submit your tuition fees at the earliest.';div.innerHTML+=waBtn('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">event</span>Fee Reminder','Due on '+curDueStr+' ('+curMonYr+')','#25d366',p.number,reminderMsg);}
+    if(hasUnpaid&&!hasOverdue){var reminderMsg='Dear *'+_studentDisplayName(s)+'* \ud83e\uddd1\u200d🎓\nKindly submit your tuition fees at the earliest.';div.innerHTML+=waBtn('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">event</span>Fee Reminder','Due on '+curDueStr+' ('+curMonYr+')','#25d366',p.number,reminderMsg);}
     if(hasOverdue){var overdueMsg='Dear Parent,\n\nDespite previous reminders, your ward\'s tuition fee remains *pending from '+maxOD+' day'+(maxOD>1?'s':'')+'*.\n\nYou are requested to clear the outstanding dues at the earliest.\n\nRegards,\nDNS Classes';div.innerHTML+=waBtn('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">warning</span>Overdue Reminder',maxOD+'d overdue','#ef4444',p.number,overdueMsg);}
     body.appendChild(div);
   });
@@ -5775,6 +5832,7 @@ function copyPhoneNumbers(){
 }
 function copyAllFields(){
   var name=(document.getElementById('f-name')||{}).value||'';
+  var surname=(document.getElementById('f-surname')||{}).value||'';
   var adm=(document.getElementById('f-adm-no')||{}).value||'';
   var school=(document.getElementById('f-school')||{}).value||'';
   var date=(document.getElementById('f-date')||{}).value||'';
@@ -5792,6 +5850,7 @@ function copyAllFields(){
   });
   var lines=[];
   lines.push('Name: '+name);
+  if(surname)lines.push('Surname: '+surname);
   if(adm)lines.push('Admission No: '+adm);
   if(school)lines.push('School: '+school);
   if(date)lines.push('Joining Date: '+date);
@@ -5822,6 +5881,7 @@ function pasteAllFields(){
     });
     var _set=function(id,val){var el=document.getElementById(id);if(el&&val!==undefined)el.value=val;};
     _set('f-name',fields['name']);
+    _set('f-surname',fields['surname']);
     _set('f-adm-no',fields['admission no']);
     _set('f-school',fields['school']);
     _set('f-date',fields['joining date']);
@@ -5935,7 +5995,7 @@ function startAdd(){
   // If there's an unsaved add-in-progress (user accidentally navigated away
   // and is now returning), preserve it instead of wiping the form again.
   if(_addFormDirty&&editId===null){go('add');return;}
-  editId=null;document.getElementById('form-title').innerHTML='<span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">person_add</span>Add New Student';document.getElementById('save-btn').textContent='Save';document.getElementById('f-name').value='';document.getElementById('f-date').value=new Date().toISOString().split('T')[0];document.getElementById('f-fees').value='';document.getElementById('f-grade').value='10th';document.getElementById('f-subject').value='Maths';document.getElementById('f-loc').value='Home';document.getElementById('f-notes').value='';
+  editId=null;document.getElementById('form-title').innerHTML='<span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">person_add</span>Add New Student';document.getElementById('save-btn').textContent='Save';document.getElementById('f-name').value='';var _fsur=document.getElementById('f-surname');if(_fsur)_fsur.value='';document.getElementById('f-date').value=new Date().toISOString().split('T')[0];document.getElementById('f-fees').value='';document.getElementById('f-grade').value='10th';document.getElementById('f-subject').value='Maths';document.getElementById('f-loc').value='Home';document.getElementById('f-notes').value='';
   var _fa=document.getElementById('f-addr');if(_fa)_fa.value='';
   var _fadm=document.getElementById('f-adm-no');if(_fadm)_fadm.value='';
   var _fs=document.getElementById('f-school');if(_fs)_fs.value='';
@@ -5945,7 +6005,7 @@ function startAdd(){
 function startEdit(sid){
   var s=db.students.find(function(x){return x.id===sid;});if(!s)return;
   editId=sid;document.getElementById('form-title').innerHTML='<span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">edit</span>Edit Student';document.getElementById('save-btn').textContent='Update';
-  document.getElementById('f-name').value=s.name||'';document.getElementById('f-date').value=s.joiningDate||'';document.getElementById('f-fees').value=s.fees||'';document.getElementById('f-grade').value=s.grade||'Other';initSubjectChips(s.subjects?s.subjects.join(', '):(s.subject||'Maths'));document.getElementById('f-loc').value=s.location||'Home';
+  document.getElementById('f-name').value=s.name||'';var _fsur2=document.getElementById('f-surname');if(_fsur2)_fsur2.value=s.surname||'';document.getElementById('f-date').value=s.joiningDate||'';document.getElementById('f-fees').value=s.fees||'';document.getElementById('f-grade').value=s.grade||'Other';initSubjectChips(s.subjects?s.subjects.join(', '):(s.subject||'Maths'));document.getElementById('f-loc').value=s.location||'Home';
   var fadmEl=document.getElementById('f-adm-no');if(fadmEl)fadmEl.value=(typeof s.admissionNo==='number')?s.admissionNo:'';
   var fad=document.getElementById('f-addr');if(fad)fad.value=s.address||'';
   var fadEl=document.getElementById('f-addr');if(fadEl)fadEl.value=s.address||'';
@@ -5990,6 +6050,7 @@ function saveForm(){
   try{
     var grade=(document.getElementById('f-grade')||{value:'Other'}).value||'Other';
     var loc=(document.getElementById('f-loc')||{value:'Home'}).value||'Home';
+    var surname=(document.getElementById('f-surname')||{value:''}).value.trim();
     var subjEl=document.getElementById('f-subject'),rawSubj=subjEl?subjEl.value:'';
     var subjects=rawSubj?rawSubj.split(',').map(function(s){return s.trim();}).filter(Boolean):['Maths'];
     var addr=(document.getElementById('f-addr')||{value:''}).value||'';
@@ -6000,7 +6061,7 @@ function saveForm(){
     if(admNoRaw&&(isNaN(admNoVal)||admNoVal<0)){showToast('Admission number must be 0 or higher',true);return;}
     pushUndo();
     var dobVal=(document.getElementById('f-dob')||{value:''}).value||'';
-    var payload={name:name,joiningDate:jd,fees:Number(fees)||0,grade:grade,subject:subjects[0]||'Maths',subjects:subjects,address:addr,school:school,location:loc,notes:notes,dob:dobVal,phone:ph.map(function(p){return p.number;}).join(', '),phones:ph,freeStudent:Number(fees)===0};
+    var payload={name:name,surname:surname,joiningDate:jd,fees:Number(fees)||0,grade:grade,subject:subjects[0]||'Maths',subjects:subjects,address:addr,school:school,location:loc,notes:notes,dob:dobVal,phone:ph.map(function(p){return p.number;}).join(', '),phones:ph,freeStudent:Number(fees)===0};
     if(editId){
       var _eid=editId;
       if(admNoVal!==null){
@@ -6205,7 +6266,7 @@ function runGlobalSearch(){
       var icon = _gsAchievementIcon('trophy');
       var cards = lead.top.map(function(r) {
         return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf(' + r.s.id + ')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
-          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">' + esc(r.s.name) + '</div>' +
+          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">' + esc(_studentDisplayName(r.s)) + '</div>' +
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class ' + esc(r.s.grade || '') + (r.s.school ? ' \u2022 ' + esc(r.s.school) : '') + '</div></div>' +
           '<div style="font-size:20px;font-weight:800;color:var(--acc)">' + icon + ' ' + r.count + '</div>' +
           '</div>';
@@ -6220,7 +6281,7 @@ function runGlobalSearch(){
       var icon = _gsAchievementIcon('medal');
       var cards = lead.top.map(function(r) {
         return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf(' + r.s.id + ')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
-          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">' + esc(r.s.name) + '</div>' +
+          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">' + esc(_studentDisplayName(r.s)) + '</div>' +
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class ' + esc(r.s.grade || '') + (r.s.school ? ' \u2022 ' + esc(r.s.school) : '') + '</div></div>' +
           '<div style="font-size:20px;font-weight:800;color:var(--acc)">' + icon + ' ' + r.count + '</div>' +
           '</div>';
@@ -6240,7 +6301,7 @@ function runGlobalSearch(){
       var icon=_gsAchievementIcon(smart.type);
       var cards=lead.top.map(function(r){
         return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+r.s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'+
-          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">'+esc(r.s.name)+'</div>'+
+          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">'+esc(_studentDisplayName(r.s))+'</div>'+
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class '+esc(r.s.grade||'')+(r.s.school?' \u2022 '+esc(r.s.school):'')+'</div></div>'+
           '<div style="font-size:20px;font-weight:800;color:var(--acc)">'+icon+' '+r.count+'</div>'+
           '</div>';
@@ -6256,7 +6317,7 @@ function runGlobalSearch(){
       if(!mLbl)mLbl='Overall';
       var acards=alead.top.map(function(r){
         return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+r.s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'+
-          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">'+esc(r.s.name)+'</div>'+
+          '<div><div style="font-weight:bold;font-size:15px;color:var(--txt)">'+esc(_studentDisplayName(r.s))+'</div>'+
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class '+esc(r.s.grade||'')+' \u2022 '+r.st.present+'/'+r.st.total+' days present</div></div>'+
           '<div style="font-size:20px;font-weight:800;color:#22c55e">'+r.pct+'%</div>'+
           '</div>';
@@ -6273,7 +6334,7 @@ function runGlobalSearch(){
     var fields=[s.name||'',s.grade||'',s.school||'',s.address||'',s.notes||'',s.location||'',s.status||'',getSubjects(s),(s.joiningDate||''),String(s.fees||''),(typeof s.admissionNo==='number'?String(s.admissionNo):''),(typeof s.admissionNo==='number'?'adm# '+s.admissionNo:''),(typeof s.admissionNo==='number'?'adm#'+s.admissionNo:''),(typeof s.admissionNo==='number'?'adm '+s.admissionNo:''),((s.phones||[]).map(function(p){return p.number;}).join(' '))];
     if(fields.some(function(f){return String(f).toLowerCase().indexOf(q)>=0;})){
       studentCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
-        '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(s.name)+(s.admissionNo?' <span style="font-size:11px;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
+        '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(_studentDisplayName(s))+(s.admissionNo?' <span style="font-size:11px;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
         '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class '+esc(s.grade||'')+(s.school?' \u2022 '+esc(s.school):'')+(s.location?' \u2022 '+esc(s.location):'')+'</div>'+
         '</div>');
     }
@@ -6287,7 +6348,7 @@ function runGlobalSearch(){
       var fullMonName=MO[cyMoIdx]?MO[cyMoIdx].toLowerCase():'';
       if(rid.indexOf(q)>=0||mon.indexOf(q)>=0||fullMonName.indexOf(q)>=0||amt.indexOf(q)>=0||mode.indexOf(q)>=0||pdon.indexOf(q)>=0){
         payCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
-          '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(s.name)+'</div><div style="font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+'">\u20b9'+getAmt(s,rec).toLocaleString()+'</div></div>'+
+          '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(_studentDisplayName(s))+'</div><div style="font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+'">\u20b9'+getAmt(s,rec).toLocaleString()+'</div></div>'+
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(cy.label)+(rec.receiptId?' \u2022 Receipt #'+esc(rec.receiptId):'')+(rec.paidOn?' \u2022 '+esc(fmtD(rec.paidOn)):'')+'</div>'+
           '</div>');
       }
@@ -6347,7 +6408,7 @@ function runGlobalSearch(){
       if(fields.some(function(f){return String(f).toLowerCase().indexOf(q)>=0;})){
         mockCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+stu.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
           '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(e.name||'Mock Exam')+'</div>'+
-          '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(stu.name)+' \u2022 '+e.marks+'/'+e.total+(e.dateGiven?' \u2022 '+esc(fmtD(e.dateGiven)):'')+'</div>'+
+          '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(_studentDisplayName(stu))+' \u2022 '+e.marks+'/'+e.total+(e.dateGiven?' \u2022 '+esc(fmtD(e.dateGiven)):'')+'</div>'+
           '</div>');
       }
     });
@@ -6430,7 +6491,7 @@ function runSearch(){
       if(s.notes)extras.push('\uD83D\uDCDD '+esc(s.notes));
       return '<div class="card" style="border-color:'+ci.color+'33;flex-direction:column;align-items:stretch;cursor:pointer" onclick="openProf('+s.id+')">'+
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-        '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(s.name)+'</div>'+
+        '<div style="font-weight:bold;font-size:16px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+'</div>'+
         '<span style="font-size:13px;color:var(--sub)">Class '+esc(s.grade||'-')+' \u2022 '+esc(getSubjects(s))+' \u2022 '+(s.location||'Home')+'</span>'+
         '</div>'+
         '<div style="font-size:13px;color:var(--sub);margin-top:3px">'+ph2.map(function(p){return '\uD83D\uDCDE '+esc(p.number)+' ['+esc(p.tag)+']';}).join(' | ')+'</div>'+
@@ -6627,6 +6688,177 @@ function renderAttend() {
   var d = document.getElementById('att-date');
   if (d && !d.value) d.value = _todayStr();
   if (attMode==='mark') renderMarkToday(); else renderAttendHistory();
+}
+var _bulkAttLoc='all',_bulkAttSelectedClasses=[],_bulkAttPeriod='overall',_bulkAttMonths=[],_bulkAttMonthPickerYear=(new Date()).getFullYear();
+function _bulkAttBaseStudents(){
+  var students=_getSessionStudents().filter(function(s){
+    return (s.status||'active')==='active';
+  });
+  if(_bulkAttLoc!=='all')students=students.filter(function(s){return (s.location||'Home')===_bulkAttLoc;});
+  return students;
+}
+function _bulkAttSortGrades(a,b){
+  var na=parseInt(a),nb=parseInt(b);
+  if(!isNaN(na)&&!isNaN(nb)&&na!==nb)return na-nb;
+  if(!isNaN(na))return -1;
+  if(!isNaN(nb))return 1;
+  return a.localeCompare(b);
+}
+function sendBulkAttendanceReport(){
+  _bulkAttLoc='all';
+  _bulkAttPeriod='overall';
+  _bulkAttMonths=[];
+  var students=_bulkAttBaseStudents();
+  if(!students.length){showToast('No students available for the attendance report',true);return;}
+  _bulkAttSelectedClasses=[];
+  _bulkAttRenderPicker();
+  openM('bulk-att-modal');
+}
+function _bulkAttRenderPicker(){
+  var list=document.getElementById('bulk-att-class-list');
+  var note=document.getElementById('bulk-att-selection-note');
+  if(!list)return;
+  var students=_bulkAttBaseStudents();
+  var grades=Object.keys(students.reduce(function(out,s){out[String(s.grade||'Other')]=1;return out;},{})).sort(_bulkAttSortGrades);
+  if(!grades.length){list.innerHTML='<div style="padding:18px;text-align:center;color:var(--sub);font-size:13px">No classes found for this location.</div>';if(note)note.textContent='';return;}
+  list.innerHTML=grades.map(function(grade){
+    var checked=_bulkAttSelectedClasses.indexOf(grade)>=0?' checked':'';
+    var count=students.filter(function(s){return String(s.grade||'Other')===grade;}).length;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 9px;border-bottom:1px solid var(--bdr);cursor:pointer">'+
+      '<input type="checkbox" data-bulk-grade="'+esc(grade)+'" onchange="bulkAttClassChanged(this)"'+checked+' style="width:18px;height:18px;accent-color:#25d366;flex-shrink:0">'+
+      '<span style="flex:1;color:var(--txt);font-size:14px;font-weight:700">Class '+esc(grade)+'</span><span style="font-size:11px;color:var(--sub)">'+count+' student'+(count===1?'':'s')+'</span></label>';
+  }).join('');
+  if(note)note.textContent=_bulkAttSelectedClasses.length+' of '+grades.length+' class'+(grades.length===1?'':'es')+' selected';
+  ['all','home','city'].forEach(function(key){
+    var btn=document.getElementById('bulk-att-loc-'+key);if(!btn)return;
+    var active=(_bulkAttLoc==='all'&&key==='all')||(_bulkAttLoc===key.charAt(0).toUpperCase()+key.slice(1));
+    btn.style.border=active?'2px solid #25d366':'1px solid var(--ibdr)';
+    btn.style.background=active?'rgba(37,211,102,.14)':'var(--ibg)';
+    btn.style.color=active?'#25d366':'var(--sub)';
+  });
+  ['overall','month'].forEach(function(key){
+    var btn=document.getElementById('bulk-att-period-'+key);if(!btn)return;
+    var active=(_bulkAttPeriod===key);
+    btn.style.border=active?'2px solid #25d366':'1px solid var(--ibdr)';
+    btn.style.background=active?'rgba(37,211,102,.14)':'var(--ibg)';
+    btn.style.color=active?'#25d366':'var(--sub)';
+  });
+  var monthChoice=document.getElementById('bulk-att-month-choice');
+  if(monthChoice){
+    monthChoice.style.display=_bulkAttPeriod==='month'?'block':'none';
+    var monthLabels=_bulkAttMonths.slice().sort().map(function(value){return _SMOS[parseInt(value.slice(5,7),10)-1]+' '+value.slice(0,4);});
+    monthChoice.textContent=monthLabels.length===1?monthLabels[0]:monthLabels.length+' months selected';
+  }
+}
+function setBulkAttPeriod(mode){
+  _bulkAttPeriod=mode==='month'?'month':'overall';
+  _bulkAttRenderPicker();
+  if(_bulkAttPeriod==='month')openBulkAttMonthPicker();
+}
+function openBulkAttMonthPicker(){
+  var seed=_bulkAttMonths.length?_bulkAttMonths.slice().sort()[_bulkAttMonths.length-1]:'';
+  var base=seed?new Date(parseInt(seed.slice(0,4),10),parseInt(seed.slice(5,7),10)-1,1):new Date();
+  _bulkAttMonthPickerYear=base.getFullYear();
+  _renderBulkAttMonthPicker();
+  openM('bulk-att-month-modal');
+}
+function bulkAttShiftMonthYear(delta){
+  _bulkAttMonthPickerYear+=delta;
+  _renderBulkAttMonthPicker();
+}
+function _renderBulkAttMonthPicker(){
+  var title=document.getElementById('bulk-att-month-year');
+  var grid=document.getElementById('bulk-att-month-grid');
+  if(title)title.textContent=String(_bulkAttMonthPickerYear);
+  if(!grid)return;
+  grid.innerHTML=_SMOS.map(function(name,i){
+    var value=_bulkAttMonthPickerYear+'-'+('0'+(i+1)).slice(-2);
+    var active=_bulkAttMonths.indexOf(value)>=0;
+    return '<button data-m="'+value+'" onclick="setBulkAttMonth(this.dataset.m)" style="padding:10px 5px;border-radius:9px;border:'+(active?'2px solid #25d366':'1px solid var(--ibdr)')+';background:'+(active?'rgba(37,211,102,.14)':'var(--ibg)')+';color:'+(active?'#25d366':'var(--txt)')+';font-size:13px;font-weight:800">'+name+'</button>';
+  }).join('');
+  var selectedNote=document.getElementById('bulk-att-month-selection');
+  if(selectedNote)selectedNote.textContent=_bulkAttMonths.length?_bulkAttMonths.length+' month'+(_bulkAttMonths.length===1?'':'s')+' selected':'No months selected';
+}
+function setBulkAttMonth(value){
+  var index=_bulkAttMonths.indexOf(value);
+  if(index>=0)_bulkAttMonths.splice(index,1);else _bulkAttMonths.push(value);
+  _bulkAttMonths.sort();
+  _bulkAttPeriod='month';
+  _renderBulkAttMonthPicker();
+  _bulkAttRenderPicker();
+}
+function bulkAttDoneMonths(){
+  if(!_bulkAttMonths.length){showToast('Select at least one month',true);return;}
+  closeM('bulk-att-month-modal');
+  _bulkAttRenderPicker();
+}
+function setBulkAttLoc(loc){
+  _bulkAttLoc=loc;
+  _bulkAttSelectedClasses=[];
+  _bulkAttRenderPicker();
+}
+function setBulkAttClasses(selectAll){
+  var students=_bulkAttBaseStudents();
+  _bulkAttSelectedClasses=selectAll?Object.keys(students.reduce(function(out,s){out[String(s.grade||'Other')]=1;return out;},{})).sort(_bulkAttSortGrades):[];
+  _bulkAttRenderPicker();
+}
+function bulkAttClassChanged(cb){
+  var grade=cb.getAttribute('data-bulk-grade');
+  if(cb.checked){if(_bulkAttSelectedClasses.indexOf(grade)<0)_bulkAttSelectedClasses.push(grade);}
+  else _bulkAttSelectedClasses=_bulkAttSelectedClasses.filter(function(x){return x!==grade;});
+  _bulkAttSelectedClasses.sort(_bulkAttSortGrades);
+  var note=document.getElementById('bulk-att-selection-note');
+  var total=document.querySelectorAll('#bulk-att-class-list input[type=checkbox]').length;
+  if(note)note.textContent=_bulkAttSelectedClasses.length+' of '+total+' class'+(total===1?'':'es')+' selected';
+}
+function _bulkAttStatsForMonths(s,months){
+  var total=0,absent=0,late=0,present=0;
+  months.forEach(function(value){
+    var parts=value.split('-');
+    var st=getAttendStats(s,parseInt(parts[0],10),parseInt(parts[1],10)-1,null);
+    total+=st.total;absent+=st.absent;late+=st.late;present+=st.present;
+  });
+  return {total:total,absent:absent,late:late,present:present,pct:total?Math.round(present/total*100):0};
+}
+function sendBulkAttendanceReportNow(){
+  var selected=_bulkAttSelectedClasses.slice();
+  if(!selected.length){showToast('Select at least one class',true);return;}
+  if(_bulkAttPeriod==='month'&&!_bulkAttMonths.length){showToast('Select at least one month for the report',true);return;}
+  var students=_bulkAttBaseStudents().filter(function(s){return selected.indexOf(String(s.grade||'Other'))>=0;});
+  if(!students.length){showToast('No students found for the selected classes',true);return;}
+  var groups={};
+  students.forEach(function(s){
+    var grade=String(s.grade||'Other');
+    if(!groups[grade])groups[grade]=[];
+    var stats=_bulkAttPeriod==='month'
+      ? _bulkAttStatsForMonths(s,_bulkAttMonths)
+      : getTotalAttendStats(s);
+    groups[grade].push({student:s,stats:stats});
+  });
+  var grades=Object.keys(groups).sort(_bulkAttSortGrades);
+  var reportLabel='Overall';
+  if(_bulkAttPeriod==='month'){
+    reportLabel=_bulkAttMonths.slice().sort().map(function(value){return _SMOS[parseInt(value.slice(5,7),10)-1]+' '+value.slice(0,4);}).join(' + ');
+  }
+  var lines=['📊 *ATTENDANCE REPORT*','_'+reportLabel+'_',''];
+  grades.forEach(function(grade, gradeIndex){
+    if(gradeIndex>0)lines.push('');
+    var rows=groups[grade].sort(function(a,b){return (b.stats.pct-a.stats.pct)||(b.stats.present-a.stats.present)||((a.student.name||'').localeCompare(b.student.name||''));});
+    lines.push('📚 *CLASS '+grade+'*');
+    rows.forEach(function(row){
+      var st=row.stats;
+      var indicator=st.pct>=85?'🟢':st.pct>=70?'🟡':'🔴';
+      lines.push(indicator+' *'+st.pct+'%* | P-'+st.present+' A-'+st.absent+' L-'+st.late+' — *'+(_studentDisplayName(row.student)||'Unnamed')+'*');
+    });
+  });
+  lines.push('');
+  lines.push('ℹ️ P = Present | A = Absent | L = Late');
+  var msg=lines.join('\n');
+  closeM('bulk-att-modal');
+  var txt=encodeURIComponent(msg);
+  var pkg=_waTarget==='business'?'com.whatsapp.w4b':'com.whatsapp';
+  var intentUrl='intent://send?text='+txt+'#Intent;scheme=whatsapp;package='+pkg+';end';
+  try{window.location.href=intentUrl;setTimeout(function(){window.open('https://wa.me/?text='+txt,'_blank');},800);}catch(e){window.open('https://wa.me/?text='+txt,'_blank');}
 }
 
 function _chKey(grade,loc){return grade+'|'+(loc||'Home');}
@@ -6913,7 +7145,7 @@ function renderMarkToday() {
           ? '<input type="number" placeholder="min" min="1" max="120" value="'+minVal+'" data-act="lmin" data-sid="'+s.id+'" data-no-swipe="1" style="width:72px;padding:4px 7px;font-size:12px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);display:inline-block;margin-left:4px">'
           : '';
         html += '<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid var(--ibdr)">'
-          +'<div data-act="prof" data-sid="'+s.id+'" style="flex:1;font-size:14px;font-weight:500;color:var(--txt);cursor:pointer">'+esc(s.name)+'</div>'
+          +'<div data-act="prof" data-sid="'+s.id+'" style="flex:1;font-size:14px;font-weight:500;color:var(--txt);cursor:pointer">'+esc(_studentDisplayName(s,true))+'</div>'
           +'<button data-act="markh" data-sid="'+s.id+'" style="'+hS+'"><span class="material-symbols-outlined" style="font-size:14px;line-height:1">beach_access</span></button>'
           +'<button data-act="markp" data-sid="'+s.id+'" style="'+pS+'">P</button>'
           +'<button data-act="marka" data-sid="'+s.id+'" style="'+aS+'">A</button>'
@@ -7189,7 +7421,7 @@ function renderAttendHistory() {
 
       var tbody = '<tbody>';
       byG[g].forEach(function(s) {
-        tbody += '<tr><td data-sid="'+s.id+'" style="padding:6px 10px;font-size:15px;font-weight:bold;color:'+cTxt()+';position:sticky;left:0;background:var(--card);z-index:1;cursor:pointer;text-decoration:underline dotted" onclick="openProf('+s.id+')">'+esc(s.name)+'</td>';
+        tbody += '<tr><td data-sid="'+s.id+'" style="padding:6px 10px;font-size:15px;font-weight:bold;color:'+cTxt()+';position:sticky;left:0;background:var(--card);z-index:1;cursor:pointer;text-decoration:underline dotted" onclick="openProf('+s.id+')">'+esc(_studentDisplayName(s))+'</td>';
         dates.forEach(function(d) {
           var att=(s.attendance||{})[d];
           var _gh=(db.settings&&db.settings.classHolidays&&db.settings.classHolidays[_chKey(g,loc)])||[];
@@ -7201,7 +7433,7 @@ function renderAttendHistory() {
             else if(att.status==='absent') dot='<span style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:16px">\u25cf</span>';
             else if(att.status==='late') {
               var mins=att.minutes?String(att.minutes):'';
-              dot='<span data-late="1" data-mins="'+mins+'" data-nm="'+esc(s.name)+'" data-dt="'+d+'" style="color:#f59e0b;font-size:16px;cursor:pointer">\u25cf</span>';
+              dot='<span data-late="1" data-mins="'+mins+'" data-nm="'+esc(_studentDisplayName(s))+'" data-dt="'+d+'" style="color:#f59e0b;font-size:16px;cursor:pointer">\u25cf</span>';
             }
             else if(att.status==='holiday') {
               dot='<span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b;vertical-align:middle">beach_access</span>';
@@ -7304,7 +7536,7 @@ function attAlertCard(s, st, color, label, urgent, type) {
   var waOnclick=type==='late'?('openLateWA('+s.id+')'):'openAttendWA('+s.id+','+(urgent?'true':'false')+')';
   var waB=ph.length?('<button onclick="event.stopPropagation();'+waOnclick+'" style="padding:4px 10px;border-radius:14px;border:1px solid '+waBdr+';background:'+waBg+';color:'+waClr+';font-size:13px;font-weight:bold;flex-shrink:0">'+waLbl+'</button>'):'';
   return '<div style="background:'+color+'15;border:1px solid '+color+'40;border-radius:10px;padding:10px 13px;margin-bottom:6px;display:flex;align-items:center;gap:8px" onclick="openProf('+s.id+')" >'
-    + '<div style="flex:1"><div style="font-weight:bold;font-size:15px;color:'+cTxt()+'">'+esc(s.name)+'</div>'
+    + '<div style="flex:1"><div style="font-weight:bold;font-size:15px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+'</div>'
     + '<div style="font-size:12px;color:'+cSub()+'">Class '+esc(s.grade||'-')+' \u2022 '+(s.location||'Home')+'</div></div>'
     + '<div style="font-weight:bold;font-size:14px;color:'+color+'">'+label+'</div>'
     + waB + '</div>';
@@ -7508,7 +7740,7 @@ function openBirthdayWA(sid){
   if(!ph.length){showToast('No phone number',true);return;}
   var age='';
   if(s.dob){var dp=s.dob.split('-');age=' Turning '+( new Date().getFullYear()-parseInt(dp[0]));}
-  var msg='🎂 Happy Birthday, *'+s.name+'*!'+age+'!'+
+  var msg='🎂 Happy Birthday, *'+_studentDisplayName(s)+'*!'+age+'!'+
     '\n\nDNS Classes wishes you a very Happy Birthday! 🎉🎈'+
     '\n\nMay this special day bring you lots of joy, happiness and success in your studies!'+
     '\n\nBest Wishes,\nDNS Classes';
@@ -7522,7 +7754,7 @@ function openLateWA(sid){
   if(!ph.length){showToast('No phone number',true);return;}
   var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);
   var msg='Dear Parent,'+
-    '\n\nYour ward *'+s.name+'* (Class '+(s.grade||'-')+') is continuously coming late in tuition from past *'+st.late+' day'+(st.late!==1?'s':'')+'*.' +
+    '\n\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') is continuously coming late in tuition from past *'+st.late+' day'+(st.late!==1?'s':'')+'*.' +
     '\n\nThis month so far:'+
     '\n\u2705 Present: '+st.present+
     '\n\u274c Absent: '+st.absent+
@@ -7539,7 +7771,7 @@ function openContAbsentWA(sid,streak){
   if(!ph.length){showToast('No phone number',true);return;}
   var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);
   var msg='Dear Parent,'+
-    '\n\nYour ward *'+s.name+'* (Class '+(s.grade||'-')+') has been continuously absent from past *'+streak+' day'+(streak!==1?'s':'')+'*.'+
+    '\n\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') has been continuously absent from past *'+streak+' day'+(streak!==1?'s':'')+'*.'+
     '\n\nThis month so far:'+
     '\n\u2705 Present: '+st.present+
     '\n\u274c Absent: '+st.absent+
@@ -7550,7 +7782,7 @@ function openContAbsentWA(sid,streak){
   if(ph.length===1)openWAUrl(ph[0].number,msg);
   else showPhonePicker(ph,null,null,msg);
 }
-function openAttendWA(sid,urgent){var s=db.students.find(function(x){return x.id===sid;});if(!s)return;var ph=phones(s);if(!ph.length){showToast('No phone number',true);return;}var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);var mn=MO[now.getMonth()]+' '+now.getFullYear();var streak=getRecentConsecAbsent(s);var msg;if(urgent&&streak>=2){msg='Dear Parent,'+'\n\n*URGENT ATTENDANCE ALERT*'+'\n\nYour ward *'+s.name+'* (Class '+(s.grade||'-')+') has been continuously absent for '+streak+' day'+(streak!==1?'s':'')+'.'+'\n\nThis month so far:'+'\n\u2705 Present: '+st.present+'\n\u274c Absent: '+st.absent+'\n\ud83d\udfe1 Late: '+st.late+'\n\ud83d\udcca Attendance: '+st.pct+'%'+'\n\nPlease ensure regular attendance.'+'\n\nRegards,\nDNS Classes';}else{msg='Dear Parent,'+'\n\nYour ward *'+s.name+'* (Class '+(s.grade||'-')+') has been absent *'+st.absent+' day'+(st.absent!==1?'s':'')+' in '+mn+'*.'+'\n\nThis month so far:'+'\n\u2705 Present: '+st.present+'\n\u274c Absent: '+st.absent+'\n\ud83d\udfe1 Late: '+st.late+'\n\ud83d\udcca Attendance: '+st.pct+'%'+'\n\nPlease ensure regular attendance.'+'\n\nRegards,\nDNS Classes';}if(ph.length===1)openWAUrl(ph[0].number,msg);else showPhonePicker(ph,null,null,msg);}
+function openAttendWA(sid,urgent){var s=db.students.find(function(x){return x.id===sid;});if(!s)return;var ph=phones(s);if(!ph.length){showToast('No phone number',true);return;}var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);var mn=MO[now.getMonth()]+' '+now.getFullYear();var streak=getRecentConsecAbsent(s);var msg;if(urgent&&streak>=2){msg='Dear Parent,'+'\n\n*URGENT ATTENDANCE ALERT*'+'\n\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') has been continuously absent for '+streak+' day'+(streak!==1?'s':'')+'.'+'\n\nThis month so far:'+'\n\u2705 Present: '+st.present+'\n\u274c Absent: '+st.absent+'\n\ud83d\udfe1 Late: '+st.late+'\n\ud83d\udcca Attendance: '+st.pct+'%'+'\n\nPlease ensure regular attendance.'+'\n\nRegards,\nDNS Classes';}else{msg='Dear Parent,'+'\n\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') has been absent *'+st.absent+' day'+(st.absent!==1?'s':'')+' in '+mn+'*.'+'\n\nThis month so far:'+'\n\u2705 Present: '+st.present+'\n\u274c Absent: '+st.absent+'\n\ud83d\udfe1 Late: '+st.late+'\n\ud83d\udcca Attendance: '+st.pct+'%'+'\n\nPlease ensure regular attendance.'+'\n\nRegards,\nDNS Classes';}if(ph.length===1)openWAUrl(ph[0].number,msg);else showPhonePicker(ph,null,null,msg);}
 function sendMonthlyAttendSummary(sid) {
   sid = parseInt(sid) || sid;
   var s = db.students.find(function(x) { return x.id === sid; });
@@ -7606,7 +7838,8 @@ function sendMonthlyAttendSummary(sid) {
     list.appendChild(row);
   });
 
-  document.getElementById('month-picker-modal').style.display = 'block';
+  var _mp=document.getElementById('month-picker-modal');
+  if(_mp){_mp.style.display='flex';}
   var title = document.querySelector('#month-picker-modal span');
   if (title) title.textContent = 'Select Attendance Month';
 }
@@ -8824,7 +9057,7 @@ function sendDecoratedToWA(){
     var icon=getIcon(s,rank);
     var isMedal=rank<=3;
     if(isMedal){
-      lines.push(icon+" "+bar(s.marks)+" "+scorePad(s.marks)+"*"+scoreVal(s.marks)+" - "+s.name+"*");
+      lines.push(icon+" "+bar(s.marks)+" "+scorePad(s.marks)+"*"+scoreVal(s.marks)+" - "+_studentDisplayName(s)+"*");
     } else {
       lines.push(icon+" "+bar(s.marks)+" "+score(s.marks)+" - "+s.name);
     }
@@ -8964,7 +9197,7 @@ html+='<div id="pr-students-list" style="background:var(--card);border-radius:10
     html+='<div data-student-id="'+s.id+'" data-student-name="'+esc(String(s.name||'').trim())+'" style="display:flex;align-items:center;gap:8px;padding:11px 12px;'+(i?'border-top:1px solid var(--ibdr)':'')+'">';
     var _isInactive=(s.status||'active')==='discontinued';
     html+='<div style="flex:1">'
-      +'<div style="font-size:16px;font-weight:bold;color:'+(_isInactive?'#ef4444':'var(--txt)')+'">'+esc(s.name)
+      +'<div style="font-size:16px;font-weight:bold;color:'+(_isInactive?'#ef4444':'var(--txt)')+'">'+esc(_studentDisplayName(s))
       +(_isInactive?' <span style="font-size:10px;color:#94a3b8;font-weight:normal;background:#64748b22;padding:1px 6px;border-radius:10px">inactive</span>':'')
       +'</div></div>';
     html+='<input type="number" id="'+mk_id+'" placeholder="Marks" min="0" oninput="_onMarksInput(this)" style="width:72px;padding:7px 8px;font-size:15px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt)">';
@@ -10943,6 +11176,8 @@ function chAddChapter(){
   if(!_isSenior(cls)&&!school){showToast('Select a school first',true);return;}
   var key=_chKeyCls(cls,school);
   if(!db.chapters[key])db.chapters[key]=[];
+  var _hasNewChapter=lines.some(function(name){return !db.chapters[key].find(function(c){return c.name.toLowerCase()===name.toLowerCase();});});
+  if(_hasNewChapter)pushUndo();
   var added=0,skipped=0;
   lines.forEach(function(name){
     if(db.chapters[key].find(function(c){return c.name.toLowerCase()===name.toLowerCase();})){
@@ -11053,6 +11288,7 @@ function chMoveByIdx(btn,dir){
   // Just swap array positions — marks are stored keyed by chapter NAME
   // (db.progress[studentId][chapterName][testNo]), never by position, so
   // reordering here never affects any recorded marks.
+  pushUndo();
   var tmp=chs[idx];chs[idx]=chs[newIdx];chs[newIdx]=tmp;
   saveDB();
   chRenderList();
@@ -11062,6 +11298,7 @@ function chDeleteByIdx(btn){var cls=btn.dataset.cls;var school=btn.dataset.schoo
 function chDelete(cls,school,idx){
   var key=_chKeyCls(cls,school);
   if(!db.chapters[key])return;
+  pushUndo();
   db.chapters[key].splice(idx,1);
   saveDB();
   chRenderList();
@@ -11123,7 +11360,7 @@ function mockLoadStudents(){
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
   _sortTestRecordStudents(studs);
   el.innerHTML='<option value="">Select student...</option>';
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
+  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(_studentDisplayName(s))+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
   el.disabled=!studs.length;
   if(!studs.length)el.innerHTML='<option value="">No students found...</option>';
   _gpSync('mock-class','mock-class-btn');
@@ -11305,7 +11542,7 @@ function pgLoadStudents(){
   if(!cls)return;
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
   _sortTestRecordStudents(studs);
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+'</option>';});
+  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(_studentDisplayName(s))+'</option>';});
 }
 
 function _pgInferTotal(chapter,tno,fallback){
@@ -11338,7 +11575,7 @@ function pgEditCell(sid,chapter,tno){
   modal.style.cssText='display:flex;z-index:400';
   modal.onclick=function(ev){if(ev.target===modal)modal.remove();};
   modal.innerHTML='<div class="mbox" style="max-width:340px" onclick="event.stopPropagation()">'
-    +'<div style="font-size:16px;font-weight:bold;color:var(--txt);margin-bottom:2px">'+esc(stu.name)+'</div>'
+    +'<div style="font-size:16px;font-weight:bold;color:var(--txt);margin-bottom:2px">'+esc(_studentDisplayName(stu))+'</div>'
     +'<div style="font-size:13px;color:var(--sub);margin-bottom:14px">'+esc(chapter)+' &middot; '+esc(tno)+'</div>'
     +'<label class="flabel">MARKS (max '+defTotal+')</label>'
     +'<input id="pg-cell-marks" type="number" inputmode="decimal" min="0" max="'+defTotal+'" step="any" value="'+curVal+'" placeholder="Enter marks" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;margin-bottom:6px">'
@@ -11704,7 +11941,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
   h+='</div></td></tr>';
   h+='<tr>'+H+'2px 0 8px"><span style="font-size:17px;font-weight:800;color:'+tx+';letter-spacing:0.02em;word-spacing:4px">CHAPTER-WISE PROGRESS REPORT</span></td></tr>';
   h+='<tr>'+H+'0 3px"><div style="height:2px;background:'+ac+'"></div></td></tr>';
-  h+='<tr>'+H+'8px 0 1px"><span style="font-size:20px;font-weight:800;color:'+tx+'">'+esc(stu.name)+'</span></td></tr>';
+  h+='<tr>'+H+'8px 0 1px"><span style="font-size:20px;font-weight:800;color:'+tx+'">'+esc(_studentDisplayName(stu))+'</span></td></tr>';
   h+='<tr>'+H+'0 10px"><span style="font-size:13px;color:'+sb+'">Class '+esc(cls)+' | Mathematics</span></td></tr>';
   }
 
@@ -12291,7 +12528,7 @@ function prnMockClassChanged(){
   var studs=_getPrnMockStudents().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
   el.innerHTML='<option value="">Select student...</option>';
   if(studs.length)el.innerHTML+='<option value="__ALL__">All Students</option>';
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
+  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(_studentDisplayName(s))+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
   el.disabled=!studs.length;
   if(prev==='__ALL__'&&studs.length)el.value='__ALL__';
   else if(studs.some(function(s){return String(s.id)===String(prev);})){el.value=prev;}
@@ -12309,7 +12546,7 @@ function prnClassChanged(){
   var studs=_getPrnChartFilteredStudents();
   studs.sort(function(a,b){return a.name.localeCompare(b.name);});
   el.innerHTML='<option value="">Select student...</option>';
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(s.name)+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
+  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(_studentDisplayName(s))+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
   el.disabled=!studs.length;
   if(studs.some(function(s){return String(s.id)===String(prev);})){el.value=prev;}
   if(!studs.length){el.innerHTML='<option value="">No students found...</option>';}
@@ -12434,7 +12671,7 @@ function _buildPrnChartTableHTML(data,emptyRows,isPrint){
   h+='<div style="font-size:'+_fs(19,isPrint)+';font-weight:800;letter-spacing:0.02em">DNS CLASSES</div>';
   h+='</div>';
   h+='<div style="text-align:right">';
-  h+='<div style="font-size:'+_fs(19,isPrint)+';font-weight:800">'+esc(stu.name)+'</div>';
+  h+='<div style="font-size:'+_fs(19,isPrint)+';font-weight:800">'+esc(_studentDisplayName(stu))+'</div>';
   h+='<div style="font-size:'+_fs(12,isPrint)+';color:#475569">Class '+esc(stu.grade||'')+(stu.school?' | '+esc(stu.school):'')+(stu.location?' | '+esc(stu.location):'')+'</div>';
   h+='<div style="font-size:'+_fs(11,isPrint)+';color:#94a3b8;margin-top:1px">Joined: '+(stu.joiningDate?esc(fmtD(stu.joiningDate)):'\u2014')+'</div>';
   h+='</div>';
@@ -12507,7 +12744,7 @@ function printPrnChart(sid){
   if(!stu)return;
   var emptyRows=parseInt((document.getElementById('prn-chart-empty-rows')||{}).value)||0;
   var data=_buildPrnChartData(stu);
-  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Progress Chart \u2014 '+esc(stu.name)+'</title>';
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Progress Chart \u2014 '+esc(_studentDisplayName(stu))+'</title>';
   h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:auto}tr{page-break-inside:avoid}</style>';
   h+='</head><body>';
   h+=_buildPrnChartTableHTML(data,emptyRows,true);
@@ -12556,7 +12793,7 @@ function _buildPrnMockTableHTML(data,emptyRows,isPrint){
     h+='<div style="text-align:center;flex-shrink:0">'+_buildGaugeMeter(data.avgPct,95,false)+'<div style="font-size:'+_fs(12,isPrint)+';color:#0f172a;font-weight:800;margin-top:2px">Avg% = '+data.avgPct+'%</div></div>';
   }
   h+='<div style="text-align:right;flex:1">';
-  h+='<div style="font-size:'+_fs(18,isPrint)+';font-weight:800">'+esc(stu.name)+'</div>';
+  h+='<div style="font-size:'+_fs(18,isPrint)+';font-weight:800">'+esc(_studentDisplayName(stu))+'</div>';
   h+='<div style="font-size:'+_fs(13,isPrint)+';color:#475569">Class '+esc(stu.grade||'')+(stu.school?' | '+esc(stu.school):'')+(stu.location?' | '+esc(stu.location):'')+'</div>';
   h+='<div style="font-size:'+_fs(11,isPrint)+';color:#94a3b8;margin-top:1px">Joined: '+(stu.joiningDate?esc(fmtD(stu.joiningDate)):'\u2014')+'</div>';
   h+='</div>';
@@ -12648,7 +12885,7 @@ function printPrnMock(sid){
   if(!stu)return;
   var emptyRows=parseInt((document.getElementById('prn-mock-empty-rows')||{}).value);
   var data=_buildPrnMockData(stu);
-  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mock Exam Record \u2014 '+esc(stu.name)+'</title>';
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mock Exam Record \u2014 '+esc(_studentDisplayName(stu))+'</title>';
   h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:auto}tr{page-break-inside:avoid}</style>';
   h+='</head><body>';
   h+=_buildPrnMockTableHTML(data,emptyRows,true);
@@ -13235,7 +13472,7 @@ function hwClassChanged(){
     list.innerHTML=studs.map(function(s){
       return '<label style="display:flex;align-items:center;gap:12px;padding:11px 6px;cursor:pointer;border-bottom:1px solid var(--ibdr)">'
         +'<input type="checkbox" class="hw-stu-cb" value="'+s.id+'" onchange="hwStudentCheckChanged()" style="width:22px;height:22px;accent-color:#22c55e;flex-shrink:0">'
-        +'<span style="color:var(--txt);font-size:16px;font-weight:600">'+esc(s.name)+(s.school?' <span style="color:var(--sub);font-size:13px;font-weight:400">('+esc(s.school)+')</span>':'')+'</span>'
+        +'<span style="color:var(--txt);font-size:16px;font-weight:600">'+esc(_studentDisplayName(s))+(s.school?' <span style="color:var(--sub);font-size:13px;font-weight:400">('+esc(s.school)+')</span>':'')+'</span>'
         +'</label>';
     }).join('');
   }
@@ -14890,7 +15127,8 @@ function openMonthPicker(){
     };
     list.appendChild(row);
   });
-  document.getElementById('month-picker-modal').style.display='block';
+  var _mp=document.getElementById('month-picker-modal');
+  if(_mp){_mp.style.display='flex';}
 }
 function closeMonthPicker(){
   var m=document.getElementById('month-picker-modal');
@@ -14941,14 +15179,14 @@ function editHwChart(idx){
 </div>
 
 <!-- Month Picker Modal -->
-<div id="month-picker-modal" data-no-swipe="1" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999">
-  <div onclick="closeMonthPicker()" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5)"></div>
-  <div class="mbox" style="position:absolute;bottom:0;left:0;right:0;height:70vh;background:var(--card);border-radius:20px 20px 0 0;padding:0">
-    <div style="position:absolute;top:0;left:0;right:0;height:56px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;border-bottom:1px solid var(--bdr);background:var(--card);border-radius:20px 20px 0 0;z-index:1">
-      <span style="font-size:16px;font-weight:700;color:var(--txt)">Select Month</span>
-      <button onclick="closeMonthPicker()" style="background:var(--ibg);border:none;border-radius:20px;padding:6px 14px;color:var(--txt);font-size:14px;cursor:pointer;touch-action:manipulation">Cancel</button>
+<div id="month-picker-modal" data-no-swipe="1" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(2,6,23,.62);backdrop-filter:blur(3px);padding:18px;align-items:center;justify-content:center">
+  <div onclick="closeMonthPicker()" style="position:absolute;inset:0"></div>
+  <div class="mbox" style="position:relative;width:min(100%,360px);max-height:78vh;background:var(--card);border:1px solid var(--ibdr);border-radius:18px;padding:0;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.38)" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--ibdr);background:var(--card)">
+      <span style="font-size:16px;font-weight:800;color:var(--txt)">Select Month</span>
+      <button onclick="closeMonthPicker()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:10px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">Close</button>
     </div>
-    <div id="month-picker-list" data-no-swipe="1" style="position:absolute;top:56px;bottom:0;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--card)"></div>
+    <div id="month-picker-list" data-no-swipe="1" style="max-height:calc(78vh - 62px);overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--card);padding:6px 0"></div>
   </div>
 </div>
 <script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
