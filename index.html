@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="DNS CLASSES Management">
 <meta name="theme-color" content="#0d1f3c">
+<meta name="color-scheme" content="light dark">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <title>DNS CLASSES Management</title>
@@ -160,6 +161,33 @@ body.light .hdr{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:
 .mbox{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:480px;border:1px solid var(--bdr);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-md)}
 .mbot .mbox{border-radius:18px 18px 0 0;max-width:100%;max-height:82vh}
 select{-webkit-appearance:none;appearance:none;background:var(--ibg)!important;color:var(--txt)!important;}
+/* Keep native date/month calendars aligned with the selected app theme. */
+html{color-scheme:dark only}
+body.light{color-scheme:light only}
+input[type="date"],input[type="month"],input[type="time"],input[type="datetime-local"]{color-scheme:dark only;accent-color:var(--acc)}
+body.light input[type="date"],body.light input[type="month"],body.light input[type="time"],body.light input[type="datetime-local"]{color-scheme:light only}
+/* In-app calendar used for date fields so Android/WebView cannot force the
+   operating-system picker into a different theme than the app. */
+.dns-cal-modal{z-index:10000;background:rgba(0,0,0,.58);padding:14px}
+.dns-cal-box{max-width:350px!important;width:100%;padding:0!important;overflow:hidden}
+.dns-cal-head{padding:17px 18px 14px;background:var(--ibg);border-bottom:1px solid var(--bdr)}
+.dns-cal-year{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:2px}
+.dns-cal-selected{font-size:27px;font-weight:800;color:var(--txt);line-height:1.15}
+.dns-cal-body{padding:14px 15px 12px;background:var(--card)}
+.dns-cal-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.dns-cal-nav button,.dns-cal-action{border:1px solid var(--bdr);background:var(--ibg);color:var(--txt);border-radius:10px;cursor:pointer;font-weight:800}
+.dns-cal-nav button{width:38px;height:34px;font-size:21px;line-height:1}
+.dns-cal-month{font-size:15px;font-weight:800;color:var(--txt);text-align:center;flex:1}
+.dns-cal-week,.dns-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.dns-cal-week{margin-bottom:5px;color:var(--sub);font-size:11px;font-weight:800}
+.dns-cal-day{height:36px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--txt);font-size:13px;cursor:pointer}
+.dns-cal-day:hover{background:var(--ibg);border-color:var(--bdr)}
+.dns-cal-day.is-today{border-color:var(--acc)}
+.dns-cal-day.is-selected{background:var(--acc);color:var(--bg);font-weight:900}
+.dns-cal-empty{height:36px}
+.dns-cal-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 15px 15px;background:var(--card)}
+.dns-cal-action{padding:9px 15px;font-size:13px}
+.dns-cal-action.primary{background:var(--acc);color:var(--bg);border-color:var(--acc)}
 .hidden{display:none!important}
 *{-webkit-tap-highlight-color:transparent}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:11px 22px;border-radius:30px;font-weight:bold;font-size:15px;z-index:999;color:#fff;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
@@ -450,13 +478,13 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 </div>
 
 <div id="v-attend" class="hidden">
-  <input type="date" id="att-date" style="display:none" onchange="renderMarkToday()">
+  <input type="date" id="att-date" style="position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none;overflow:hidden" onchange="renderMarkToday()">
   <div id="att-sticky" style="position:sticky;top:168px;z-index:30;background:var(--bg);padding:6px 0 4px;margin-bottom:4px">
   <!-- Date navigator: shown in Mark mode only -->
   <div id="att-date-nav" style="display:flex;margin-bottom:10px;align-items:center;justify-content:center">
     <div style="display:flex;align-items:center;background:var(--card);border:1px solid var(--bdr);border-radius:24px;padding:4px;gap:2px">
       <button onclick="attChangeDay(-1)" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--acc);color:var(--bg);font-size:20px;font-weight:bold;flex-shrink:0;line-height:1">&#8249;</button>
-      <div id="att-date-display" onclick="document.getElementById('att-date').showPicker&&document.getElementById('att-date').showPicker()" style="padding:0 14px;text-align:center;font-weight:bold;font-size:14px;color:var(--acc);cursor:pointer;line-height:1.3;display:flex;flex-direction:column;justify-content:center;min-width:150px"></div>
+      <div id="att-date-display" onclick="_openThemedDatePicker('att-date')" style="padding:0 14px;text-align:center;font-weight:bold;font-size:14px;color:var(--acc);cursor:pointer;line-height:1.3;display:flex;flex-direction:column;justify-content:center;min-width:150px"></div>
       <button onclick="attChangeDay(1)" id="att-next-day-btn" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--acc);color:var(--bg);font-size:20px;font-weight:bold;flex-shrink:0;line-height:1">&#8250;</button>
     </div>
   </div>
@@ -511,7 +539,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
     </div>
   </div>
 </div>
-<div style="display:flex;gap:8px;align-items:stretch;width:calc(100% - 20px);max-width:520px;margin:4px auto 12px">
+<div id="att-mark-actions" style="display:flex;gap:8px;align-items:stretch;width:calc(100% - 20px);max-width:520px;margin:4px auto 12px">
 <button onclick="showAttExportModal()" style="flex:1;min-width:0;padding:10px 8px;border-radius:11px;border:1px solid rgba(52,211,153,.38);background:linear-gradient(135deg,rgba(52,211,153,.16),rgba(16,185,129,.08));color:#34d399;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;white-space:nowrap;box-shadow:0 3px 10px rgba(16,185,129,.08)"><span class="material-symbols-outlined" style="font-size:16px">file_download</span><span>Export CSV</span></button>
 <button id="bulk-att-report-btn" aria-label="Send Attendance Report on WhatsApp" title="Send Attendance Report on WhatsApp" onclick="sendBulkAttendanceReport()" style="flex:1.55;min-width:0;width:auto;max-width:none;margin:0;padding:10px 9px;border-radius:11px;border:1px solid rgba(134,239,172,.45);background:linear-gradient(135deg,#25d366 0%,#128c7e 55%,#075e54 100%);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;white-space:nowrap;overflow:hidden;box-shadow:0 4px 12px rgba(18,140,126,.24),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .15s ease,box-shadow .15s ease" onmouseenter="this.style.transform='translateY(-1px)';this.style.boxShadow='0 7px 16px rgba(18,140,126,.34),inset 0 1px 0 rgba(255,255,255,.3)'" onmouseleave="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(18,140,126,.24),inset 0 1px 0 rgba(255,255,255,.25)'"><span class="material-symbols-outlined" style="font-size:16px;flex:0 0 auto">send</span><span style="overflow:hidden;text-overflow:ellipsis">WhatsApp Report</span></button>
 </div>
@@ -2498,8 +2526,145 @@ function getCurrentCycle(s){
 // ═══ THEME & UI ═══
 function _applySelectTheme(){
   var scheme=isDark?'dark':'light';
-  document.querySelectorAll('select').forEach(function(el){
-    el.style.colorScheme=scheme;
+  var strictScheme=scheme+' only';
+  /* `only` prevents Android/WebView forced-dark styling from overriding the
+     selected app theme for native date/month popovers. */
+  document.documentElement.style.setProperty('color-scheme',strictScheme);
+  document.documentElement.dataset.theme=scheme;
+  document.body.style.setProperty('color-scheme',strictScheme);
+  
+  // Update meta tags used by mobile browsers and the surrounding WebView.
+  var meta=document.querySelector('meta[name="color-scheme"]');
+  if(meta)meta.content=scheme;
+  var themeMeta=document.querySelector('meta[name="theme-color"]');
+  if(themeMeta)themeMeta.content=isDark?(pitchBlack?'#000000':'#0d1f3c'):'#1d4ed8';
+
+  var selector='select,input[type="date"],input[type="month"],input[type="time"],input[type="datetime-local"]';
+  document.querySelectorAll(selector).forEach(function(el){
+    el.style.setProperty('color-scheme',strictScheme);
+    /* Force a style/layout read so a just-toggled native control is refreshed
+       before the browser opens its calendar dialog. */
+    void el.offsetWidth;
+  });
+  _initThemedCalendars();
+}
+var _dnsCalTarget=null,_dnsCalYear=0,_dnsCalMonth=0;
+function _dnsCalParse(value){
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(value||'');
+  if(!m)return null;
+  var d=new Date(parseInt(m[1],10),parseInt(m[2],10)-1,parseInt(m[3],10));
+  return isNaN(d.getTime())?null:d;
+}
+function _dnsCalIso(d){
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function _dnsCalLabel(d){
+  var names=_SMOS&&_SMOS.length?_SMOS:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return days[d.getDay()]+', '+d.getDate()+' '+names[d.getMonth()];
+}
+function _dnsCalClose(){
+  var modal=document.getElementById('dns-calendar-modal');
+  if(modal)modal.remove();
+  _dnsCalTarget=null;
+}
+function _dnsCalShift(delta){
+  _dnsCalMonth+=delta;
+  if(_dnsCalMonth<0){_dnsCalMonth=11;_dnsCalYear--;}
+  if(_dnsCalMonth>11){_dnsCalMonth=0;_dnsCalYear++;}
+  _renderThemedCalendar();
+}
+function _dnsCalPick(day){
+  if(!_dnsCalTarget)return;
+  var d=new Date(_dnsCalYear,_dnsCalMonth,parseInt(day,10));
+  if(isNaN(d.getTime()))return;
+  _dnsCalTarget.value=_dnsCalIso(d);
+  _dnsCalTarget.dispatchEvent(new Event('input',{bubbles:true}));
+  _dnsCalTarget.dispatchEvent(new Event('change',{bubbles:true}));
+  _dnsCalClose();
+}
+function _renderThemedCalendar(){
+  var modal=document.getElementById('dns-calendar-modal');
+  if(!modal||!_dnsCalTarget)return;
+  var selected=_dnsCalParse(_dnsCalTarget.value);
+  var first=new Date(_dnsCalYear,_dnsCalMonth,1);
+  var daysInMonth=new Date(_dnsCalYear,_dnsCalMonth+1,0).getDate();
+  var start=first.getDay();
+  var today=_todayStr();
+  var smos=_SMOS&&_SMOS.length?_SMOS:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var monthTitle=smos[_dnsCalMonth]+' '+_dnsCalYear;
+  var selectedText=selected?_dnsCalLabel(selected):'Select date';
+  var html='<div class="dns-cal-head"><div class="dns-cal-year">'+_dnsCalYear+'</div><div class="dns-cal-selected">'+selectedText+'</div></div>';
+  html+='<div class="dns-cal-body"><div class="dns-cal-nav"><button type="button" onclick="_dnsCalShift(-1)" aria-label="Previous month">‹</button><div class="dns-cal-month">'+monthTitle+'</div><button type="button" onclick="_dnsCalShift(1)" aria-label="Next month">›</button></div>';
+  html+='<div class="dns-cal-week">'+['S','M','T','W','T','F','S'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div><div class="dns-cal-grid">';
+  for(var i=0;i<start;i++)html+='<div class="dns-cal-empty"></div>';
+  for(var day=1;day<=daysInMonth;day++){
+    var d=new Date(_dnsCalYear,_dnsCalMonth,day),iso=_dnsCalIso(d),cls='dns-cal-day';
+    if(iso===today)cls+=' is-today';
+    if(selected&&iso===_dnsCalIso(selected))cls+=' is-selected';
+    html+='<button type="button" class="'+cls+'" data-day="'+day+'" onclick="_dnsCalPick(this.dataset.day)">'+day+'</button>';
+  }
+  html+='</div></div><div class="dns-cal-foot"><button type="button" class="dns-cal-action" onclick="_dnsCalClose()">Cancel</button></div>';
+  var box=modal.querySelector('.dns-cal-box');
+  if(box)box.innerHTML=html;
+}
+function _openThemedDatePicker(idOrElement){
+  _applySelectTheme();
+  var el=typeof idOrElement==='string'?document.getElementById(idOrElement):idOrElement;
+  if(!el)return;
+  var existing=document.getElementById('dns-calendar-modal');
+  if(existing&&_dnsCalTarget===el){
+    _renderThemedCalendar();
+    return;
+  }
+  _dnsCalTarget=el;
+  var base=_dnsCalParse(el.value)||new Date();
+  _dnsCalYear=base.getFullYear();
+  _dnsCalMonth=base.getMonth();
+  var old=document.getElementById('dns-calendar-modal');
+  if(old)old.remove();
+  var modal=document.createElement('div');
+  modal.id='dns-calendar-modal';
+  modal.className='modal dns-cal-modal';
+  modal.innerHTML='<div class="mbox dns-cal-box" onclick="event.stopPropagation()"></div>';
+  modal.addEventListener('click',function(e){if(e.target===modal)_dnsCalClose();});
+  document.body.appendChild(modal);
+  _renderThemedCalendar();
+}
+var _dnsCalDelegationBound=false;
+function _dnsCalBindInput(el){
+  if(!el||el.dataset.dnsCalendarBound==='1')return;
+  el.dataset.dnsCalendarBound='1';
+  el.readOnly=true;
+  var openFromUserEvent=function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    _openThemedDatePicker(el);
+  };
+  /* Capture before the browser's date-control default action. This is
+     important on Android, where the native dialog can open before click. */
+  el.addEventListener('pointerdown',openFromUserEvent,true);
+  el.addEventListener('mousedown',openFromUserEvent,true);
+  el.addEventListener('touchstart',openFromUserEvent,true);
+  el.addEventListener('click',openFromUserEvent,true);
+  el.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();_openThemedDatePicker(el);}
+  });
+}
+function _initThemedCalendars(){
+  document.querySelectorAll('input[type="date"]').forEach(_dnsCalBindInput);
+  if(_dnsCalDelegationBound)return;
+  _dnsCalDelegationBound=true;
+  /* Fallback for date inputs inserted after a view render. */
+  ['pointerdown','mousedown','touchstart','click'].forEach(function(type){
+    document.addEventListener(type,function(e){
+      var el=e.target&&e.target.closest?e.target.closest('input[type="date"]'):null;
+      if(!el||el.dataset.dnsCalendarBound==='1')return;
+      _dnsCalBindInput(el);
+      e.preventDefault();
+      e.stopPropagation();
+      _openThemedDatePicker(el);
+    },true);
   });
 }
 
@@ -2514,12 +2679,16 @@ function togglePitchBlack(){
     var dot=tog.firstElementChild;
     if(dot)dot.style.left=pitchBlack?'23px':'3px';
   }
+  _applySelectTheme();
   if(!isDark)showToast('Will apply next time you switch to dark mode');
   if(curView==='dash'&&typeof _updateDashSmallCards==='function')_updateDashSmallCards();
 }
 function toggleTheme(){
   isDark=!isDark;
   document.body.className=(isDark?'':'light')+(isDark&&pitchBlack?' pitch-black':'');
+  /* Update native calendar controls before any view refresh so the theme
+     change is applied immediately, not only after the next render. */
+  _applySelectTheme();
   localStorage.setItem('dns_theme',isDark?'dark':'light');
   var ti=document.getElementById('theme-icon');
   if(ti)ti.textContent=isDark?'light_mode':'dark_mode';
@@ -2591,8 +2760,12 @@ function go(v,noPush){
     var _ls=document.getElementById('inv-lock-screen');
     if(_ls)_ls.remove();
   }
+  // Some views create native date/month controls during their render pass.
+  // Apply the current scheme after that pass so the next calendar popover
+  // always opens in the same mode as the top-level theme button.
+  _applySelectTheme();
 }
-function refresh(){if(curView==='dash'){renderDash();var hb=document.getElementById('dash-hw-block');if(hb&&!hb.classList.contains('hidden'))renderDashHwCharts();}else if(curView==='byclass')renderByClass();else if(curView==='profile')renderProfile();else if(curView==='attend')renderAttend();else if(curView==='manager')renderManager();else if(curView==='settings'){renderSettingsView();var _bb=document.getElementById('settings-backup-block'),_ab=document.getElementById('settings-alerts-block');if(_bb&&!_bb.classList.contains('hidden'))renderBackupView();if(_ab&&!_ab.classList.contains('hidden'))renderAlertsView();}else if(curView==='sessions')renderSessionsView();else if(curView==='investments')renderInvestments();else if(curView==='report'&&_rptCurrentSid)generateReport(_rptCurrentSid);else if(curView==='printables'){if(prnMode==='chart')renderPrnChart();else if(prnMode==='mock')renderPrnMock();}}
+function refresh(){if(curView==='dash'){renderDash();var hb=document.getElementById('dash-hw-block');if(hb&&!hb.classList.contains('hidden'))renderDashHwCharts();}else if(curView==='byclass')renderByClass();else if(curView==='profile')renderProfile();else if(curView==='attend')renderAttend();else if(curView==='manager')renderManager();else if(curView==='settings'){renderSettingsView();var _bb=document.getElementById('settings-backup-block'),_ab=document.getElementById('settings-alerts-block');if(_bb&&!_bb.classList.contains('hidden'))renderBackupView();if(_ab&&!_ab.classList.contains('hidden'))renderAlertsView();}else if(curView==='sessions')renderSessionsView();else if(curView==='investments')renderInvestments();else if(curView==='report'&&_rptCurrentSid)generateReport(_rptCurrentSid);else if(curView==='printables'){if(prnMode==='chart')renderPrnChart();else if(prnMode==='mock')renderPrnMock();} _applySelectTheme();}
 
 // ═══ DASHBOARD ═══
 function setFilter(f){
@@ -7249,11 +7422,13 @@ function setAttMode(mode) {
   var hc = document.getElementById('att-hist-controls');
   var dn = document.getElementById('att-date-nav');
   var sn = document.getElementById('hist-sticky-nav');
+  var aa = document.getElementById('att-mark-actions');
   if (mb) { mb.classList.toggle('on', mode==='mark'); }
   if (hb) { hb.classList.toggle('on', mode==='hist'); }
   if (hc) { hc.classList.toggle('hidden', mode !== 'hist'); }
   if (dn) { dn.style.display = mode==='mark' ? 'flex' : 'none'; }
   if (sn) { sn.style.display = mode==='hist' ? 'block' : 'none'; }
+  if (aa) { aa.style.display = mode==='mark' ? 'flex' : 'none'; }
   if (mode==='mark') { renderMarkToday(); }
   else {
     // Do NOT reset histYear/histMonth — preserve the month the user was viewing
@@ -8694,8 +8869,9 @@ function init(){
   var _greetEl=document.getElementById('hdr-greet');if(_greetEl)_greetEl.textContent=_greetTxt;
   isDark=localStorage.getItem('dns_theme')!=='light';
   pitchBlack=localStorage.getItem('dns_pitch_black')==='1';
-  _applySelectTheme();
   document.body.className=(isDark?'':'light')+(isDark&&pitchBlack?' pitch-black':'');
+  _applySelectTheme();
+  _initThemedCalendars();
   var ti=document.getElementById('theme-icon');
   if(ti)ti.textContent=isDark?'light_mode':'dark_mode';
   initDropdowns();loadDB();_loadThresh();refreshUndoUI();
