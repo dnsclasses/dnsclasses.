@@ -155,7 +155,7 @@ body.light .hdr{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:
 .card{background:var(--card);border-radius:20px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border:1px solid var(--bdr);box-shadow:var(--shadow-sm)}
 .scard{background:var(--card);border-radius:22px;padding:14px 16px;border:1px solid var(--bdr);cursor:pointer;box-shadow:var(--shadow-sm);transition:box-shadow .2s}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:300;padding:14px;touch-action:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;z-index:300;padding:14px;touch-action:none;will-change:backdrop-filter;-webkit-transform:translateZ(0);transform:translateZ(0)}
 .mbot{align-items:flex-end;padding:0}
 .mbot .mbox{border-radius:22px 22px 0 0;max-width:100%;padding-bottom:30px}
 .mbox{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:480px;border:1px solid var(--bdr);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-md)}
@@ -273,7 +273,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 .m3-search-bar .stxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
-<body>
+<body>>
 <div class="m3hdr">
   <div class="m3hdr-row1">
     <div class="m3hdr-brand">
@@ -641,8 +641,8 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
       </select>
       <button type="button" id="pr-topic-btn" onclick="openPrTopicPicker()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:pointer;white-space:normal;word-break:break-word;min-height:42px">Select class first...</button>
     </div>
-    <div style="min-width:0"><label class="flabel">TEST No.</label><select id="pr-tno" onchange="_restoreScoreState()" style="width:100%;padding:10px 4px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px"><option value="">Select test...</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="T4">T4</option><option value="T5">T5</option><option value="T6">T6</option><option value="T7">T7</option><option value="T8">T8</option><option value="T9">T9</option><option value="T10">T10</option><option value="T11">T11</option><option value="T12">T12</option><option value="T13">T13</option><option value="T14">T14</option><option value="T15">T15</option><option value="T16">T16</option><option value="T17">T17</option><option value="T18">T18</option><option value="T19">T19</option><option value="T20">T20</option></select></div>
-    <div style="min-width:0"><label class="flabel">TOTAL</label><input id="pr-total" type="number" min="1" max="200" value="20" style="width:100%;padding:10px 6px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;box-sizing:border-box"></div>
+    <div style="min-width:0"><label class="flabel">TEST No.</label><select id="pr-tno" onchange="_restoreScoreState()" style="width:100%;padding:10px 4px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;text-align:center"><option value="">Select test...</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="T4">T4</option><option value="T5">T5</option><option value="T6">T6</option><option value="T7">T7</option><option value="T8">T8</option><option value="T9">T9</option><option value="T10">T10</option><option value="T11">T11</option><option value="T12">T12</option><option value="T13">T13</option><option value="T14">T14</option><option value="T15">T15</option><option value="T16">T16</option><option value="T17">T17</option><option value="T18">T18</option><option value="T19">T19</option><option value="T20">T20</option></select></div>
+    <div style="min-width:0"><label class="flabel">TOTAL</label><input id="pr-total" type="number" min="1" max="200" value="20" style="width:100%;padding:10px 6px;border-radius:10px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;box-sizing:border-box;text-align:center"></div>
   </div>
 
   <div id="pr-students" style="margin-bottom:14px"></div>
@@ -2824,11 +2824,31 @@ function toggleTheme(){
 }
 var toastT;
 function showToast(msg,err){var el=document.getElementById('toast');if(!el){console.warn('Toast:',msg);return;}el.textContent=msg;el.style.background=err?'#ef4444':'#22c55e';el.classList.remove('hidden');clearTimeout(toastT);toastT=setTimeout(function(){el.classList.add('hidden');},3000);}
-function closeM(id){
-  document.getElementById(id).classList.add('hidden');
-}
+function closeM(id){var _cm=document.getElementById(id);if(_cm)_cm.style.backgroundImage='';_cm.classList.add('hidden');setTimeout(function(){if(!document.querySelector('.modal:not(.hidden)')&&(!document.getElementById('month-picker-modal')||document.getElementById('month-picker-modal').style.display==='none')){document.body.classList.remove('modal-open');var _clrEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#toast');_clrEls.forEach(function(el){el.style.filter='';});var _mp2=document.getElementById('month-picker-modal');if(_mp2)_mp2.style.backgroundImage='';}},50);}
 function openM(id){
   document.getElementById(id).classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  var _blurEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#toast');
+  _blurEls.forEach(function(el){el.style.filter='url(#svg-blur-filter)';});
+  // Fallback blur for browsers without backdrop-filter support
+  var modal=document.getElementById(id);
+  if(modal&&typeof window.CSS!=='undefined'&&CSS.supports&&CSS.supports('backdrop-filter','blur(1px)'))return;
+  // Try canvas blur via html2canvas
+  if(modal&&typeof html2canvas!=='undefined'){
+    html2canvas(document.body,{backgroundColor:null,scale:0.35,useCORS:true,logging:false,foreignObjectRendering:false}).then(function(canvas){
+      var ctx=canvas.getContext('2d');
+      ctx.filter='blur(4px)';
+      ctx.drawImage(canvas,0,0,canvas.width,canvas.height);
+      ctx.filter='none';
+      var modalEl=document.getElementById(id);
+      if(modalEl)modalEl.style.backgroundImage='url('+canvas.toDataURL()+')';
+    }).catch(function(){
+      if(modal)modal.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';
+    });
+  }else{
+    // No html2canvas - apply frosted glass texture
+    if(modal)modal.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';
+  }
 }
 
 // ═══ NAVIGATION ═══
@@ -4629,7 +4649,7 @@ function generateReport(sid){
     h+='<div style="display:flex;gap:14px;font-size:11px;color:'+sub+';margin-top:2px">';
     h+='<span style="color:'+(isDark?'#4ade80':'#22c55e')+';font-weight:700">&#9679; Present</span>';
     h+='<span style="color:'+(isDark?'#fbbf24':'#f59e0b')+';font-weight:700">&#9679; Late</span>';
-    h+='<span style="color:'+(isDark?'#f87171':'#ef4444')+';font-weight:700">&#9679; Absent</span></div>';
+    h+='<span style="color:#dc2626;font-weight:700">&#9679; Absent</span></div>';
     h+='</div>';
   }
   // Chapter Progress - reuses the exact same chart builder as the Test Records page
@@ -5482,8 +5502,8 @@ function showRec(sid,key){
     aHtml='<div style="font-size:10px;font-weight:bold;color:#0f172a;letter-spacing:0.5px;margin-bottom:5px">ATTENDANCE \u2014 '+pMoName.toUpperCase()+'</div>'
       +'<div style="font-size:12px;color:#475569;margin-bottom:4px">Your&nbsp;attendance&nbsp;for <b style="color:#0f172a">'+pMoName+'</b>:</div>'
       +'<div style="display:flex;gap:10px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:4px">'
-      +'<span style="color:'+(isDark?'#4ade80':'#16a34a')+'">\u2705 Present: '+ast.present+'</span>'
-      +'<span style="color:'+(isDark?'#f87171':'#ef4444')+'">\u274c Absent: '+ast.absent+'</span>'
+      +'<span style="color:#16a34a">\u2705 Present: '+ast.present+'</span>'
+      +'<span style="color:#dc2626">\u274c Absent: '+ast.absent+'</span>'
       +'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ast.late+'</span>'
       +'</div>'
       +'<div style="font-size:11px;font-weight:bold;color:'+aPctCol+'">\ud83d\udcca Attendance %: '+ast.pct+'%</div>';
@@ -5567,7 +5587,7 @@ function openMR(sid){
     '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0"><span>Total Billed ('+cycles.length+' months)</span><span style="font-weight:bold">\u20b9'+(tPaid+tPend).toLocaleString()+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0;color:'+(isDark?'#4ade80':'#16a34a')+'"><span>Total Paid ('+paid.length+' months)</span><span style="font-weight:bold">\u20b9'+tPaid.toLocaleString()+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:'+(tPend>0?'#ef4444':'#16a34a')+';font-weight:bold"><span>Outstanding</span><span>\u20b9'+tPend.toLocaleString()+'</span></div></div>'+
-    '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:'+(isDark?'#4ade80':'#16a34a')+'">\u2705 Present: '+ts.present+'</span>'+'<span style="color:'+(isDark?'#f87171':'#ef4444')+'">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()
+    '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:#16a34a">\u2705 Present: '+ts.present+'</span>'+'<span style="color:#dc2626">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()
   openM('mrec-modal');
 }
 
@@ -8264,7 +8284,7 @@ function sendMonthlyAttendSummary(sid) {
   });
 
   var _mp=document.getElementById('month-picker-modal');
-  if(_mp){_mp.style.display='flex';}
+  if(_mp){_mp.style.display='flex';document.body.classList.add('modal-open');var _bEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#toast');_bEls.forEach(function(el){el.style.filter='url(#svg-blur-filter)';});if(typeof window.CSS!=='undefined'&&CSS.supports&&CSS.supports('backdrop-filter','blur(1px)')){}else if(typeof html2canvas!=='undefined'){html2canvas(document.body,{backgroundColor:null,scale:0.35,useCORS:true,logging:false,foreignObjectRendering:false}).then(function(canvas){var ctx=canvas.getContext('2d');ctx.filter='blur(4px)';ctx.drawImage(canvas,0,0,canvas.width,canvas.height);ctx.filter='none';_mp.style.backgroundImage='url('+canvas.toDataURL()+')';}).catch(function(){_mp.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';});}else{_mp.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';}}
   var title = document.querySelector('#month-picker-modal span');
   if (title) title.textContent = 'Select Attendance Month';
 }
@@ -15638,11 +15658,12 @@ function openMonthPicker(){
     list.appendChild(row);
   });
   var _mp=document.getElementById('month-picker-modal');
-  if(_mp){_mp.style.display='flex';}
+  if(_mp){_mp.style.display='flex';document.body.classList.add('modal-open');var _bEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#toast');_bEls.forEach(function(el){el.style.filter='url(#svg-blur-filter)';});if(typeof window.CSS!=='undefined'&&CSS.supports&&CSS.supports('backdrop-filter','blur(1px)')){}else if(typeof html2canvas!=='undefined'){html2canvas(document.body,{backgroundColor:null,scale:0.35,useCORS:true,logging:false,foreignObjectRendering:false}).then(function(canvas){var ctx=canvas.getContext('2d');ctx.filter='blur(4px)';ctx.drawImage(canvas,0,0,canvas.width,canvas.height);ctx.filter='none';_mp.style.backgroundImage='url('+canvas.toDataURL()+')';}).catch(function(){_mp.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';});}else{_mp.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';}}
 }
 function closeMonthPicker(){
   var m=document.getElementById('month-picker-modal');
-  if(m)m.style.display='none';
+  if(m){m.style.backgroundImage='';m.style.display='none';}
+  setTimeout(function(){if(!document.querySelector('.modal:not(.hidden)')&&(!document.getElementById('month-picker-modal')||document.getElementById('month-picker-modal').style.display==='none')){document.body.classList.remove('modal-open');var _cEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#toast');_cEls.forEach(function(el){el.style.filter='';});}},50);
 }
 function editHwChart(idx){
   var charts=(db.settings&&db.settings.savedHwCharts)||[];
@@ -15689,7 +15710,7 @@ function editHwChart(idx){
 </div>
 
 <!-- Month Picker Modal -->
-<div id="month-picker-modal" data-no-swipe="1" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(2,6,23,.62);backdrop-filter:blur(3px);padding:18px;align-items:center;justify-content:center">
+<div id="month-picker-modal" data-no-swipe="1" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);padding:18px;align-items:center;justify-content:center">
   <div onclick="closeMonthPicker()" style="position:absolute;inset:0"></div>
   <div class="mbox" style="position:relative;width:min(100%,360px);max-height:78vh;background:var(--card);border:1px solid var(--ibdr);border-radius:18px;padding:0;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.38)" onclick="event.stopPropagation()">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--ibdr);background:var(--card)">
@@ -15712,5 +15733,6 @@ function editHwChart(idx){
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<svg style="position:absolute;width:0;height:0;pointer-events:none" aria-hidden="true"><defs><filter id="svg-blur-filter"><feGaussianBlur in="SourceGraphic" stdDeviation="4"/></filter></defs></svg>
 </body>
 </html>
