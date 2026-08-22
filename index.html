@@ -159,6 +159,16 @@ body.light .hdr{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:
 .mbot{align-items:center;padding:14px}
 .mbot .mbox{border-radius:20px;max-width:480px;padding-bottom:20px}
 .mbox{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:480px;border:1px solid var(--bdr);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-md)}
+/* Master fee statement tables: keep horizontal gestures inside the table scroller. */
+#mrec-modal .mr-table-scroll{display:block;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x!important;scrollbar-width:thin;position:relative;z-index:1}
+/* The modal used touch-action:none, which prevents Android from handing a swipe to the nested table. */
+#mrec-modal{touch-action:pan-x pan-y!important}
+#mrec-modal .mbox{touch-action:pan-x pan-y!important}
+#mrec-modal .mr-table-scroll table{width:100%;min-width:400px}
+/* Keep the complete Master receipt available on screen; let the outer modal scroll vertically. */
+#mrec-modal .mbox{overflow-x:hidden!important;overflow-y:auto!important;max-height:88vh!important}
+#mrec-modal #mrprint{height:auto!important;max-height:none!important;overflow:visible!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+#mrec-modal #mrprint [style*="text-overflow:ellipsis"]{overflow:visible!important;text-overflow:clip!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}
 .mbot .mbox{border-radius:20px;max-width:480px;max-height:82vh}
 select{-webkit-appearance:none;appearance:none;background:var(--ibg)!important;color:var(--txt)!important;}
 /* Keep report fee records inside the visible page when the app font zoom is increased. */
@@ -1170,7 +1180,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   </div>
   <div style="margin-bottom:10px"><label class="flabel">CATEGORY</label>
     <input type="hidden" id="mgr-exp-cat">
-    <div onclick="openCatModal()" style="padding:11px 13px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+    <div onclick="openCatModal()" style="padding:11px 13px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:42px;box-sizing:border-box">
       <span id="mgr-exp-cat-lbl">Select category...</span>
       <span style="font-size:11px;color:var(--sub)">&#9660;</span>
     </div>
@@ -1198,7 +1208,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   </div>
   <div style="margin-bottom:10px"><label class="flabel">CATEGORY</label>
     <input type="hidden" id="mgr-edit-exp-cat">
-    <div onclick="openCatModal('edit')" style="padding:11px 13px;border-radius:8px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+    <div onclick="openCatModal('edit')" style="padding:11px 13px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:42px;box-sizing:border-box">
       <span id="mgr-edit-exp-cat-lbl">Select category...</span>
       <span style="font-size:11px;color:var(--sub)">&#9660;</span>
     </div>
@@ -1255,8 +1265,8 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
 <div id="mgr-calc-overlay" onclick="document.getElementById('mgr-calc').style.display='none';this.style.display='none'" style="display:none;position:fixed;inset:0;z-index:499"></div>
 <div id="mgr-calc" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--card);border-top:2px solid var(--acc);box-shadow:0 -4px 20px rgba(0,0,0,.4);max-width:500px;margin:0 auto">
   <div style="padding:10px 14px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center">
-    <div id="calc-expr" style="font-size:13px;color:var(--sub);min-height:20px"></div>
-    <div id="calc-display" style="font-size:26px;font-weight:bold;color:var(--txt)">0</div>
+    <div id="calc-expr" style="font-size:24px;font-weight:bold;color:var(--txt);min-height:32px;word-break:normal;overflow-wrap:anywhere;flex:1;margin-right:10px;line-height:1.2;display:flex;flex-wrap:wrap;align-items:center;gap:4px"></div>
+    <div id="calc-display" style="font-size:32px;font-weight:bold;color:var(--acc);text-align:right;line-height:1;white-space:nowrap">0</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px">
     <button onclick="calcBtn('C')" style="grid-column:span 2;padding:18px;border-radius:14px;background:rgba(239,68,68,.15);color:var(--m3-red);font-size:19px;font-weight:bold;border:none;cursor:pointer">C</button>
@@ -1333,7 +1343,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
 
 <div id="rec-modal" class="modal hidden" onclick="closeM('rec-modal')"><div class="mbox" style="max-width:420px;background:#fff;color:#0f172a;padding:0;border-radius:12px;overflow:hidden" onclick="event.stopPropagation()"><div id="rprint" style="padding:22px;background:#fff;font-family:'Courier New',monospace"><div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:center;gap:8px"><img class="logo-img" src="" style="height:26px;width:26px;object-fit:contain"><div style="font-size:15px;font-weight:bold;color:#0f172a;letter-spacing:2px">DNS CLASSES</div></div><div style="font-size:9px;color:#64748b">RAMPUR, UTTAR PRADESH</div><div style="font-size:10px;font-weight:bold;margin-top:5px;border:1px solid #0f172a;display:inline-block;padding:2px 8px">FEE RECEIPT</div></div><div style="font-size:11px;display:grid;grid-template-columns:1.3fr 1fr;gap:6px;margin-bottom:12px;color:#334155"><div><b>Receipt&nbsp;No:</b> <span id="r-id"></span></div><div style="text-align:right"><b>Date:</b> <span id="r-date"></span></div></div><div style="font-size:12px;line-height:1.7;border-bottom:1px dashed #e2e8f0;padding-bottom:10px;margin-bottom:10px;color:#0f172a"><div><b>Student:</b> <span id="r-name" style="text-transform:uppercase"></span></div><div><b>Class:</b> <span id="r-grade"></span> | <b>Subject:</b> <span id="r-subject"></span></div><div><b>Period:</b> <span id="r-cycle"></span></div></div><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:bold;padding:6px 0;border-bottom:1px solid #e2e8f0;color:#0f172a"><span>Amount Paid</span><span id="r-amt">₹0</span></div><div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px solid #e2e8f0;color:#334155"><span>Payment&nbsp;Mode</span><span id="r-mode" style="font-weight:bold">💵 Cash</span></div><div id="r-attend" style="margin-top:12px;background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0"></div><div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b"><b style="color:#0f172a">Thank you for your payment!</b><br>DNS&nbsp;Classes&nbsp;&mdash;&nbsp;Computer&nbsp;generated&nbsp;receipt.</div></div><div style="background:#f8fafc;padding:12px;display:flex;gap:8px;border-top:1px solid #e2e8f0;flex-wrap:wrap"><button onclick="window.print()" style="flex:1;padding:9px;border-radius:6px;background:#d97706;color:#060d1a;font-weight:bold;font-size:13px;min-width:90px"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">print</span>Print</button><button onclick="sendRecImg()" style="flex:1;padding:9px;border-radius:6px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:bold;font-size:13px;min-width:90px;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="15" height="15" viewBox="0 0 32 32" style="flex-shrink:0"><path fill="#fff" d="M23.47 8.52A10.9 10.9 0 0016.02 5.4c-6.03 0-10.94 4.9-10.94 10.94 0 1.93.5 3.8 1.46 5.46L5 27l5.35-1.4a10.93 10.93 0 005.66 1.55h.005c6.03 0 10.94-4.9 10.94-10.94 0-2.92-1.14-5.67-3.2-7.73zm-7.45 16.83h-.004a9.08 9.08 0 01-4.63-1.27l-.33-.2-3.17.83.85-3.09-.22-.32a9.07 9.07 0 01-1.4-4.86c0-5.02 4.09-9.11 9.12-9.11 2.43 0 4.72.95 6.44 2.67a9.05 9.05 0 012.67 6.45c0 5.03-4.09 9.1-9.32 9.1zm5-6.83c-.28-.14-1.63-.8-1.88-.9-.25-.09-.44-.14-.62.14-.18.28-.72.9-.88 1.08-.16.19-.32.21-.6.07-.28-.14-1.17-.43-2.23-1.38-.82-.73-1.38-1.64-1.54-1.92-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.5-.07-.14-.62-1.51-.85-2.07-.23-.55-.46-.47-.62-.48h-.53c-.19 0-.5.07-.76.35-.26.28-1 .97-1 2.36 0 1.39 1.02 2.74 1.16 2.93.14.19 2.01 3.06 4.86 4.29.68.29 1.21.47 1.62.6.68.22 1.31.19 1.8.11.55-.08 1.68-.69 1.92-1.35.24-.66.24-1.23.17-1.35-.07-.12-.25-.19-.53-.32z"/></svg>Send Image</button><button onclick="closeM('rec-modal')" style="flex:1;padding:9px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#64748b;font-size:13px;min-width:70px">Dismiss</button></div></div></div>
 
-<div id="mrec-modal" class="modal hidden" onclick="closeM('mrec-modal')"><div class="mbox" style="max-width:480px;background:#fff;color:#0f172a;padding:0;border-radius:12px;overflow:hidden" onclick="event.stopPropagation()"><div id="mrprint" style="padding:22px;background:#fff;font-family:'Courier New',monospace;overflow-y:auto;max-height:75vh"></div><div style="background:#f8fafc;padding:12px;display:flex;gap:8px;border-top:1px solid #e2e8f0;flex-wrap:wrap"><button onclick="printMR()" style="flex:1;padding:9px;border-radius:6px;background:#d97706;color:#060d1a;font-weight:bold;font-size:13px;min-width:80px"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">print</span>Print</button><button onclick="sendMRImg()" style="flex:1;padding:9px;border-radius:6px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:bold;font-size:13px;min-width:80px;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="15" height="15" viewBox="0 0 32 32" style="flex-shrink:0"><path fill="#fff" d="M23.47 8.52A10.9 10.9 0 0016.02 5.4c-6.03 0-10.94 4.9-10.94 10.94 0 1.93.5 3.8 1.46 5.46L5 27l5.35-1.4a10.93 10.93 0 005.66 1.55h.005c6.03 0 10.94-4.9 10.94-10.94 0-2.92-1.14-5.67-3.2-7.73zm-7.45 16.83h-.004a9.08 9.08 0 01-4.63-1.27l-.33-.2-3.17.83.85-3.09-.22-.32a9.07 9.07 0 01-1.4-4.86c0-5.02 4.09-9.11 9.12-9.11 2.43 0 4.72.95 6.44 2.67a9.05 9.05 0 012.67 6.45c0 5.03-4.09 9.1-9.32 9.1zm5-6.83c-.28-.14-1.63-.8-1.88-.9-.25-.09-.44-.14-.62.14-.18.28-.72.9-.88 1.08-.16.19-.32.21-.6.07-.28-.14-1.17-.43-2.23-1.38-.82-.73-1.38-1.64-1.54-1.92-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.5-.07-.14-.62-1.51-.85-2.07-.23-.55-.46-.47-.62-.48h-.53c-.19 0-.5.07-.76.35-.26.28-1 .97-1 2.36 0 1.39 1.02 2.74 1.16 2.93.14.19 2.01 3.06 4.86 4.29.68.29 1.21.47 1.62.6.68.22 1.31.19 1.8.11.55-.08 1.68-.69 1.92-1.35.24-.66.24-1.23.17-1.35-.07-.12-.25-.19-.53-.32z"/></svg>Send Image</button><button onclick="sendMRText()" style="flex:1;padding:9px;border-radius:6px;background:#075e54;color:#fff;font-weight:bold;font-size:13px;min-width:80px"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">sms</span>Text</button><button onclick="closeM('mrec-modal')" style="flex:1;padding:9px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#64748b;font-size:13px;min-width:60px">Dismiss</button></div></div></div>
+<div id="mrec-modal" class="modal hidden" onclick="closeM('mrec-modal')"><div class="mbox" style="max-width:480px;background:#fff;color:#0f172a;padding:0;border-radius:12px;overflow:hidden" onclick="event.stopPropagation()"><div id="mrprint" style="padding:22px;background:#fff;font-family:'Courier New',monospace;overflow-y:auto;max-height:75vh;box-sizing:border-box"></div><div style="background:#f8fafc;padding:12px;display:flex;gap:8px;border-top:1px solid #e2e8f0;flex-wrap:wrap"><button onclick="printMR()" style="flex:1;padding:9px;border-radius:6px;background:#d97706;color:#060d1a;font-weight:bold;font-size:13px;min-width:80px"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">print</span>Print</button><button onclick="sendMRImg()" style="flex:1;padding:9px;border-radius:6px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:bold;font-size:13px;min-width:80px;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="15" height="15" viewBox="0 0 32 32" style="flex-shrink:0"><path fill="#fff" d="M23.47 8.52A10.9 10.9 0 0016.02 5.4c-6.03 0-10.94 4.9-10.94 10.94 0 1.93.5 3.8 1.46 5.46L5 27l5.35-1.4a10.93 10.93 0 005.66 1.55h.005c6.03 0 10.94-4.9 10.94-10.94 0-2.92-1.14-5.67-3.2-7.73zm-7.45 16.83h-.004a9.08 9.08 0 01-4.63-1.27l-.33-.2-3.17.83.85-3.09-.22-.32a9.07 9.07 0 01-1.4-4.86c0-5.02 4.09-9.11 9.12-9.11 2.43 0 4.72.95 6.44 2.67a9.05 9.05 0 012.67 6.45c0 5.03-4.09 9.1-9.32 9.1zm5-6.83c-.28-.14-1.63-.8-1.88-.9-.25-.09-.44-.14-.62.14-.18.28-.72.9-.88 1.08-.16.19-.32.21-.6.07-.28-.14-1.17-.43-2.23-1.38-.82-.73-1.38-1.64-1.54-1.92-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.5-.07-.14-.62-1.51-.85-2.07-.23-.55-.46-.47-.62-.48h-.53c-.19 0-.5.07-.76.35-.26.28-1 .97-1 2.36 0 1.39 1.02 2.74 1.16 2.93.14.19 2.01 3.06 4.86 4.29.68.29 1.21.47 1.62.6.68.22 1.31.19 1.8.11.55-.08 1.68-.69 1.92-1.35.24-.66.24-1.23.17-1.35-.07-.12-.25-.19-.53-.32z"/></svg>Send Image</button><button onclick="sendMRText()" style="flex:1;padding:9px;border-radius:6px;background:#075e54;color:#fff;font-weight:bold;font-size:13px;min-width:80px"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">sms</span>Text</button><button onclick="closeM('mrec-modal')" style="flex:1;padding:9px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#64748b;font-size:13px;min-width:60px">Dismiss</button></div></div></div>
 
 <div id="editcycle-modal" class="modal hidden"><div class="mbox" style="max-width:320px"><div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:5px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">event</span>Edit Cycle Start</div><div id="editcycle-desc" style="font-size:13px;color:var(--sub);margin-bottom:14px"></div><div style="margin-bottom:14px"><label class="flabel">NEW START DATE</label><div id="editcycle-start-btn" style="padding:11px 13px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;cursor:pointer;min-height:42px;display:flex;align-items:center;box-sizing:border-box">Select date...</div>
     <input type="text" id="editcycle-start" style="display:none"><div style="font-size:11px;color:#f59e0b;margin-top:4px">Only moves payment. History dates unchanged.</div></div><div style="display:flex;gap:10px"><button id="editcycle-ok" style="flex:1;padding:11px;border-radius:8px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:15px">Apply</button><button onclick="closeM('editcycle-modal')" style="flex:1;padding:11px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);font-size:15px">Cancel</button></div></div></div>
@@ -5663,6 +5673,49 @@ function sendRecText(){
 }
 
 // ═══ MASTER RECEIPT ═══
+/* Direct drag scrolling for Master receipt tables. This bypasses Android WebView/Chrome cases
+   where nested overflow-x:auto receives the gesture but does not update scrollLeft. */
+function _initMasterReceiptScroll(){
+  document.querySelectorAll('#mrec-modal .mr-table-scroll').forEach(function(sc){
+    if(sc.getAttribute('data-drag-scroll-bound')==='1')return;
+    sc.setAttribute('data-drag-scroll-bound','1');
+    sc.style.cursor='grab';
+    var sx=0,sy=0,sl=0,dragging=false;
+    sc.addEventListener('touchstart',function(e){
+      if(!e.touches||e.touches.length!==1)return;
+      sx=e.touches[0].clientX;sy=e.touches[0].clientY;sl=sc.scrollLeft;dragging=false;
+    },{passive:true});
+    sc.addEventListener('touchmove',function(e){
+      if(!e.touches||e.touches.length!==1)return;
+      var dx=e.touches[0].clientX-sx;
+      var dy=e.touches[0].clientY-sy;
+      if(!dragging){
+        if(Math.abs(dx)<6)return;
+        if(Math.abs(dx)<=Math.abs(dy))return;
+        dragging=true;
+        sc.style.cursor='grabbing';
+      }
+      e.preventDefault();
+      sc.scrollLeft=sl-dx;
+    },{passive:false});
+    sc.addEventListener('touchend',function(){dragging=false;sc.style.cursor='grab';},{passive:true});
+    sc.addEventListener('touchcancel',function(){dragging=false;sc.style.cursor='grab';},{passive:true});
+    /* Desktop fallback for mouse users and Android devices exposing pointer events. */
+    var px=0,pl=0,pdrag=false;
+    sc.addEventListener('pointerdown',function(e){
+      if(e.pointerType!=='mouse')return;
+      px=e.clientX;pl=sc.scrollLeft;pdrag=true;sc.style.cursor='grabbing';
+      try{sc.setPointerCapture(e.pointerId);}catch(_){ }
+    });
+    sc.addEventListener('pointermove',function(e){
+      if(!pdrag)return;
+      sc.scrollLeft=pl-(e.clientX-px);
+    });
+    function pend(e){if(!pdrag)return;pdrag=false;sc.style.cursor='grab';try{sc.releasePointerCapture(e.pointerId);}catch(_){ }}
+    sc.addEventListener('pointerup',pend);
+    sc.addEventListener('pointercancel',pend);
+  });
+}
 function openMR(sid){
   var s=db.students.find(function(x){return x.id===sid;});if(!s)return;
   lastMRecSid=sid;
@@ -5673,29 +5726,30 @@ function openMR(sid){
   var tPend=unpaid.reduce(function(sum,c){return sum+Number(s.fees||0);},0);
   var mrNo='DNS-M-'+Math.floor(100000+Math.random()*900000);
   var today=fmtD(new Date().toISOString());
-  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 3px;font-size:11px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 3px;font-size:11px;text-align:center">'+mE+'</td><td style="padding:5px 3px;font-size:10px;color:#64748b">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
-  var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 3px;font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 3px;font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+c.label+'</td><td style="padding:5px 3px;font-size:11px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 3px;font-size:11px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees).toLocaleString()+'</td><td style="padding:5px 3px;font-size:10px;color:#94a3b8">\u2014</td></tr>';}).join('');
+  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 2px;font-size:10px;text-align:center">'+mE+'</td><td style="padding:5px 2px;font-size:9px;color:#64748b;white-space:nowrap">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
+  var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees).toLocaleString()+'</td><td style="padding:5px 2px;font-size:9px;color:#94a3b8">\u2014</td></tr>';}).join('');
   document.getElementById('mrprint').innerHTML=
     '<div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px">'+
     '<div style="display:flex;align-items:center;justify-content:center;gap:8px"><img src="'+LOGO_DATA+'" style="height:26px;width:26px;object-fit:contain"><div style="font-size:17px;font-weight:bold;color:#0f172a;letter-spacing:2px">DNS CLASSES</div></div>'+
     '<div style="font-size:10px;color:#64748b">RAMPUR, UTTAR PRADESH</div>'+
     '<div style="font-size:13px;font-weight:bold;margin-top:5px;border:1px solid #0f172a;display:inline-block;padding:2px 10px">\u2605 MASTER FEE STATEMENT \u2605</div></div>'+
-    '<div style="font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:6px;color:#334155;border-bottom:1px dashed #e2e8f0;padding-bottom:10px;margin-bottom:10px">'+
-    '<div><b>Receipt No:</b> '+mrNo+'</div><div style="text-align:right"><b>Date:</b> '+today+'</div>'+
-    '<div><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(_studentDisplayName(s))+'</span></div><div style="text-align:right"><b>Class:</b> '+(s.grade||'Other')+'</div>'+
-    '<div><b>Subject:</b> '+getSubjects(s)+'</div><div style="text-align:right"><b>Fee:</b> \u20b9'+Number(s.fees).toLocaleString()+'/mo</div>'+
-    '<div><b>Joined:</b> '+fmtD(s.joiningDate)+'</div><div style="text-align:right"><b>Due Day:</b> '+ord(getDueDay(s))+' every month</div></div>'+
-    (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">PAID ON</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:center">MODE</th><th style="padding:4px 3px;font-size:10px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table>':'')+
-    (unpaid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:5px">\u26a0\ufe0f PENDING ('+unpaid.length+')</div><table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr style="background:#fef2f2;border-bottom:2px solid #fca5a5"><th style="padding:4px 3px;font-size:10px;text-align:left">#</th><th style="padding:4px 3px;font-size:10px;text-align:left">PERIOD</th><th style="padding:4px 3px;font-size:10px;text-align:left">STATUS</th><th style="padding:4px 3px;font-size:10px;text-align:right">AMOUNT</th><th style="padding:4px 3px;font-size:10px;text-align:left">NOTE</th></tr></thead><tbody>'+uRows+'</tbody></table>':'')+
+    '<div style="font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:6px;color:#334155;border-bottom:1px dashed #e2e8f0;padding-bottom:10px;margin-bottom:10px;word-break:break-word">'+
+    '<div style="overflow:hidden;text-overflow:ellipsis"><b>Receipt No:</b> '+mrNo+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Date:</b> '+today+'</div>'+
+    '<div style="overflow:hidden;text-overflow:ellipsis"><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(_studentDisplayName(s))+'</span></div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Class:</b> '+(s.grade||'Other')+'</div>'+
+    '<div style="overflow:hidden;text-overflow:ellipsis"><b>Subject:</b> '+getSubjects(s)+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Fee:</b> \u20b9'+Number(s.fees).toLocaleString()+'/mo</div>'+
+    '<div style="overflow:hidden;text-overflow:ellipsis"><b>Joined:</b> '+fmtD(s.joiningDate)+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Due Day:</b> '+ord(getDueDay(s))+' every month</div></div>'+
+    (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><div class="mr-table-scroll" data-no-swipe="1"><table style="width:100%;border-collapse:collapse;min-width:400px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 2px;font-size:9px;text-align:left">#</th><th style="padding:4px 2px;font-size:9px;text-align:left">PERIOD</th><th style="padding:4px 2px;font-size:9px;text-align:left">PAID ON</th><th style="padding:4px 2px;font-size:9px;text-align:right">AMOUNT</th><th style="padding:4px 2px;font-size:9px;text-align:center">MODE</th><th style="padding:4px 2px;font-size:9px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table></div>':'')+
+    (unpaid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:5px">\u26a0\ufe0f PENDING ('+unpaid.length+')</div><div class="mr-table-scroll" data-no-swipe="1"><table style="width:100%;border-collapse:collapse;min-width:400px"><thead><tr style="background:#fef2f2;border-bottom:2px solid #fca5a5"><th style="padding:4px 2px;font-size:9px;text-align:left">#</th><th style="padding:4px 2px;font-size:9px;text-align:left">PERIOD</th><th style="padding:4px 2px;font-size:9px;text-align:left">STATUS</th><th style="padding:4px 2px;font-size:9px;text-align:right">AMOUNT</th><th style="padding:4px 2px;font-size:9px;text-align:left">NOTE</th></tr></thead><tbody>'+uRows+'</tbody></table></div>':'')+
     '<div style="border-top:2px solid #0f172a;padding-top:10px">'+
     '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0"><span>Total Billed ('+cycles.length+' months)</span><span style="font-weight:bold">\u20b9'+(tPaid+tPend).toLocaleString()+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0;color:'+(isDark?'#4ade80':'#16a34a')+'"><span>Total Paid ('+paid.length+' months)</span><span style="font-weight:bold">\u20b9'+tPaid.toLocaleString()+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:'+(tPend>0?'#ef4444':'#16a34a')+';font-weight:bold"><span>Outstanding</span><span>\u20b9'+tPend.toLocaleString()+'</span></div></div>'+
     '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:#16a34a">\u2705 Present: '+ts.present+'</span>'+'<span style="color:#dc2626">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()
   openM('mrec-modal');
+  setTimeout(_initMasterReceiptScroll,0);
 }
 
-function printMR(){var content=document.getElementById('mrprint').innerHTML;var w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><title>Master Receipt</title><style>body{font-family:"Courier New",monospace;padding:20px;color:#0f172a}table{width:100%;border-collapse:collapse}</style></head><body>'+content+'\n</body></html>');w.document.close();w.focus();setTimeout(function(){w.print();},300);}
+function printMR(){var content=document.getElementById('mrprint').innerHTML;var w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><title>Master Receipt</title><style>body{font-family:"Courier New",monospace;padding:20px;color:#0f172a;overflow-wrap:anywhere;word-break:break-word}table{width:100%;border-collapse:collapse}div[style*="text-overflow:ellipsis"]{overflow:visible!important;text-overflow:clip!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}</style></head><body>'+content+'\n</body></html>');w.document.close();w.focus();setTimeout(function(){w.print();},300);}
 
 function sendMRImg(){
   var s=db.students.find(function(x){return x.id===lastMRecSid;});
@@ -5704,11 +5758,17 @@ function sendMRImg(){
   if(!window.html2canvas){sendMRText();return;}
   showToast('Capturing receipt...');
   var el=document.getElementById('mrprint');
+  /* Use a modest quality boost for normal receipts. Long receipts keep the
+     existing fast scale so capture time and memory use do not grow. */
+  var _mrCaptureScale=(el.scrollHeight>1600)?4:4.5;
   html2canvas(el,{
-    scale:4,backgroundColor:'#ffffff',useCORS:true,logging:false,
+    scale:_mrCaptureScale,backgroundColor:'#ffffff',useCORS:true,logging:false,
     onclone:function(doc){
       var ce=doc.getElementById('mrprint');if(!ce)return;
+      ce.querySelectorAll('[style*="text-overflow:ellipsis"]').forEach(function(n){n.style.overflow='visible';n.style.textOverflow='clip';n.style.whiteSpace='normal';n.style.overflowWrap='anywhere';n.style.wordBreak='break-word';});
       ce.style.width='480px';ce.style.minWidth='480px';
+      ce.style.textRendering='geometricPrecision';
+      ce.style.webkitFontSmoothing='antialiased';
       ce.style.maxHeight='none';ce.style.height='auto';
       ce.style.overflowY='visible';ce.style.overflowX='visible';
       var p=ce.parentElement;
@@ -5740,7 +5800,7 @@ function sendMRText(){
   var mts=getTotalAttendStats(s);
   var mAtt=mts.total>0?'\n\n\ud83d\udcca *ATTENDANCE SUMMARY*\nYour attendance till '+fmtD(new Date().toISOString())+':'
     +'\n\u2705 Present: '+mts.present+'\n\u274c Absent: '+mts.absent+'\n\ud83d\udfe1 Late: '+mts.late+'\n\ud83d\udcca Attendance %: '+mts.pct+'%':'';
-  var msg='*MASTER FEE STATEMENT \u2014 DNS CLASSES*\n\n*Student:* '+s.name.toUpperCase()+'\n*Class:* '+(s.grade||'Other')+' | *Subject:* '+getSubjects(s)+'\n*Date:* '+fmtD(new Date().toISOString())+'\n\n\u2705 *PAID ('+paid.length+' months)*\n'+(rows||'None')+'\n\n'+(unpaid.length?'\u26a0\ufe0f *PENDING ('+unpaid.length+' months)*\n'+unpaid.map(function(c,i){return (i+1)+'. '+c.label;}).join('\n')+'\n\n':'')+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n*Total Paid:* \u20b9'+tPaid.toLocaleString()+'\n*Outstanding:* \u20b9'+tPend.toLocaleString()+mAtt+'\n\nThank you! \ud83d\ude4f\n\u2014 DNS CLASSES';
+  var msg='*\u2605 MASTER FEE STATEMENT \u2014 DNS CLASSES \u2605*\n\n*Student:* '+s.name.toUpperCase()+'\n*Class:* '+(s.grade||'Other')+' | *Subject:* '+getSubjects(s)+'\n*Date:* '+fmtD(new Date().toISOString())+'\n\n\u2705 *PAID ('+paid.length+' months)*\n'+(rows||'None')+'\n\n'+(unpaid.length?'\u26a0\ufe0f *PENDING ('+unpaid.length+' months)*\n'+unpaid.map(function(c,i){return (i+1)+'. '+c.label;}).join('\n')+'\n\n':'')+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n*Total Paid:* \u20b9'+tPaid.toLocaleString()+'\n*Outstanding:* \u20b9'+tPend.toLocaleString()+mAtt+'\n\nThank you! \ud83d\ude4f\n\u2014 DNS CLASSES';
   openWAUrl(ph[0].number,msg);
 }
 
@@ -8456,8 +8516,15 @@ function sendMonthlyAttendSummary(sid) {
     list.appendChild(row);
   });
 
+  // Use the shared modal opener. Leaving the hidden class in place causes the
+  // page to blur while .hidden{display:none!important} keeps the picker invisible.
   var _mp=document.getElementById('month-picker-modal');
-  if(_mp){_mp.style.display='flex';document.body.classList.add('modal-open');var _allCh2=document.body.children;for(var _i=0;_i<_allCh2.length;_i++){var _c2=_allCh2[_i];if(!_c2.classList){continue;}var _cid3=_c2.id||'';if(_c2.classList.contains('modal')||_cid3==='mgr-calc'||_cid3==='mgr-calc-overlay'||_cid3==='mgr-cats-modal'||_cid3==='cat-picker-modal'){continue;}_c2.style.filter='blur(3px)';_c2.style.transition='filter 0.2s ease';}if(_mp){_mp.style.backdropFilter='';_mp.style.webkitBackdropFilter='';_mp.style.filter='';}var _bEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#v-attend,#v-poster,#v-sessions,#v-settings,#v-backup,#v-alerts,#v-manager,#v-printables,#v-investments,#toast');_bEls.forEach(function(el){el.style.filter='blur(3px)';});var _mgrEls=document.querySelectorAll('#mgr-calc,#mgr-calc-overlay,#mgr-cats-modal,#cat-picker-modal');_mgrEls.forEach(function(el){el.style.filter='';el.style.transition='';});if(typeof window.CSS!=='undefined'&&CSS.supports&&CSS.supports('backdrop-filter','blur(1px)')){}else if(typeof html2canvas!=='undefined'){}else{_mp.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';}}
+  if(_mp){
+    _mp.classList.remove('hidden');
+    _mp.style.display='flex';
+    document.body.classList.add('modal-open');
+    _applyOverlayBlur('month-picker-modal');
+  }
   var title = document.querySelector('#month-picker-modal span');
   if (title) title.textContent = 'Select Attendance Month';
 }
@@ -10414,16 +10481,14 @@ function openCatModal(target){
     var row=document.createElement('div');
     row.style.cssText='padding:15px 20px;font-size:15px;color:var(--txt);border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;gap:10px';
     row.textContent=c.icon+' '+c.name;
-    // touch-action:manipulation = instant tap, no delay, browser handles scroll naturally
-    row.style.touchAction='manipulation';
+    row.style.touchAction='pan-y';
     row.onclick=function(){pickCat(c.id,c.icon+' '+c.name);};
     list.appendChild(row);
   });
-  document.getElementById('cat-picker-modal').style.display='block';
+  openM('cat-picker-modal');
 }
 function closeCatModal(){
-  var m=document.getElementById('cat-picker-modal');
-  if(m)m.style.display='none';
+  closeM('cat-picker-modal');
 }
 function pickCat(id,label){
   var idPrefix=_catPickerTarget==='edit'?'mgr-edit-exp-cat':'mgr-exp-cat';
@@ -10687,22 +10752,49 @@ function openMgrCalc(inputEl){
 }
 function calcBtn(k){
   var disp=document.getElementById('calc-display');
-  var expr=document.getElementById('calc-expr');
-  if(k==='C'){_calcCur='0';_calcExpr='';disp.textContent='0';expr.textContent='';return;}
-  if(k==='←'){_calcCur=_calcCur.length>1?_calcCur.slice(0,-1):'0';disp.textContent=_calcCur;return;}
-  if('0123456789.'.indexOf(k)>=0){
+  var exprEl=document.getElementById('calc-expr');
+  if(k==='C'){_calcCur='0';_calcExpr='';disp.textContent='0';exprEl.textContent='';return;}
+  if(k==='←'){
+    if(_calcCur!=='0'&&_calcCur!==''){
+      _calcCur=_calcCur.length>1?_calcCur.slice(0,-1):'0';
+    } else if(_calcExpr.length>0){
+      var trimmed = _calcExpr.trim();
+      _calcExpr = trimmed.slice(0,-1).trim();
+    }
+  } else if('0123456789.'.indexOf(k)>=0){
     if(_calcCur==='0'&&k!=='.')_calcCur=k;
     else if(k==='.'&&_calcCur.indexOf('.')>=0)return;
     else _calcCur+=k;
-    disp.textContent=_calcCur;return;
+  } else {
+    // operator
+    var op = (k==='÷'?'/':k==='×'?'*':k);
+    _calcExpr += (_calcCur===''?'':_calcCur) + ' ' + op + ' ';
+    _calcCur = '';
   }
-  // operator
-  _calcExpr+=_calcCur+(k==='÷'?'/':k==='×'?'*':k);
-  try{var res=Function('"use strict";return ('+_calcExpr.replace(/×/g,'*').replace(/÷/g,'/')+'0)')();
-    disp.textContent=String(res);_calcCur=String(res);}
-  catch(e){}
-  expr.textContent=_calcExpr;
-  _calcCur='0';
+  
+  var fullExpr = (_calcExpr + _calcCur).trim();
+  var displayExpr = fullExpr.replace(/\*/g,'×').replace(/\//g,'÷');
+  
+  // Smart wrapping: split by spaces (operators) and wrap each part
+  exprEl.innerHTML = displayExpr.split(' ').map(function(part){
+    return '<span style="display:inline-block">' + part + '</span>';
+  }).join(' ');
+
+  // Auto-scaling font size
+  var len = displayExpr.length;
+  var fs = 24;
+  if(len > 40) fs = 14;
+  else if(len > 30) fs = 16;
+  else if(len > 20) fs = 20;
+  exprEl.style.fontSize = fs + 'px';
+
+  try {
+    var cleanExpr = fullExpr.replace(/×/g,'*').replace(/÷/g,'/');
+    if(/[0-9]$/.test(cleanExpr.trim())){
+      var res = Function('"use strict";return (' + cleanExpr + ')')();
+      disp.textContent = String(Math.round(res*100)/100);
+    }
+  } catch(e){}
 }
 function calcDone(){
   if(_calcExpr){
@@ -15909,7 +16001,7 @@ function openMonthPicker(){
   list.innerHTML='';
   options.forEach(function(opt){
     var row=document.createElement('div');
-    row.style.cssText='padding:15px 20px;font-size:15px;color:var(--txt);border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:space-between';
+    row.style.cssText='padding:15px 20px;font-size:15px;color:var(--txt);border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:space-between;touch-action:pan-y';
     row.innerHTML='<span>'+opt.lbl+'</span>'+(_collectFilter===opt.val?'<span class="material-symbols-outlined" style="color:#22c55e;font-size:18px">check_circle</span>':'');
     row.onclick=function(){
       _collectFilter=opt.val;
@@ -15919,13 +16011,10 @@ function openMonthPicker(){
     };
     list.appendChild(row);
   });
-  var _mp=document.getElementById('month-picker-modal');
-  if(_mp){_mp.style.display='flex';document.body.classList.add('modal-open');var _allCh2=document.body.children;for(var _i=0;_i<_allCh2.length;_i++){var _c2=_allCh2[_i];if(!_c2.classList){continue;}var _cid3=_c2.id||'';if(_c2.classList.contains('modal')||_cid3==='mgr-calc'||_cid3==='mgr-calc-overlay'||_cid3==='mgr-cats-modal'||_cid3==='cat-picker-modal'){continue;}_c2.style.filter='blur(3px)';_c2.style.transition='filter 0.2s ease';}if(_mp){_mp.style.backdropFilter='';_mp.style.webkitBackdropFilter='';_mp.style.filter='';}var _bEls=document.querySelectorAll('.m3hdr,#nav-bar,.wrap,#v-attend,#v-poster,#v-sessions,#v-settings,#v-backup,#v-alerts,#v-manager,#v-printables,#v-investments,#toast');_bEls.forEach(function(el){el.style.filter='blur(3px)';});var _mgrEls=document.querySelectorAll('#mgr-calc,#mgr-calc-overlay,#mgr-cats-modal,#cat-picker-modal');_mgrEls.forEach(function(el){el.style.filter='';el.style.transition='';});if(typeof window.CSS!=='undefined'&&CSS.supports&&CSS.supports('backdrop-filter','blur(1px)')){}else if(typeof html2canvas!=='undefined'){}else{_mp.style.backgroundImage='repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px),repeating-linear-gradient(-45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)';}}
+  openM('month-picker-modal');
 }
 function closeMonthPicker(){
-  var m=document.getElementById('month-picker-modal');
-  if(m){m.style.backgroundImage='';m.style.display='none';}
-  _clearOverlayBlur();
+  closeM('month-picker-modal');
 }
 
 function editHwChart(idx){
@@ -15961,28 +16050,24 @@ function editHwChart(idx){
 </script>
 
 <!-- Category Picker Modal -->
-<div id="cat-picker-modal" data-no-swipe="1" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999">
-  <div onclick="closeCatModal()" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5)"></div>
-  <div class="mbox" style="position:absolute;bottom:0;left:0;right:0;height:80vh;background:var(--card);border-radius:20px 20px 0 0;padding:0">
-    <div style="position:absolute;top:0;left:0;right:0;height:56px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;border-bottom:1px solid var(--bdr);background:var(--card);border-radius:20px 20px 0 0;z-index:1">
-      <span style="font-size:16px;font-weight:700;color:var(--txt)">Select Category</span>
-      <button onclick="closeCatModal()" style="background:var(--ibg);border:none;border-radius:20px;padding:6px 14px;color:var(--txt);font-size:14px;cursor:pointer;touch-action:manipulation">Cancel</button>
-    </div>
-    <div id="cat-picker-list" data-no-swipe="1" style="position:absolute;top:56px;bottom:0;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;background:var(--card)"></div>
+<div id="cat-picker-modal" class="modal hidden" style="z-index:20000" onclick="closeCatModal()">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column;padding:0">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bdr);background:var(--card);flex-shrink:0">
+    <span style="font-size:16px;font-weight:700;color:var(--acc)">Select Category</span>
+    <button onclick="closeCatModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">Cancel</button>
   </div>
-</div>
+  <div id="cat-picker-list" style="overflow-y:auto;flex:1;background:var(--card);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y"></div>
+</div></div>
 
 <!-- Month Picker Modal -->
-<div id="month-picker-modal" data-no-swipe="1" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);padding:18px;align-items:center;justify-content:center">
-  <div onclick="closeMonthPicker()" style="position:absolute;inset:0"></div>
-  <div class="mbox" style="position:relative;width:min(100%,360px);max-height:78vh;background:var(--card);border:1px solid var(--ibdr);border-radius:18px;padding:0;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.38)" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--ibdr);background:var(--card)">
-      <span style="font-size:16px;font-weight:800;color:var(--txt)">Select Month</span>
-      <button onclick="closeMonthPicker()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">Close</button>
-    </div>
-    <div id="month-picker-list" data-no-swipe="1" style="max-height:calc(78vh - 62px);overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--card);padding:6px 0"></div>
+<div id="month-picker-modal" class="modal hidden" style="z-index:20000" onclick="closeMonthPicker()">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column;padding:0">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bdr);background:var(--card);flex-shrink:0">
+    <span style="font-size:16px;font-weight:800;color:var(--acc)">Select Month</span>
+    <button onclick="closeMonthPicker()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">Close</button>
   </div>
-</div>
+  <div id="month-picker-list" style="overflow-y:auto;flex:1;background:var(--card);padding:6px 0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y"></div>
+</div></div>
 <script src="/agent/canvas/bridge.js" defer></script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
