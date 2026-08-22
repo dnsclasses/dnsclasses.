@@ -156,10 +156,10 @@ body.light .hdr{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:
 .scard{background:var(--card);border-radius:22px;padding:14px 16px;border:1px solid var(--bdr);cursor:pointer;box-shadow:var(--shadow-sm);transition:box-shadow .2s}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:300;padding:14px;touch-action:none}
-.mbot{align-items:flex-end;padding:0}
-.mbot .mbox{border-radius:22px 22px 0 0;max-width:100%;padding-bottom:30px}
+.mbot{align-items:center;padding:14px}
+.mbot .mbox{border-radius:20px;max-width:480px;padding-bottom:20px}
 .mbox{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:480px;border:1px solid var(--bdr);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-md)}
-.mbot .mbox{border-radius:18px 18px 0 0;max-width:100%;max-height:82vh}
+.mbot .mbox{border-radius:20px;max-width:480px;max-height:82vh}
 select{-webkit-appearance:none;appearance:none;background:var(--ibg)!important;color:var(--txt)!important;}
 /* Keep report fee records inside the visible page when the app font zoom is increased. */
 #rpt-fees-card{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden}
@@ -215,7 +215,7 @@ body.light input[type="date"],body.light input[type="month"],body.light input[ty
 .dns-cal-action.primary{background:var(--acc);color:var(--bg);border-color:var(--acc)}
 .hidden{display:none!important}
 *{-webkit-tap-highlight-color:transparent}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:11px 22px;border-radius:30px;font-weight:bold;font-size:15px;z-index:999;color:#fff;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:11px 22px;border-radius:30px;font-weight:bold;font-size:15px;z-index:300000;color:#fff;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .flabel{font-size:13px;color:var(--sub);display:block;margin-bottom:5px;letter-spacing:0.02em;font-weight:bold}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media print{
@@ -1021,28 +1021,28 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   <button onclick="saveReminderDate()" style="width:100%;padding:12px;border-radius:14px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:15px;border:none;cursor:pointer">Save New Date</button>
 </div></div>
 
-<div id="pr-topic-modal" class="modal hidden" onclick="closeM('pr-topic-modal')" style="z-index:350">
+<div id="pr-topic-modal" class="modal hidden" onclick="closeM('pr-topic-modal')" style="z-index:20000">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column">
   <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Select Chapter</div>
   <div id="pr-topic-list" style="overflow-y:auto;flex:1"></div>
   <button onclick="closeM('pr-topic-modal')" style="margin-top:12px;padding:11px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:bold;font-size:14px;flex-shrink:0">Cancel</button>
 </div></div>
 
-<div id="generic-picker-modal" class="modal hidden" onclick="closeM('generic-picker-modal')" style="z-index:350">
+<div id="generic-picker-modal" class="modal hidden" onclick="closeM('generic-picker-modal')" style="z-index:20000">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column">
   <div id="generic-picker-title" style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0">Select</div>
   <div id="generic-picker-list" style="overflow-y:auto;flex:1"></div>
   <button onclick="closeM('generic-picker-modal')" style="margin-top:12px;padding:11px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:bold;font-size:14px;flex-shrink:0">Cancel</button>
 </div></div>
 
-<div id="ta-class-modal" class="modal hidden" onclick="closeM('ta-class-modal')" style="z-index:350">
+<div id="ta-class-modal" class="modal hidden" onclick="closeM('ta-class-modal')" style="z-index:20000">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:340px;max-height:75vh;display:flex;flex-direction:column">
   <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">school</span>Select Class</div>
   <div id="ta-class-list" style="overflow-y:auto;flex:1"></div>
   <button onclick="closeM('ta-class-modal')" style="margin-top:12px;padding:11px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-weight:bold;font-size:14px;flex-shrink:0">Cancel</button>
 </div></div>
 
-<div id="ta-student-modal" class="modal hidden" onclick="closeM('ta-student-modal')" style="z-index:350">
+<div id="ta-student-modal" class="modal hidden" onclick="closeM('ta-student-modal')" style="z-index:20000">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column">
   <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">person</span>Select Students</div>
   <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--ibdr);border-radius:14px;background:var(--ibg);margin-bottom:10px;flex-shrink:0">
@@ -1104,7 +1104,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   </div>
 </div></div>
 
-<div id="ta-chapter-modal" class="modal hidden" onclick="closeM('ta-chapter-modal')" style="z-index:350">
+<div id="ta-chapter-modal" class="modal hidden" onclick="closeM('ta-chapter-modal')" style="z-index:20000">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;max-height:75vh;display:flex;flex-direction:column">
   <div style="font-weight:bold;font-size:16px;color:var(--acc);margin-bottom:12px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px;margin-right:4px">menu_book</span>Select Chapter</div>
   <div id="ta-chapter-list" style="overflow-y:auto;flex:1"></div>
@@ -2516,18 +2516,19 @@ function _openGenericPickerManual(options, callback, title) {
   _applyOverlayBlur('dns-generic-picker');
   var modal = document.createElement('div');
   modal.id = 'dns-generic-picker';
-  modal.className = 'modal mbot';
-  modal.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);z-index:99999;display:flex;align-items:flex-end;justify-content:center';
+  modal.className = 'modal';
+  modal.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   var content = document.createElement('div');
-  content.style = 'width:100%;max-width:500px;background:var(--m3-card);border-radius:24px 24px 0 0;padding:20px;box-sizing:border-box;max-height:80vh;overflow-y:auto';
-  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">';
-  html += '<span style="font-size:18px;font-weight:bold;color:var(--txt)">' + (title || 'Select Option') + '</span>';
+  content.style = 'width:100%;max-width:400px;background:var(--card);border-radius:24px;padding:22px;box-sizing:border-box;max-height:80vh;overflow-y:auto;border:1px solid var(--bdr);box-shadow:var(--shadow-md)';
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">';
+  html += '<span style="font-size:18px;font-weight:bold;color:var(--acc)">' + (title || 'Select Option') + '</span>';
   html += '<button onclick="_closeGenericPickerManual()" style="background:none;border:none;color:var(--sub);cursor:pointer"><span class="material-symbols-outlined">close</span></button>';
-  html += '</div><div style="display:grid;grid-template-columns:1fr;gap:8px">';
+  html += '</div><div style="display:grid;grid-template-columns:1fr;gap:10px">';
   options.forEach(function(opt) {
-    var bg = opt.active ? 'var(--m3-blue)' : 'var(--m3-bg)';
-    var co = opt.active ? '#fff' : 'var(--txt)';
-    html += '<div class=\"picker-opt\" onclick=\"_selectGenericManual(\'' + opt.value + '\')\" style=\"padding:14px;border-radius:12px;background:' + bg + ';color:' + co + ';font-size:15px;font-weight:500;cursor:pointer;text-align:center\">' + opt.label + '</div>';
+    var bg = opt.active ? 'var(--btn)' : 'var(--ibg)';
+    var co = opt.active ? 'var(--btntxt)' : 'var(--txt)';
+    var bdr = opt.active ? 'none' : '1px solid var(--ibdr)';
+    html += '<div class=\"picker-opt\" onclick=\"_selectGenericManual(\'' + opt.value + '\')\" style=\"padding:15px;border-radius:16px;background:' + bg + ';color:' + co + ';border:' + bdr + ';font-size:15px;font-weight:700;cursor:pointer;text-align:center\">' + opt.label + '</div>';
   });
   html += '</div>';
   content.innerHTML = html;
@@ -2938,7 +2939,7 @@ function _applyOverlayBlur(excludeId){
     var c=_all[i];
     if(!c.classList){continue;}
     var cid=c.id||'';
-    if(c.classList.contains('modal')||cid===excludeId||cid==='mgr-calc'||cid==='mgr-calc-overlay'||cid==='mgr-cats-modal'||cid==='cat-picker-modal'||cid==='lock-screen'||cid==='inv-lock-screen'){
+    if(c.classList.contains('modal')||c.classList.contains('toast')||cid===excludeId||cid==='mgr-calc'||cid==='mgr-calc-overlay'||cid==='mgr-cats-modal'||cid==='cat-picker-modal'||cid==='lock-screen'||cid==='inv-lock-screen'){
       continue;
     }
     c.style.filter='blur(2px)';
@@ -6485,7 +6486,16 @@ function startAdd(){
   document.getElementById('save-btn').textContent='Save';
   document.getElementById('f-name').value='';
   var _fsur=document.getElementById('f-surname');if(_fsur)_fsur.value='';
-  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  
+  var today = _todayStr();
+  var dateInp = document.getElementById('f-date');
+  if(dateInp) {
+    dateInp.value = today;
+    // Dispatch events to trigger the button label update via _dnsCalBindBtn
+    dateInp.dispatchEvent(new Event('input', { bubbles: true }));
+    dateInp.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  
   document.getElementById('f-fees').value='';
   document.getElementById('f-grade').value='10th';
   document.getElementById('f-subject').value='Maths';
@@ -9215,7 +9225,7 @@ function openLockSettings() {
   var timeout = localStorage.getItem('dns_lock_timeout') || '5';
   var pinSet   = !!localStorage.getItem('dns_lock_pin');
   var overlay  = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999'; _applyOverlayBlur();
   overlay.innerHTML =
     '<div style="background:var(--bg);border-radius:16px;padding:22px;max-width:320px;width:92%;border:1px solid var(--bdr)">' +
     '<div style="font-weight:bold;font-size:17px;color:var(--acc);margin-bottom:4px">\uD83D\uDD12 Screen Lock</div>' +
@@ -9319,7 +9329,7 @@ function startVerifyPin(cb) {
 function showPinSetup(title, cb) {
   var entered = '';
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:99998';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:200000';
   _applyOverlayBlur();
   function render() {
     overlay.innerHTML =
@@ -9334,14 +9344,14 @@ function showPinSetup(title, cb) {
           return '<button onclick="spPress(\'' + d + '\')" style="padding:16px;border-radius:14px;font-size:20px;font-weight:bold;background:var(--card);border:1px solid var(--bdr);color:var(--txt)">' + d + '</button>';
         }).join('') +
       '</div>' +
-      '<button onclick="this.closest(\'[style*=position]\').remove()" style="margin-top:14px;padding:8px 24px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--sub)">Cancel</button>' +
+      '<button onclick="this.closest(\'[style*=position]\').remove(); _clearOverlayBlur();" style="margin-top:14px;padding:8px 24px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--sub)">Cancel</button>' +
       '</div>';
   }
   window._spCallback = cb;
   window._spEntered  = '';
   window._spOverlay  = overlay;
   render();
-  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); _clearOverlayBlur(); _clearOverlayBlur(); };
+  overlay.onclick = function(e){ if(e.target===overlay){ overlay.remove(); _clearOverlayBlur(); } };
   document.body.appendChild(overlay);
   window.spPress = function(d) {
     if (d==='⌫') { window._spEntered=window._spEntered.slice(0,-1); }
@@ -10431,7 +10441,16 @@ function openMgrAddExpense(){
   if(ci)ci.value='';
   var cl=document.getElementById('mgr-exp-cat-lbl');
   if(cl){cl.textContent='Select category...';cl.style.color='var(--sub)';}
-  document.getElementById('mgr-exp-date').value=new Date().toISOString().split('T')[0];
+  
+  var today = _todayStr();
+  var dateInp = document.getElementById('mgr-exp-date');
+  if(dateInp) {
+    dateInp.value = today;
+    // Dispatch events to trigger the button label update via _dnsCalBindBtn
+    dateInp.dispatchEvent(new Event('input', { bubbles: true }));
+    dateInp.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  
   document.getElementById('mgr-exp-amt').value='';
   document.getElementById('mgr-exp-note').value='';
   openM('mgr-exp-modal');
@@ -11246,7 +11265,9 @@ function _showInvLockScreen(){
   _invLockAttempts=0;
   var el=document.createElement('div');
   el.id='inv-lock-screen';
-  el.style.cssText='position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);touch-action:none'; _applyOverlayBlur('inv-lock-screen');
+  // Use a solid background color instead of blur
+  var bgCol = document.body.classList.contains('light') ? '#f8fafc' : '#060d1a';
+  el.style.cssText='position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:'+bgCol+';touch-action:none';
   _invLockRender(el,'',false);
   document.body.appendChild(el);
 }
@@ -11305,7 +11326,7 @@ function _invLockPress(d){
 function _invLockCheckPin(pin){
   var el=document.getElementById('inv-lock-screen');if(!el)return;
   if(hashPin(pin)===localStorage.getItem('inv_lock_pin')){
-    _invLockUnlocked=true;_invLockAttempts=0;el.remove();
+    _invLockUnlocked=true;_invLockAttempts=0;el.remove(); _clearOverlayBlur();
   } else {
     _invLockAttempts++;
     var showForgot=_invLockAttempts>=5;
@@ -11317,7 +11338,7 @@ function _invLockCheckPin(pin){
 
 function _invLockForgot(){
   var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.style.cssText='position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML=
     '<div style="background:var(--card);border-radius:16px;padding:24px;max-width:300px;width:100%;border:1px solid var(--bdr);text-align:center">'+
     '<div class="material-symbols-outlined" style="font-size:26px;margin-bottom:8px">key</div>'+
@@ -11328,11 +11349,11 @@ function _invLockForgot(){
     '<button onclick="_invLockRecovery()" style="width:100%;padding:11px;border-radius:8px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:15px;border:none;margin-bottom:8px;cursor:pointer">Unlock & Reset PIN</button>'+
     '<button id="ilk-cancel-btn" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--sub);font-size:14px;cursor:pointer">Cancel</button>'+
     '</div>';
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.onclick=function(e){if(e.target===ov){ov.remove(); _clearOverlayBlur();}};
   document.body.appendChild(ov);
   setTimeout(function(){var i=document.getElementById('ilk-rec-inp');if(i)i.focus();},100);
   var _cc=document.getElementById('ilk-cancel-btn');
-  if(_cc)_cc.onclick=function(){ov.remove();};
+  if(_cc)_cc.onclick=function(){ov.remove(); _clearOverlayBlur();};
 }
 
 function _invLockRecovery(){
@@ -11344,6 +11365,7 @@ function _invLockRecovery(){
     _invLockUnlocked=true;_invLockAttempts=0;
     var ls=document.getElementById('inv-lock-screen');if(ls)ls.remove();
     document.querySelectorAll('[style*="z-index:9999"]').forEach(function(e){e.remove();});
+    _clearOverlayBlur();
     showToast('Investment lock removed');
   } else {
     if(err)err.textContent='Incorrect phrase. Try again.';
@@ -11351,9 +11373,11 @@ function _invLockRecovery(){
 }
 
 function openInvLockSettings(){
+  var ex=document.getElementById('inv-lock-settings-ov');if(ex)ex.remove();
   var enabled=_invLockEnabled();
   var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.id='inv-lock-settings-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML=
     '<div style="background:var(--card);border-radius:16px;padding:22px;max-width:310px;width:100%;border:1px solid var(--bdr)">'+
     '<div style="font-weight:bold;font-size:17px;color:var(--acc);margin-bottom:4px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;margin-right:4px">lock</span>Investment Lock</div>'+
@@ -11369,9 +11393,9 @@ function openInvLockSettings(){
     '<div style="font-size:11px;color:var(--sub);background:var(--bg);border-radius:8px;padding:10px;margin-bottom:14px"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">lightbulb</span>Recovery phrase: <b style="color:var(--acc)">DNSCLASSES</b> — use if you forget PIN (shows after 5 wrong attempts)</div>'+
     '<button id="ilk-done-btn" style="width:100%;padding:11px;border-radius:8px;background:var(--btn);color:var(--btntxt);font-weight:bold;font-size:15px;border:none;cursor:pointer">Done</button>'+
     '</div>';
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.onclick=function(e){if(e.target===ov){ov.remove(); _clearOverlayBlur();}};
   document.body.appendChild(ov);
-  var _db=document.getElementById('ilk-done-btn');if(_db)_db.onclick=function(){ov.remove();};
+  var _db=document.getElementById('ilk-done-btn');if(_db)_db.onclick=function(){ov.remove(); _clearOverlayBlur();};
 }
 
 function _invLockSetup(){
@@ -11383,7 +11407,8 @@ function _invLockSetup(){
         localStorage.setItem('inv_lock_enabled','1');
         _invLockUnlocked=true;
         showToast('Investment lock enabled');
-      } else {showToast('PINs do not match. Try again.',true);}
+        openInvLockSettings();
+      } else {showToast('PINs do not match. Try again.',true); openInvLockSettings();}
     });
   });
 }
@@ -11399,11 +11424,12 @@ function _invLockChange(){
 function _invLockDisable(){
   document.querySelectorAll('[style*="z-index:9999"]').forEach(function(e){e.remove();});
   showPinSetup('Enter PIN to disable',function(pin){
-    if(hashPin(pin)!==localStorage.getItem('inv_lock_pin')){showToast('Incorrect PIN',true);return;}
+    if(hashPin(pin)!==localStorage.getItem('inv_lock_pin')){showToast('Incorrect PIN',true); openInvLockSettings(); return;}
     localStorage.removeItem('inv_lock_pin');
     localStorage.removeItem('inv_lock_enabled');
     _invLockUnlocked=false;
     showToast('Lock disabled');
+    openInvLockSettings();
   });
 }
 // ═══════════════════════════════════════════════
