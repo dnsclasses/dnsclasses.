@@ -2482,6 +2482,7 @@ function doUndo(){
   }
   showToast('Undone!');
   _refreshAllProgressViews();
+  if(typeof pgRefreshChapterLabelModal==='function'&&typeof _pgChapterLabelContext!=='undefined'&&_pgChapterLabelContext)pgRefreshChapterLabelModal();
   var _mkS=document.getElementById('mock-student');if(_mkS&&_mkS.value)_refreshAllMockViews(parseInt(_mkS.value));
   renderDailyCollection();
   if(typeof renderByClass==='function')renderByClass();
@@ -2501,6 +2502,8 @@ function doRedo(){
     if(_rdi)_renderInvDetails(_rdi); else closeM('inv-detail-modal');
   }
   showToast('Redone!');
+  _refreshAllProgressViews();
+  if(typeof pgRefreshChapterLabelModal==='function'&&typeof _pgChapterLabelContext!=='undefined'&&_pgChapterLabelContext)pgRefreshChapterLabelModal();
   if(curView==='dash'){renderDashTests();renderDashHwCharts();}
 }
 function _refreshChapterSelectors(){
@@ -3086,7 +3089,9 @@ function _testDaysUntil(dateStr){
 }
 function renderDashTests(){
   if(!db.settings)db.settings={};
-  var list=(db.settings.testReminders||[]).filter(function(r){return _testDaysUntil(r.date)>=0;});
+  // Keep dismissed reminders removed, but keep every saved reminder visible after
+  // its date so an unhandled test is clearly marked EXPIRED instead of vanishing.
+  var list=(db.settings.testReminders||[]).slice();
   list.sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
   var cont=document.getElementById('dash-tests-content');
   if(cont){
@@ -3096,16 +3101,18 @@ function renderDashTests(){
       var h='';
       list.forEach(function(r){
         var days=_testDaysUntil(r.date);
+        var isExpired=days<0;
         var isToday=days===0;
-        var urgent=days<=1;
-        var soon=days>=2&&days<=4;
+        var urgent=!isExpired&&days<=1;
+        var soon=!isExpired&&days>=2&&days<=4;
         var _isLight=document.body.classList.contains('light');
         var _amberClr=_isLight?'#b45309':'#f59e0b';
-        var bg=urgent?'rgba(239,68,68,.12)':(soon?'rgba(245,158,11,.12)':'var(--card)');
-        var border=urgent?'#ef4444':(soon?_amberClr:'var(--ibdr)');
-        var flashing=isToday&&!r.flashStopped;
-        var dayLabel=isToday?'TODAY':(days===1?'TOMORROW':(days+' days'));
-        var dayColor=urgent?'#ef4444':(soon?_amberClr:'var(--sub)');
+        var bg=isExpired?(_isLight?'rgba(239,68,68,.12)':'rgba(239,68,68,.22)'):(urgent?'rgba(239,68,68,.12)':(soon?'rgba(245,158,11,.12)':'var(--card)'));
+        var border=isExpired?'#ef4444':(urgent?'#ef4444':(soon?_amberClr:'var(--ibdr)'));
+        var flashing=!isExpired&&isToday&&!r.flashStopped;
+        var dayLabel=isExpired?'EXPIRED':(isToday?'TODAY':(days===1?'TOMORROW':(days+' days')));
+        var dayColor=isExpired?'#ef4444':(urgent?'#ef4444':(soon?_amberClr:'var(--sub)'));
+        var dayBadge=isExpired?'<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px;animation:pulse-red 2s infinite">EXPIRED</span>':null;
         var flashTextColor=flashing?'#fff':null;
         var paperReady=r.paperMade===true;
         var flashRgb=paperReady?'25,140,70':'239,68,68';
@@ -3121,7 +3128,7 @@ function renderDashTests(){
         var _dow=_dnames[new Date(r.date+'T00:00:00').getDay()];
         h+='<div class="'+(flashing?'fl-body':'')+'" style="font-size:11px;color:'+(flashing?flashTextColor:'var(--sub)')+';margin-top:2px">'+esc(fmtD(r.date))+' ('+_dow+')'+(r.mode==='rev'?' \u2022 Revision':'')+'</div>';
         h+='</div>';
-        h+='<div class="'+(flashing?'fl-day-label':'')+'" style="font-size:12px;font-weight:800;color:'+(flashing?flashTextColor:dayColor)+';white-space:nowrap;flex-shrink:0">'+dayLabel+'</div>';
+        h+='<div class="'+(flashing?'fl-day-label':'')+'" style="font-size:12px;font-weight:800;color:'+(flashing?flashTextColor:dayColor)+';white-space:nowrap;flex-shrink:0">'+(dayBadge||dayLabel)+'</div>';
         h+='</div>';
         var _btnBg=_isLight?'#f1f5f9':'#1e293b';
         var _btnBdr=_isLight?'#cbd5e1':'#475569';
@@ -3188,7 +3195,7 @@ function _updateDashSmallCards(){
   var elA=document.getElementById('s-dash-admissions');
   if(elA)elA.textContent=admCount;
 
-  var testCount=((db.settings&&db.settings.testReminders)||[]).filter(function(r){return _testDaysUntil(r.date)>=0;}).length;
+  var testCount=((db.settings&&db.settings.testReminders)||[]).length;
   var elT=document.getElementById('s-dash-tests');
   if(elT)elT.textContent=testCount;
 
@@ -4881,6 +4888,8 @@ function generateReport(sid){
   h+='<button onclick="printReport()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e3a5f,#1e40af);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;touch-action:manipulation"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">print</span>Print / Save as PDF</button>';
   h+='</div>';
   document.getElementById('report-output').innerHTML=h;
+  var _reportLabelCard=document.getElementById('rpt-progress-chart-card');
+  if(_reportLabelCard&&typeof pgRenderChapterLabelsIn==='function')pgRenderChapterLabelsIn(_reportLabelCard,s.id);
 }
 function _reportCaptureImage(cardId,headingText,cb){
   var sid=_rptCurrentSid;
@@ -9194,6 +9203,9 @@ function _edgeSwipeBack(){
   document.addEventListener('touchstart',function(e){_tmStartY=e.touches[0].clientY;},{passive:true});
   document.addEventListener('touchmove',function(e){
     if(!document.querySelector('.modal:not(.hidden)'))return;
+    // Let the chapter-label list handle its own vertical gesture immediately;
+    // the list has an explicit pan-y touch surface and momentum scrolling.
+    if(e.target.closest('#pg-chapter-label-code-list'))return;
     var mbox=e.target.closest('.mbox')||e.target.closest('#gsearch-modal');
     if(!mbox){e.preventDefault();return;}// backdrop: always block
     // Find the innermost scrollable ancestor (could be a nested div, not mbox itself)
@@ -13133,7 +13145,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
     var _combColor=dk?'#34d399':'#059669';
     var _tdBg=_icr?(dk?'rgba(52,211,153,0.1)':'rgba(5,150,105,0.07)'):rB;
     var _tdBdr=_icr?_combColor:ac;
-    h+='<td style="'+TD+';background:'+_tdBg+';border-left:3px solid '+_tdBdr+';text-align:left;padding:0 7px">';
+    h+='<td data-chapter-cell="1" data-ch="'+esc(ch.name)+'" style="'+TD+';background:'+_tdBg+';border-left:3px solid '+_tdBdr+';text-align:left;padding:0 7px">';
     h+='<div style="height:'+RH+';overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:1px">';
     if(_icr){
       var _bdgBg='#000000';
@@ -13295,6 +13307,374 @@ function buildChapterProgressChart(sid,cls,includeHeader){
   return h;
 }
 
+var _pgChapterLabelContext=null;
+var _pgChapterLabelGroups=[
+  {title:'MAIN EXAMS',codes:['HY','FE']},
+  {title:'SUMMATIVE ASSESSMENTS',codes:['SA1','SA2','SA3','SA4']},
+  {title:'CLASS TESTS',codes:['CT1','CT2','CT3','CT4']},
+  {title:'UNIT TESTS',codes:['UT1','UT2','UT3','UT4']},
+  {title:'PERIODIC / DAILY TESTS',codes:['PD1','PD2','PD3','PD4']}
+];
+var _pgChapterLabelPresets=[];
+_pgChapterLabelGroups.forEach(function(group){_pgChapterLabelPresets=_pgChapterLabelPresets.concat(group.codes);});
+var _pgChapterLabelColors={
+  HY:'#b91c1c',FE:'#581c87',
+  SA1:'#c2410c',SA2:'#ea580c',SA3:'#f97316',SA4:'#fb923c',
+  CT1:'#a16207',CT2:'#ca8a04',CT3:'#eab308',CT4:'#facc15',
+  UT1:'#047857',UT2:'#059669',UT3:'#10b981',UT4:'#34d399',
+  PD1:'#1d4ed8',PD2:'#2563eb',PD3:'#3b82f6',PD4:'#60a5fa'
+};
+function _pgChapterLabelColor(label){
+  return db&&db.chapterLabelColors&&db.chapterLabelColors[label]||_pgChapterLabelColors[label]||'#64748b';
+}
+function _pgChapterLabelList(value){
+  if(Array.isArray(value))return value.slice();
+  return value?[String(value)]:[];
+}
+function pgSetChapterLabelColor(code,color){
+  color=String(color||'').trim();
+  if(!/^#[0-9a-f]{6}$/i.test(color))return;
+  var previous=db.chapterLabelColors&&db.chapterLabelColors[code];
+  if(previous===color)return;
+  pushUndo();
+  if(!db.chapterLabelColors)db.chapterLabelColors={};
+  db.chapterLabelColors[code]=color;
+  saveDB();
+  pgRenderChapterLabelControls();
+  if(_pgChapterLabelContext){
+    var current=_pgChapterLabelList(_pgGetChapterLabels(_pgChapterLabelContext.sid)[_pgChapterLabelContext.ch]);
+    pgSyncChapterLabelModal(current);
+  }
+  var sid=_pgChapterLabelContext&&_pgChapterLabelContext.sid;
+  if(sid)pgRenderChapterLabels(sid);
+}
+function _pgGetCustomChapterLabels(){
+  if(!Array.isArray(db.customChapterLabels))db.customChapterLabels=[];
+  var seen={};
+  db.customChapterLabels=db.customChapterLabels.map(function(label){return String(label||'').trim();}).filter(function(label){
+    if(!label||_pgChapterLabelPresets.indexOf(label)!==-1||seen[label])return false;
+    seen[label]=true;return true;
+  });
+  Object.keys(db.chapterLabels||{}).forEach(function(groupKey){
+    var group=db.chapterLabels[groupKey];
+    if(!group||typeof group!=='object'||Array.isArray(group))return;
+    Object.keys(group).forEach(function(ch){
+      _pgChapterLabelList(group[ch]).forEach(function(label){
+        label=String(label||'').trim();
+        if(label&&_pgChapterLabelPresets.indexOf(label)===-1&&!seen[label]){
+          seen[label]=true;db.customChapterLabels.push(label);
+        }
+      });
+    });
+  });
+  return db.customChapterLabels;
+}
+var _pgChapterLabelColorContext='';
+var _pgChapterLabelDeleteContext='';
+function pgOpenChapterLabelColorModal(code){
+  code=String(code||'').trim();
+  if(!code)return;
+  _pgChapterLabelColorContext=code;
+  var directPicker=document.getElementById('pg-direct-chapter-color-picker');
+  if(directPicker)directPicker.remove();
+  var picker=document.getElementById('pg-chapter-label-color-picker');
+  var modal=document.getElementById('pg-chapter-label-color-modal');
+  var title=document.getElementById('pg-chapter-label-color-title');
+  if(!picker||!modal)return;
+  var current=_pgChapterLabelColor(code);
+  picker.value=/^#[0-9a-f]{6}$/i.test(current)?current:'#64748b';
+  picker.setAttribute('data-label-code',code);
+  if(title)title.textContent='Choose a colour for '+code;
+  openM('pg-chapter-label-color-modal');
+  // Keep the colour input large and visible. Also attempt the native panel
+  // while this function is still running inside the actual button gesture;
+  // browsers that reject programmatic opening leave the same input tappable.
+  try{
+    picker.focus();
+    if(typeof picker.showPicker==='function')picker.showPicker();
+  }catch(ignore){
+    try{picker.focus();}catch(ignoreFocus){}
+  }
+}
+function pgCloseChapterLabelColorModal(){
+  _pgChapterLabelColorContext='';
+  var directPicker=document.getElementById('pg-direct-chapter-color-picker');
+  if(directPicker)directPicker.remove();
+  closeM('pg-chapter-label-color-modal');
+}
+function pgSaveChapterLabelColorFromModal(){
+  var picker=document.getElementById('pg-chapter-label-color-picker');
+  if(_pgChapterLabelColorContext&&picker)pgSetChapterLabelColor(_pgChapterLabelColorContext,picker.value);
+  pgCloseChapterLabelColorModal();
+}
+function pgOpenDeleteCustomChapterLabelModal(code){
+  code=String(code||'').trim();
+  if(!code||_pgChapterLabelPresets.indexOf(code)!==-1)return;
+  _pgChapterLabelDeleteContext=code;
+  var name=document.getElementById('pg-custom-label-delete-name');
+  if(name)name.textContent=code;
+  openM('pg-custom-label-delete-modal');
+}
+function pgCloseDeleteCustomChapterLabelModal(){
+  _pgChapterLabelDeleteContext='';
+  closeM('pg-custom-label-delete-modal');
+}
+function _pgDeleteCustomChapterLabelNow(code){
+  code=String(code||'').trim();
+  if(!code||_pgChapterLabelPresets.indexOf(code)!==-1)return;
+  pushUndo();
+  db.customChapterLabels=_pgGetCustomChapterLabels().filter(function(label){return label!==code;});
+  if(db.chapterLabelColors)delete db.chapterLabelColors[code];
+  Object.keys(db.chapterLabels||{}).forEach(function(groupKey){
+    var group=db.chapterLabels[groupKey];
+    if(!group||typeof group!=='object'||Array.isArray(group))return;
+    Object.keys(group).forEach(function(ch){
+      var remaining=_pgChapterLabelList(group[ch]).filter(function(label){return label!==code;});
+      if(remaining.length)group[ch]=remaining;else delete group[ch];
+    });
+  });
+  saveDB();
+  pgRenderChapterLabelControls();
+  if(_pgChapterLabelContext){
+    pgRenderChapterLabels(_pgChapterLabelContext.sid);
+    pgRefreshChapterLabelModal();
+  }
+}
+function pgConfirmDeleteCustomChapterLabel(){
+  var code=_pgChapterLabelDeleteContext;
+  pgCloseDeleteCustomChapterLabelModal();
+  if(code)_pgDeleteCustomChapterLabelNow(code);
+}
+function pgDeleteCustomChapterLabel(code){pgOpenDeleteCustomChapterLabelModal(code);}
+function pgRenderChapterLabelControls(){
+  var host=document.getElementById('pg-chapter-label-code-list');
+  if(!host)return;
+  host.innerHTML='';
+  function appendCard(grid,code,isCustom){
+    var color=_pgChapterLabelColor(code);
+    var item=document.createElement('div');
+    item.style.cssText='min-width:0;padding:7px;border:1px solid var(--bdr);border-radius:12px;background:var(--ibg)';
+    var btn=document.createElement('button');
+    btn.type='button';
+    btn.setAttribute('data-label-code',code);
+    btn.textContent=code;
+    btn.style.cssText='width:100%;padding:9px 6px;border-radius:9px;background:transparent;border:1px solid '+color+';color:'+color+';font-weight:800;cursor:pointer;overflow-wrap:anywhere';
+    btn.onclick=function(){pgToggleChapterLabel(code);};
+    var pickerRow=document.createElement('div');
+    pickerRow.style.cssText='display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin-top:7px;color:var(--sub);font-size:10px;font-weight:700';
+    var colourBtn=document.createElement('label');
+    colourBtn.textContent='Choose colour';
+    colourBtn.title='Open colour picker for '+code;
+    colourBtn.setAttribute('aria-label','Open colour picker for '+code);
+    colourBtn.style.cssText='position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:6px 9px;border-radius:8px;border:1px solid var(--ibdr);background:var(--card);color:var(--sub);font-size:10px;font-weight:800;cursor:pointer;box-sizing:border-box;overflow:hidden;touch-action:manipulation';
+    var colourInput=document.createElement('input');
+    colourInput.type='color';
+    colourInput.value=/^#[0-9a-f]{6}$/i.test(color)?color:'#64748b';
+    colourInput.title='Choose a custom colour for '+code;
+    colourInput.setAttribute('aria-label','Choose a custom colour for '+code);
+    colourInput.style.cssText='position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;touch-action:manipulation';
+    colourInput.onclick=function(ev){ev.stopPropagation();};
+    colourInput.onchange=function(ev){
+      ev.stopPropagation();
+      pgSetChapterLabelColor(code,colourInput.value);
+    };
+    colourBtn.appendChild(colourInput);
+    pickerRow.appendChild(colourBtn);
+    if(isCustom){
+      var del=document.createElement('button');
+      del.type='button';
+      del.textContent='Delete';
+      del.title='Delete custom label '+code;
+      del.setAttribute('aria-label','Delete custom label '+code);
+      del.style.cssText='padding:6px 8px;border-radius:8px;border:1px solid #ef4444;background:transparent;color:#ef4444;font-size:10px;font-weight:800;cursor:pointer';
+      del.onclick=function(ev){ev.stopPropagation();pgOpenDeleteCustomChapterLabelModal(code);};
+      pickerRow.appendChild(del);
+    }
+    item.appendChild(btn);
+    item.appendChild(pickerRow);
+    grid.appendChild(item);
+  }
+  function appendGroup(title,codes,isCustom){
+    if(!codes.length)return;
+    var section=document.createElement('div');
+    section.style.cssText='margin-bottom:14px';
+    var heading=document.createElement('div');
+    heading.textContent=title;
+    heading.style.cssText='font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--sub);margin:0 0 7px';
+    section.appendChild(heading);
+    var grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px';
+    codes.forEach(function(code){appendCard(grid,code,!!isCustom);});
+    section.appendChild(grid);
+    host.appendChild(section);
+  }
+  _pgChapterLabelGroups.forEach(function(group){appendGroup(group.title,group.codes,false);});
+  appendGroup('CUSTOM LABELS',_pgGetCustomChapterLabels(),true);
+}
+function _pgSharedChapterLabelKey(sid){
+  var stu=(db.students||[]).find(function(s){return s.id===sid;});
+  var grade=String(stu&&stu.grade||'Other').trim();
+  var school=String(stu&&stu.school||'').trim();
+  return 'class:'+encodeURIComponent(grade)+'::school:'+encodeURIComponent(school);
+}
+function _pgMergeChapterLabelMaps(target,source){
+  if(!source||typeof source!=='object'||Array.isArray(source))return;
+  Object.keys(source).forEach(function(ch){
+    var incoming=_pgChapterLabelList(source[ch]);
+    if(!incoming.length)return;
+    var existing=_pgChapterLabelList(target[ch]);
+    incoming.forEach(function(label){if(existing.indexOf(label)===-1)existing.push(label);});
+    if(existing.length)target[ch]=existing;
+  });
+}
+function _pgGetChapterLabels(sid){
+  if(!db.chapterLabels)db.chapterLabels={};
+  var key=_pgSharedChapterLabelKey(sid);
+  if(!db.chapterLabels[key]){
+    db.chapterLabels[key]={};
+    (db.students||[]).forEach(function(stu){
+      var legacy=db.chapterLabels[String(stu.id)];
+      if(_pgSharedChapterLabelKey(stu.id)===key&&legacy&&String(stu.id)!==key)_pgMergeChapterLabelMaps(db.chapterLabels[key],legacy);
+    });
+  }
+  return db.chapterLabels[key];
+}
+function pgSyncChapterLabelModal(current){
+  var modal=document.getElementById('pg-chapter-label-modal');
+  if(!modal)return;
+  current=_pgChapterLabelList(current);
+  modal.querySelectorAll('[data-label-code]').forEach(function(btn){
+    var code=btn.dataset.labelCode;
+    var color=_pgChapterLabelColor(code);
+    var selected=current.indexOf(code)!==-1;
+    btn.style.background=selected?color:'transparent';
+    btn.style.borderColor=color;
+    btn.style.color=selected?'#fff':color;
+    btn.style.boxShadow=selected?'0 0 0 2px '+color+' inset':'none';
+    btn.style.fontWeight=selected?'900':'800';
+    btn.setAttribute('aria-pressed',selected?'true':'false');
+  });
+}
+function pgRefreshChapterLabelModal(){
+  if(!_pgChapterLabelContext)return;
+  var sid=_pgChapterLabelContext.sid,ch=_pgChapterLabelContext.ch;
+  var current=_pgChapterLabelList(_pgGetChapterLabels(sid)[ch]);
+  var currentEl=document.getElementById('pg-chapter-label-current');
+  if(currentEl)currentEl.textContent=current.length?'Selected labels: '+current.join(', '):'Choose one or more labels for this chapter';
+  pgRenderChapterLabelControls();
+  pgSyncChapterLabelModal(current);
+}
+function pgOpenChapterLabelModal(sid,ch){
+  _pgChapterLabelContext={sid:sid,ch:ch};
+  var labels=_pgGetChapterLabels(sid);
+  var current=_pgChapterLabelList(labels[ch]);
+  var title=document.getElementById('pg-chapter-label-title');
+  var currentEl=document.getElementById('pg-chapter-label-current');
+  var custom=document.getElementById('pg-chapter-label-custom');
+  var customLabels=current.filter(function(label){return _pgChapterLabelPresets.indexOf(label)===-1;});
+  if(title)title.textContent='Chapter: '+ch;
+  if(currentEl)currentEl.textContent=current.length?'Selected labels: '+current.join(', '):'Choose one or more labels for this chapter';
+  if(custom)custom.value=customLabels.length===1?customLabels[0]:'';
+  pgRenderChapterLabelControls();
+  pgSyncChapterLabelModal(current);
+  openM('pg-chapter-label-modal');
+}
+function pgCloseChapterLabelModal(){
+  _pgChapterLabelColorContext='';
+  var directPicker=document.getElementById('pg-direct-chapter-color-picker');
+  if(directPicker)directPicker.remove();
+  closeM('pg-chapter-label-modal');
+}
+function pgToggleChapterLabel(label,skipHistory){
+  if(!_pgChapterLabelContext)return;
+  var sid=_pgChapterLabelContext.sid,ch=_pgChapterLabelContext.ch;
+  label=String(label||'').trim();
+  if(!label)return;
+  var labels=_pgGetChapterLabels(sid);
+  var current=_pgChapterLabelList(labels[ch]);
+  if(!skipHistory)pushUndo();
+  var index=current.indexOf(label);
+  if(index===-1)current.push(label);else current.splice(index,1);
+  if(current.length)labels[ch]=current;else delete labels[ch];
+  saveDB();
+  pgRenderChapterLabels(sid);
+  pgRefreshChapterLabelModal();
+}
+function pgApplyChapterLabel(label){pgToggleChapterLabel(label);}
+function pgApplyCustomChapterLabel(){
+  var input=document.getElementById('pg-chapter-label-custom');
+  var label=input?input.value.trim():'';
+  if(!label){showToast('Enter a custom label',true);return;}
+  var newCustom=false;
+  if(_pgChapterLabelPresets.indexOf(label)===-1){
+    var customLabels=_pgGetCustomChapterLabels();
+    newCustom=customLabels.indexOf(label)===-1;
+    if(newCustom)pushUndo();
+    if(newCustom)customLabels.push(label);
+    if(!db.chapterLabelColors)db.chapterLabelColors={};
+    if(!db.chapterLabelColors[label])db.chapterLabelColors[label]='#64748b';
+    saveDB();
+  }
+  pgToggleChapterLabel(label,newCustom);
+  if(input)input.value='';
+}
+function pgClearChapterLabel(){
+  if(!_pgChapterLabelContext)return;
+  var sid=_pgChapterLabelContext.sid,ch=_pgChapterLabelContext.ch;
+  var labels=_pgGetChapterLabels(sid);
+  if(labels[ch]===undefined)return;
+  pushUndo();
+  delete labels[ch];
+  saveDB();
+  pgRenderChapterLabels(sid);
+  pgRefreshChapterLabelModal();
+}
+function pgOpenResetAllChapterLabelsModal(){
+  if(!_pgChapterLabelContext)return;
+  openM('pg-chapter-label-reset-modal');
+}
+function pgCloseResetAllChapterLabelsModal(){
+  closeM('pg-chapter-label-reset-modal');
+}
+function pgConfirmResetAllChapterLabels(){
+  if(!_pgChapterLabelContext){pgCloseResetAllChapterLabelsModal();return;}
+  var sid=_pgChapterLabelContext.sid;
+  var labels=_pgGetChapterLabels(sid);
+  if(!Object.keys(labels).length){pgCloseResetAllChapterLabelsModal();return;}
+  pushUndo();
+  Object.keys(labels).forEach(function(ch){delete labels[ch];});
+  saveDB();
+  pgRenderChapterLabels(sid);
+  pgRefreshChapterLabelModal();
+  pgCloseResetAllChapterLabelsModal();
+  showToast('All chapter labels removed');
+}
+function pgResetAllChapterLabels(){pgOpenResetAllChapterLabelsModal();}
+function pgRenderChapterLabelsIn(root,sid){
+  if(!root)return;
+  var labels=_pgGetChapterLabels(sid);
+  root.querySelectorAll('[data-chapter-cell]').forEach(function(cell){
+    cell.style.position='relative';
+    var old=cell.querySelector('[data-chapter-label]');
+    if(old)old.remove();
+    var labelsList=_pgChapterLabelList(labels[cell.dataset.ch||'']);
+    if(!labelsList.length)return;
+    var badge=document.createElement('span');
+    badge.setAttribute('data-chapter-label','1');
+    badge.style.cssText='position:absolute;top:3px;right:4px;z-index:1;max-width:calc(100% - 8px);display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px;pointer-events:none;box-sizing:border-box';
+    labelsList.forEach(function(label){
+      var chip=document.createElement('span');
+      chip.setAttribute('data-chapter-label-code',label);
+      chip.textContent=label;
+      chip.style.cssText='padding:1px 4px;border-radius:4px;background:'+_pgChapterLabelColor(label)+';color:#fff;font-size:9px;font-weight:900;line-height:1.2;letter-spacing:.02em;white-space:nowrap;box-sizing:border-box';
+      badge.appendChild(chip);
+    });
+    cell.appendChild(badge);
+  });
+}
+function pgRenderChapterLabels(sid){
+  pgRenderChapterLabelsIn(document.getElementById('pg-chart-wrap'),sid);
+}
 function pgShowChart(){
   var sid=parseInt(document.getElementById('pg-student').value);
   var cls=document.getElementById('pg-class').value;
@@ -13302,7 +13682,13 @@ function pgShowChart(){
   if(!wrap||!sid)return;
   var h=buildChapterProgressChart(sid,cls);
   wrap.innerHTML=h;
+  pgRenderChapterLabels(sid);
   wrap.onclick=function(ev){
+    var chapterCell=ev.target.closest('[data-chapter-cell]');
+    if(chapterCell){
+      pgOpenChapterLabelModal(sid,chapterCell.dataset.ch||'');
+      return;
+    }
     var td=ev.target.closest('[data-cell]');
     if(!td)return;
     pgEditCell(sid,td.dataset.ch,td.dataset.t);
@@ -16274,6 +16660,87 @@ function editHwChart(idx){
   showToast('Homework data loaded for editing');
 }
 </script>
+
+<!-- Chapter Label Modal -->
+<div id="pg-chapter-label-modal" class="modal hidden" style="z-index:20000" onclick="pgCloseChapterLabelModal()">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:380px;padding:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bdr)">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:var(--acc)">Chapter Label</div>
+        <div id="pg-chapter-label-title" style="font-size:12px;color:var(--sub);margin-top:3px"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button type="button" onclick="pgOpenResetAllChapterLabelsModal()" style="background:transparent;border:1px solid #ef4444;border-radius:10px;padding:6px 8px;color:#ef4444;font-size:10px;font-weight:800;cursor:pointer">Reset All</button>
+        <button type="button" onclick="pgCloseChapterLabelModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer">Close</button>
+      </div>
+    </div>
+    <div style="padding:16px 20px 20px">
+      <div id="pg-chapter-label-current" style="font-size:13px;color:var(--sub);margin-bottom:12px"></div>
+      <div id="pg-chapter-label-code-list" data-label-scroll="1" style="max-height:42vh;overflow-y:auto;overflow-x:hidden;padding-right:3px;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;touch-action:pan-y;scrollbar-width:thin;will-change:scroll-position;position:relative;z-index:1"></div>
+      <div style="margin-top:14px">
+        <label class="flabel" for="pg-chapter-label-custom">CUSTOM LABEL</label>
+        <input id="pg-chapter-label-custom" maxlength="30" placeholder="Type your own label" onkeydown="if(event.key==='Enter'){event.preventDefault();pgApplyCustomChapterLabel()}" style="font-size:14px">
+        <button type="button" onclick="pgApplyCustomChapterLabel()" style="width:100%;margin-top:9px;padding:11px;border-radius:12px;background:var(--acc);color:var(--bg);font-weight:800;cursor:pointer">Use Custom Label</button>
+      </div>
+      <button type="button" onclick="pgClearChapterLabel()" style="width:100%;margin-top:10px;padding:10px;border-radius:12px;background:transparent;border:1px solid var(--ibdr);color:var(--sub);font-weight:700;cursor:pointer">Clear Label</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Label Colour Modal -->
+<div id="pg-chapter-label-color-modal" class="modal hidden" style="z-index:21000" onclick="pgCloseChapterLabelColorModal()">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:360px;padding:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bdr)">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:var(--acc)">Custom Label Colour</div>
+        <div id="pg-chapter-label-color-title" style="font-size:12px;color:var(--sub);margin-top:3px">Choose a colour</div>
+      </div>
+      <button type="button" onclick="pgCloseChapterLabelColorModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer">Close</button>
+    </div>
+    <div style="padding:18px 20px 20px">
+      <input id="pg-chapter-label-color-picker" type="color" aria-label="Choose custom label colour" style="display:block;width:100%;height:110px;padding:4px;border:1px solid var(--ibdr);border-radius:14px;background:var(--card);cursor:pointer;touch-action:manipulation">
+      <div style="font-size:12px;color:var(--sub);margin-top:9px;text-align:center">Choose any colour for this custom label.</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button type="button" onclick="pgCloseChapterLabelColorModal()" style="flex:1;padding:11px;border-radius:12px;background:transparent;border:1px solid var(--ibdr);color:var(--sub);font-weight:800;cursor:pointer">Cancel</button>
+        <button type="button" onclick="pgSaveChapterLabelColorFromModal()" style="flex:1;padding:11px;border-radius:12px;background:var(--acc);color:var(--bg);font-weight:800;cursor:pointer">Save Colour</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Custom Label Modal -->
+<div id="pg-custom-label-delete-modal" class="modal hidden" style="z-index:21000" onclick="pgCloseDeleteCustomChapterLabelModal()">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:360px;padding:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bdr)">
+      <div style="font-size:16px;font-weight:800;color:#ef4444">Delete Custom Label</div>
+      <button type="button" onclick="pgCloseDeleteCustomChapterLabelModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer">Close</button>
+    </div>
+    <div style="padding:18px 20px 20px">
+      <div style="font-size:13px;color:var(--txt);line-height:1.5">Delete <strong id="pg-custom-label-delete-name"></strong> from the custom list and all chapters?</div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="button" onclick="pgCloseDeleteCustomChapterLabelModal()" style="flex:1;padding:11px;border-radius:12px;background:transparent;border:1px solid var(--ibdr);color:var(--sub);font-weight:800;cursor:pointer">Cancel</button>
+        <button type="button" onclick="pgConfirmDeleteCustomChapterLabel()" style="flex:1;padding:11px;border-radius:12px;background:#ef4444;color:#fff;border:none;font-weight:800;cursor:pointer">Delete Label</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reset All Chapter Labels Modal -->
+<div id="pg-chapter-label-reset-modal" class="modal hidden" style="z-index:22000" onclick="pgCloseResetAllChapterLabelsModal()">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:360px;padding:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bdr)">
+      <div style="font-size:16px;font-weight:800;color:#ef4444">Reset All Chapter Labels</div>
+      <button type="button" onclick="pgCloseResetAllChapterLabelsModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:14px;padding:6px 12px;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer">Close</button>
+    </div>
+    <div style="padding:18px 20px 20px">
+      <div style="font-size:13px;color:var(--txt);line-height:1.5">Remove all labels from every chapter for this class and school? This cannot be undone.</div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="button" onclick="pgCloseResetAllChapterLabelsModal()" style="flex:1;padding:11px;border-radius:12px;background:transparent;border:1px solid var(--ibdr);color:var(--sub);font-weight:800;cursor:pointer">Cancel</button>
+        <button type="button" onclick="pgConfirmResetAllChapterLabels()" style="flex:1;padding:11px;border-radius:12px;background:#ef4444;color:#fff;border:none;font-weight:800;cursor:pointer">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Category Picker Modal -->
 <div id="cat-picker-modal" class="modal hidden" style="z-index:20000" onclick="closeCatModal()">
