@@ -8886,6 +8886,13 @@ function setWaTarget(t){
   if(nb2){nb2.style.background=t==='normal'?'rgba(37,211,102,.35)':'transparent';nb2.style.borderColor=t==='normal'?'#25d366':'rgba(37,211,102,.2)';nb2.style.color=t==='normal'?'#25d366':'var(--sub)';}
   showToast('WhatsApp: '+t);
 }
+function _refreshGScriptLastInfo(value){
+  var text=value?'Last backup: '+value:'';
+  document.querySelectorAll('[id="gscript-last-info"]').forEach(function(el){
+    el.style.display=text?'block':'none';
+    el.textContent=text;
+  });
+}
 function openBackup(){
   try{
     var bm=document.getElementById('backup-modal');
@@ -8900,8 +8907,8 @@ function openBackup(){
     var fu=localStorage.getItem('dns_gscript_folder')||'';
     var fl=document.getElementById('gscript-folder-link');var fa=document.getElementById('gscript-folder-a');
     if(fl&&fa&&fu){fa.href=fu;fl.style.display='block';}
-    var li=document.getElementById('gscript-last-info');var lt=localStorage.getItem('dns_gscript_last');
-    if(li&&lt){li.style.display='block';li.textContent='Last backup: '+lt;}
+    var lt=localStorage.getItem('dns_gscript_last');
+    _refreshGScriptLastInfo(lt);
     var dr=document.getElementById('gscript-delay-row'),ds=document.getElementById('gscript-delay-sel');
     if(dr)dr.style.display=autoOn?'flex':'none';
     if(ds){var _dv=parseInt(localStorage.getItem('dns_gscript_delay_sec')||'20');ds.value=_dv;var _dl=document.getElementById('gscript-delay-lbl');if(_dl)_dl.textContent=fmtDelaySec(_dv);}
@@ -9036,8 +9043,7 @@ function backupToGScript(silent){
           var fa=document.getElementById('gscript-folder-a');
           if(fl&&fa){fa.href=res.folderUrl;fl.style.display='block';}
         }
-        var li=document.getElementById('gscript-last-info');
-        if(li){li.style.display='block';li.textContent='Last backup: '+ts;}
+        _refreshGScriptLastInfo(ts);
         if(!silent)showToast('Backup saved! ('+res.count+' backups kept)');
         else showToast('Auto-backed up to Drive');
       } else {showToast('Backup error: '+(res.error||'unknown'),true);}
@@ -9048,8 +9054,7 @@ function backupToGScript(silent){
           var ts2=_dnsFmtTS();
           localStorage.setItem('dns_gscript_last',ts2);
           localStorage.setItem('dns_gscript_last_ts',Date.now().toString());
-          var li=document.getElementById('gscript-last-info');
-          if(li){li.style.display='block';li.textContent='Last backup: '+ts2;}
+          _refreshGScriptLastInfo(ts2);
           showToast('Auto-backed up to Drive');
           // Try GET to fetch folder URL
           fetch(url + (url.indexOf('?') === -1 ? '?' : '&') + 'action=info').then(function(r){return r.json();}).then(function(info){
@@ -9076,6 +9081,10 @@ function restoreFromGScript(){
       if(data.success&&data.data&&data.data.db){
         _showRestoreConfirm('Replace ALL current data with the Google Drive backup dated '+data.savedOn+'?',function(){
           db=data.data.db;saveDB();loadDB();
+          var restoredBackupTime=data.savedOn||data.timestamp||data.data.savedOn||data.data.timestamp||_dnsFmtTS();
+          localStorage.setItem('dns_gscript_last',String(restoredBackupTime));
+          localStorage.setItem('dns_gscript_last_ts',String(Date.now()));
+          _refreshGScriptLastInfo(String(restoredBackupTime));
           if(data.data.locks){
             var lk=data.data.locks;
             if(lk.inv_lock_pin)localStorage.setItem('inv_lock_pin',lk.inv_lock_pin);else localStorage.removeItem('inv_lock_pin');
@@ -9116,7 +9125,12 @@ function restoreFromFile(input){
       var p=parseBackupPayload(e.target.result);
       var count=(p.data.students||[]).length;
       _showRestoreConfirm('Restore '+count+' students from '+file.name+'?\n\nThis replaces your current data. (Undo is available afterward.)',function(){
-        applyBackupPayload(p);closeM('backup-modal');showToast('Restored '+count+' students!');
+        applyBackupPayload(p);
+        var restoredFileTime=p.timestamp||new Date().toISOString();
+        localStorage.setItem('dns_gscript_last',String(restoredFileTime));
+        localStorage.setItem('dns_gscript_last_ts',String(Date.now()));
+        _refreshGScriptLastInfo(String(restoredFileTime));
+        closeM('backup-modal');showToast('Restored '+count+' students!');
       });
     }catch(err){showToast('Invalid file: '+err.message,true);}
   };
@@ -11213,8 +11227,8 @@ function renderBackupView(){
   var fu=localStorage.getItem('dns_gscript_folder')||'';
   var fl=document.getElementById('gscript-folder-link'),fa=document.getElementById('gscript-folder-a');
   if(fl&&fa&&fu){fa.href=fu;fl.style.display='block';}
-  var li=document.getElementById('gscript-last-info'),lt=localStorage.getItem('dns_gscript_last');
-  if(li&&lt){li.style.display='block';li.textContent='Last backup: '+lt;}
+  var lt=localStorage.getItem('dns_gscript_last');
+  _refreshGScriptLastInfo(lt);
   // WhatsApp button state
   var t=localStorage.getItem('dns_wa_target')||'business';
   _waTarget=t;
@@ -12641,6 +12655,47 @@ function _pgInferTotal(chapter,tno,fallback){
   }
   return fallback||20;
 }
+function pgCloseEditCellModal(){
+  document.querySelectorAll('[data-pg-edit-modal]').forEach(function(m){m.remove();});
+  if(!document.querySelector('.modal:not(.hidden)')){
+    document.body.classList.remove('modal-open');
+    _clearOverlayBlur();
+  }
+}
+function pgOpenTestAlertForCell(sid,chapter,tno){
+  var stu=(db.students||[]).find(function(s){return s.id===sid;});
+  if(!stu){showToast('Select a student first',true);return;}
+  // Reuse the existing Test Alert page, but seed it from the empty chart cell.
+  // The current student is selected by default; the existing FOR picker still
+  // lets the user switch to Whole Class or another set of students.
+  _pgPopulateClasses();
+  _taManuallyEdited=false;
+  var hint=document.getElementById('ta-edit-hint');
+  if(hint)hint.textContent='Tap to edit';
+  var clsSel=document.getElementById('ta-class');
+  var desiredCls=String(stu.grade||'').trim();
+  if(clsSel)clsSel.value=desiredCls;
+  taClassChanged();
+  _taUpdateClassBtn();
+  _taSelectedStudents=[];
+  _taWholeClass=false;
+  var wcCb=document.getElementById('ta-whole-class');
+  if(wcCb)wcCb.checked=false;
+  var studentCb=Array.prototype.find.call(document.querySelectorAll('.ta-stu-cb'),function(cb){return parseInt(cb.value)===sid;});
+  if(studentCb)studentCb.checked=true;
+  taStudentCheckChanged();
+  var topic=String(chapter||'').trim();
+  var code=String(tno||'').trim().toUpperCase();
+  _taEntries=[{id:_taNextId++,date:_todayStr(),topics:topic?[topic]:[],topicTnos:{}}];
+  if(topic&&code)_taEntries[0].topicTnos[topic]=code;
+  var duration=document.getElementById('ta-duration');
+  if(duration)duration.value=45;
+  setTaMode('prep');
+  renderTaEntries();
+  var alertModal=document.getElementById('testalert-modal');
+  if(alertModal)alertModal.style.zIndex='500';
+  openM('testalert-modal');
+}
 function pgEditCell(sid,chapter,tno){
   var stu=db.students.find(function(s){return s.id===sid;});
   if(!stu)return;
@@ -12662,7 +12717,10 @@ function pgEditCell(sid,chapter,tno){
   modal.dataset.pgEditModal='1';
   modal.className='modal';
   modal.style.cssText='display:flex;z-index:400';
-  modal.onclick=function(ev){if(ev.target===modal)modal.remove();};
+  modal.onclick=function(ev){if(ev.target===modal)pgCloseEditCellModal();};
+  modal.addEventListener('pointerdown',function(ev){
+    if(ev.target===modal){ev.preventDefault();pgCloseEditCellModal();}
+  },{passive:false});
   modal.innerHTML='<div class="mbox" style="max-width:340px" onclick="event.stopPropagation()">'
     +'<div style="font-size:16px;font-weight:bold;color:var(--txt);margin-bottom:2px">'+esc(_studentDisplayName(stu))+'</div>'
     +'<div style="font-size:13px;color:var(--sub);margin-bottom:14px">'+esc(chapter)+' &middot; '+esc(tno)+'</div>'
@@ -12671,6 +12729,7 @@ function pgEditCell(sid,chapter,tno){
     +'<div id="pg-cell-err" style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;min-height:16px;margin-bottom:8px"></div>'
     +'<label class="flabel">OR MARK AS</label>'
     +'<div id="pg-cell-status-row" style="display:flex;gap:6px;margin-bottom:16px">'+statusBtnsHtml+'</div>'
+    +(!cur?'<button id="pg-cell-alert" type="button" style="width:100%;padding:10px;border-radius:14px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.4);color:#16a34a;font-weight:bold;font-size:12px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">campaign</span>Generate Test Alert</button>':'')
     +'<button onclick="pgLoadAllMarksForTest('+sid+',\''+esc(chapter)+'\',\''+esc(tno)+'\')" style="width:100%;padding:10px;border-radius:14px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#6366f1;font-weight:bold;font-size:12px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">group</span>Load All Marks for this Test</button>'
     +'<div style="display:flex;gap:8px">'
     +'<button id="pg-cell-clear" style="padding:11px 14px;border-radius:8px;background:rgba(100,116,139,.12);border:1px solid var(--ibdr);color:var(--sub);font-weight:bold;cursor:pointer">Clear</button>'
@@ -12678,6 +12737,8 @@ function pgEditCell(sid,chapter,tno){
     +'<button id="pg-cell-save" style="flex:1;padding:11px 14px;border-radius:8px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:bold;cursor:pointer">Save</button>'
     +'</div></div>';
   document.body.appendChild(modal);
+  var alertBtn=modal.querySelector('#pg-cell-alert');
+  if(alertBtn)alertBtn.onclick=function(){pgOpenTestAlertForCell(sid,chapter,tno);};
 
   var marksInp=document.getElementById('pg-cell-marks');
   var errEl=document.getElementById('pg-cell-err');
@@ -12718,11 +12779,11 @@ function pgEditCell(sid,chapter,tno){
     refreshStatusBtns();
     errEl.textContent='';
   };
-  document.getElementById('pg-cell-cancel').onclick=function(){modal.remove();};
+  document.getElementById('pg-cell-cancel').onclick=function(){pgCloseEditCellModal();};
   document.getElementById('pg-cell-clear').onclick=function(){
     pushUndo();
     if(db.progress[sid]&&db.progress[sid][chapter])delete db.progress[sid][chapter][tno];
-    saveDB();modal.remove();_refreshAllProgressViews();showToast('Cleared');
+    saveDB();pgCloseEditCellModal();_refreshAllProgressViews();showToast('Cleared');
   };
   document.getElementById('pg-cell-save').onclick=function(){
     if(!db.progress[sid])db.progress[sid]={};
@@ -12947,6 +13008,106 @@ function _refreshAllProgressViews(){
   var _prnS=document.getElementById('prn-student');
   if(_prnS&&_prnS.value&&typeof renderPrnChart==='function')renderPrnChart();
 }
+function _pgProgressColumnState(sid,cls){
+  var stu=(db.students||[]).find(function(s){return s.id===sid;});
+  if(!stu)return{key:'',stu:null,chs:[],students:[],tests:[],stored:[]};
+  _initChapters();
+  var key=_chKeyCls(cls||stu.grade||'',stu.school||'');
+  var chs=(db.chapters[key]||[]);
+  // Keep the existing chart column discovery behavior, while adding any
+  // explicitly created empty columns stored for this exact class/school group.
+  var students=(db.students||[]).filter(function(x){return x.grade===stu.grade&&_chKeyCls(x.grade||'',x.school||'')===key;});
+  var testNums=new Set();
+  chs.forEach(function(ch){
+    students.forEach(function(x){
+      var xp=db.progress[x.id]||{};
+      Object.keys(xp[ch.name]||{}).forEach(function(t){testNums.add(t);});
+    });
+  });
+  var stored=(db.progressTestColumns&&Array.isArray(db.progressTestColumns[key]))?db.progressTestColumns[key].slice():[];
+  stored.forEach(function(t){if(t)testNums.add(String(t).toUpperCase());});
+  var tests=[...testNums].sort(function(a,b){
+    var an=parseInt(String(a).replace(/\D/g,''))||0,bn=parseInt(String(b).replace(/\D/g,''))||0;
+    return an-bn||String(a).localeCompare(String(b));
+  });
+  return{key:key,stu:stu,chs:chs,students:students,tests:tests,stored:stored};
+}
+function _pgNextProgressTestNumber(sid,cls){
+  var state=_pgProgressColumnState(sid,cls),max=0;
+  state.tests.forEach(function(t){var m=String(t).match(/^T(\d+)$/i);if(m)max=Math.max(max,parseInt(m[1],10)||0);});
+  return'T'+(max+1);
+}
+function _pgProgressColumnHasData(sid,cls,tno){
+  var state=_pgProgressColumnState(sid,cls);
+  for(var i=0;i<state.students.length;i++){
+    var p=db.progress[state.students[i].id]||{};
+    for(var j=0;j<state.chs.length;j++){
+      var cp=p[state.chs[j].name]||{};
+      if(Object.prototype.hasOwnProperty.call(cp,tno))return true;
+    }
+  }
+  return false;
+}
+function _pgCloseAverageColumnModal(){
+  document.querySelectorAll('[data-pg-average-modal]').forEach(function(m){m.remove();});
+  if(!document.querySelector('.modal:not(.hidden)')){
+    document.body.classList.remove('modal-open');
+    _clearOverlayBlur();
+  }
+}
+function _pgAddProgressTestColumn(sid,cls,tno){
+  var stu=(db.students||[]).find(function(s){return s.id===sid;});
+  if(!stu||!tno)return;
+  var key=_chKeyCls(cls||stu.grade||'',stu.school||'');
+  if(!db.progressTestColumns)db.progressTestColumns={};
+  if(!Array.isArray(db.progressTestColumns[key]))db.progressTestColumns[key]=[];
+  if(db.progressTestColumns[key].indexOf(tno)<0){
+    pushUndo();
+    db.progressTestColumns[key].push(tno);
+    saveDB();
+  }
+  _pgCloseAverageColumnModal();
+  pgShowChart();
+  showToast(tno+' column added');
+}
+function _pgRemoveProgressTestColumn(sid,cls,tno){
+  var stu=(db.students||[]).find(function(s){return s.id===sid;});
+  if(!stu||!tno)return;
+  if(_pgProgressColumnHasData(sid,cls,tno)){showToast('Cannot remove '+tno+' because it contains data',true);return;}
+  var key=_chKeyCls(cls||stu.grade||'',stu.school||'');
+  var cols=(db.progressTestColumns&&Array.isArray(db.progressTestColumns[key]))?db.progressTestColumns[key]:[];
+  if(cols.indexOf(tno)<0)return;
+  pushUndo();
+  db.progressTestColumns[key]=cols.filter(function(t){return t!==tno;});
+  saveDB();
+  _pgCloseAverageColumnModal();
+  pgShowChart();
+  showToast(tno+' column removed');
+}
+function pgOpenAverageColumnModal(sid,cls,chapter){
+  var state=_pgProgressColumnState(sid,cls);
+  if(!state.stu)return;
+  var next=_pgNextProgressTestNumber(sid,cls);
+  var emptyStored=state.stored.filter(function(t){return !_pgProgressColumnHasData(sid,cls,t);});
+  var modal=document.createElement('div');
+  modal.dataset.pgAverageModal='1';
+  modal.className='modal';
+  modal.style.cssText='display:flex;z-index:450';
+  modal.onclick=function(ev){if(ev.target===modal)_pgCloseAverageColumnModal();};
+  modal.addEventListener('pointerdown',function(ev){if(ev.target===modal){ev.preventDefault();_pgCloseAverageColumnModal();}},{passive:false});
+  var removeHtml=emptyStored.length?'<div style="font-size:11px;color:var(--sub);margin:14px 0 7px">EMPTY TEST COLUMNS</div>'+emptyStored.map(function(t){return '<button type="button" data-remove-test="'+esc(t)+'" style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#ef4444;font-weight:800;font-size:13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span>Remove '+esc(t)+' column</span><span class="material-symbols-outlined" style="font-size:17px">delete</span></button>';}).join(''):'';
+  modal.innerHTML='<div class="mbox" onclick="event.stopPropagation()" style="max-width:360px;padding:18px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-size:16px;font-weight:800;color:var(--txt)">Manage Test Columns</div><button type="button" onclick="_pgCloseAverageColumnModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:10px;padding:5px 9px;color:var(--sub);cursor:pointer">×</button></div>'
+    +'<div style="font-size:12px;color:var(--sub);margin-bottom:14px">Chapter: <strong style="color:var(--txt)">'+esc(chapter||'')+'</strong></div>'
+    +'<button type="button" data-add-test="'+esc(next)+'" style="width:100%;padding:12px;border-radius:12px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.4);color:#16a34a;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><span class="material-symbols-outlined" style="font-size:17px">add_circle</span>Add empty '+esc(next)+' column</button>'
+    +removeHtml
+    +'<div style="font-size:11px;color:var(--sub);line-height:1.45;margin-top:10px">A test column can be removed only when no marks or status is saved anywhere in that column.</div>'
+    +'</div>';
+  document.body.appendChild(modal);
+  var addBtn=modal.querySelector('[data-add-test]');
+  if(addBtn)addBtn.onclick=function(){_pgAddProgressTestColumn(sid,cls,addBtn.getAttribute('data-add-test'));};
+  modal.querySelectorAll('[data-remove-test]').forEach(function(btn){btn.onclick=function(){_pgRemoveProgressTestColumn(sid,cls,btn.getAttribute('data-remove-test'));};});
+}
 function buildChapterProgressChart(sid,cls,includeHeader){
   if(includeHeader===undefined)includeHeader=true;
   if(!sid)return '';
@@ -12956,15 +13117,10 @@ function buildChapterProgressChart(sid,cls,includeHeader){
   var _pgChKey=_chKeyCls(cls,stu.school||'');
   var chs=(db.chapters[_pgChKey]||[]);
   var sp=db.progress[sid]||{};
-  var _classmatesForCols=(db.students||[]).filter(function(x){return x.grade===stu.grade;});
-  var testNums=new Set();
-  chs.forEach(function(ch){
-    _classmatesForCols.forEach(function(x){
-      var xp=db.progress[x.id]||{};
-      Object.keys(xp[ch.name]||{}).forEach(function(t){testNums.add(t);});
-    });
-  });
-  var tests=[...testNums].sort(function(a,b){return(parseInt(a.replace(/\D/g,''))||0)-(parseInt(b.replace(/\D/g,''))||0);});
+  var _columnState=_pgProgressColumnState(sid,cls);
+  var _classmatesForCols=_columnState.students;
+  var testNums=new Set(_columnState.tests);
+  var tests=[...testNums].sort(function(a,b){return(parseInt(String(a).replace(/\D/g,''))||0)-(parseInt(String(b).replace(/\D/g,''))||0);});
   if(!chs.length)return '<div style="text-align:center;color:var(--sub);padding:20px">No chapters. Use Manage above.</div>';
 
   function CS(e){
@@ -13189,7 +13345,8 @@ function buildChapterProgressChart(sid,cls,includeHeader){
       }
     });
     var _avgSh=avg!==null&&aB!=='transparent'?(aC2==='#fff'||aC2.indexOf('fff')>=0?'0 1px 3px rgba(0,0,0,0.4)':'0 1px 0 rgba(255,255,255,0.7),0 -1px 0 rgba(0,0,0,0.08)'):'none';
-    h+='<td style="'+TD+';background:'+aB+';color:'+aC2+';font-weight:800"><div style="'+IN+';text-shadow:'+_avgSh+'">'+(avg!==null?avg+'%':'--')+'</div></td>';
+    var _avgCellMeta=includeHeader?' data-average-cell="1" data-ch="'+esc(ch.name)+'" title="Manage test columns"':'';
+    h+='<td'+_avgCellMeta+' style="'+TD+';background:'+aB+';color:'+aC2+';font-weight:800'+(includeHeader?';cursor:pointer':'')+'"><div style="'+IN+';text-shadow:'+_avgSh+'">'+(avg!==null?avg+'%':'--')+'</div></td>';
     h+=(function(){var pp=fl.split('|'),em=pp[0]||'',tx=pp[1]||'';return '<td style="border:1px solid '+bd+';border-radius:6px;height:'+RH+';vertical-align:middle;background:'+fB+';overflow:hidden"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:'+RH+';padding:2px 3px;gap:1px">'+(em?'<span style="font-size:12px;line-height:1.1">'+em+'</span>':'')+(tx?'<span style="font-size:10px;font-weight:700;color:'+fC+';line-height:1.2;display:block;text-align:center;word-break:break-word">'+tx+'</span>':'')+'</div></td>';})();
     h+='</tr>';
   });
@@ -13310,11 +13467,12 @@ function buildChapterProgressChart(sid,cls,includeHeader){
 var _pgChapterLabelContext=null;
 var _pgChapterLabelGroups=[
   {title:'MAIN EXAMS',codes:['HY','FE']},
-  {title:'SUMMATIVE ASSESSMENTS',codes:['SA1','SA2','SA3','SA4']},
-  {title:'CLASS TESTS',codes:['CT1','CT2','CT3','CT4']},
-  {title:'UNIT TESTS',codes:['UT1','UT2','UT3','UT4']},
-  {title:'PERIODIC / DAILY TESTS',codes:['PD1','PD2','PD3','PD4']}
+  {title:'UNIT TESTS',codes:['UT1','UT2','UT3','UT4']}
 ];
+// These legacy codes remain colour-resolvable so old chips are not corrupted,
+// but they are no longer offered as preset or custom-selector choices.
+var _pgHiddenChapterLabelCodes=['SA1','SA2','SA3','SA4','CT1','CT2','CT3','CT4','PD1','PD2','PD3','PD4'];
+function _pgIsHiddenChapterLabel(label){return _pgHiddenChapterLabelCodes.indexOf(String(label||'').trim())!==-1;}
 var _pgChapterLabelPresets=[];
 _pgChapterLabelGroups.forEach(function(group){_pgChapterLabelPresets=_pgChapterLabelPresets.concat(group.codes);});
 var _pgChapterLabelColors={
@@ -13352,7 +13510,7 @@ function _pgGetCustomChapterLabels(){
   if(!Array.isArray(db.customChapterLabels))db.customChapterLabels=[];
   var seen={};
   db.customChapterLabels=db.customChapterLabels.map(function(label){return String(label||'').trim();}).filter(function(label){
-    if(!label||_pgChapterLabelPresets.indexOf(label)!==-1||seen[label])return false;
+    if(!label||_pgChapterLabelPresets.indexOf(label)!==-1||_pgIsHiddenChapterLabel(label)||seen[label])return false;
     seen[label]=true;return true;
   });
   Object.keys(db.chapterLabels||{}).forEach(function(groupKey){
@@ -13361,7 +13519,7 @@ function _pgGetCustomChapterLabels(){
     Object.keys(group).forEach(function(ch){
       _pgChapterLabelList(group[ch]).forEach(function(label){
         label=String(label||'').trim();
-        if(label&&_pgChapterLabelPresets.indexOf(label)===-1&&!seen[label]){
+        if(label&&_pgChapterLabelPresets.indexOf(label)===-1&&!_pgIsHiddenChapterLabel(label)&&!seen[label]){
           seen[label]=true;db.customChapterLabels.push(label);
         }
       });
@@ -13571,7 +13729,7 @@ function pgOpenChapterLabelModal(sid,ch){
   var title=document.getElementById('pg-chapter-label-title');
   var currentEl=document.getElementById('pg-chapter-label-current');
   var custom=document.getElementById('pg-chapter-label-custom');
-  var customLabels=current.filter(function(label){return _pgChapterLabelPresets.indexOf(label)===-1;});
+  var customLabels=current.filter(function(label){return _pgChapterLabelPresets.indexOf(label)===-1&&!_pgIsHiddenChapterLabel(label);});
   if(title)title.textContent='Chapter: '+ch;
   if(currentEl)currentEl.textContent=current.length?'Selected labels: '+current.join(', '):'Choose one or more labels for this chapter';
   if(custom)custom.value=customLabels.length===1?customLabels[0]:'';
@@ -13684,6 +13842,11 @@ function pgShowChart(){
   wrap.innerHTML=h;
   pgRenderChapterLabels(sid);
   wrap.onclick=function(ev){
+    var averageCell=ev.target.closest('[data-average-cell]');
+    if(averageCell){
+      pgOpenAverageColumnModal(sid,cls,averageCell.dataset.ch||'');
+      return;
+    }
     var chapterCell=ev.target.closest('[data-chapter-cell]');
     if(chapterCell){
       pgOpenChapterLabelModal(sid,chapterCell.dataset.ch||'');
