@@ -6898,12 +6898,109 @@ function _gsAttendanceLeaders(monthIdx,year){
 function _gsAchievementIcon(type){
   return type==='trophy'?'\ud83c\udfc6':type==='gold'?'\ud83e\udd47':type==='silver'?'\ud83e\udd48':type==='bronze'?'\ud83e\udd49':'\ud83c\udf96\ufe0f';
 }
+function _gsNorm(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');}
+function _gsGradeKey(v){
+  var s=_gsNorm(v).replace(/^(class|grade|standard|std)\s*/,'').replace(/\s+/g,'');
+  return s.replace(/(st|nd|rd|th)$/,'');
+}
+function _gsFindStudentByNaturalName(q){
+  var qn=_gsNorm(q),best=null,bestScore=0;
+  (db.students||[]).forEach(function(s){
+    var nn=_gsNorm(_studentDisplayName(s)||s.name||'');
+    if(!nn)return;
+    if(qn.indexOf(nn)!==-1){var exact=nn.length+1000;if(exact>bestScore){best=s;bestScore=exact;}return;}
+    var nt=nn.split(' '),qt=qn.split(' '),hits=nt.filter(function(t){return t.length>1&&qt.indexOf(t)!==-1;}).length;
+    var score=hits===nt.length?hits*100+nn.length:hits*10;
+    if(score>bestScore){best=s;bestScore=score;}
+  });
+  return bestScore>=100?best:null;
+}
+function _gsParseStudentScope(qRaw){
+  var qn=_gsNorm(qRaw);
+  var students=db.students||[];
+  // A scope query may be a full sentence or the compact form
+  // “class 8 GWS HOME/CITY”.
+  var hasClassWord=/\b(class|grade|standard|std)\b/.test(qn);
+  var hasOrdinalClass=/\b\d+(?:st|nd|rd|th)\b/.test(qn);
+  var listIntent=(/\b(students?|pupils?|learners?)\b/.test(qn)&&/\b(class|grade|standard|std|of|from|in)\b/.test(qn))||hasClassWord||hasOrdinalClass;
+  if(!listIntent)return null;
+  var grade=null;
+  var gm=qn.match(/\b(?:class|grade|standard|std)\s*([a-z0-9]+(?:st|nd|rd|th)?)/);
+  if(gm)grade=gm[1];
+  if(!grade){
+    var gradeCandidates={};
+    students.forEach(function(s){var k=_gsGradeKey(s.grade);if(k)gradeCandidates[k]=s.grade;});
+    var qTokens=qn.split(' ');
+    Object.keys(gradeCandidates).sort(function(a,b){return b.length-a.length;}).some(function(k){if(qTokens.some(function(tok){return _gsGradeKey(tok)===k;})){grade=gradeCandidates[k];return true;}return false;});
+  }
+  if(!grade)return null;
+  var school=null,schoolKey='';
+  var schools=[...new Set(students.map(function(s){return String(s.school||'').trim();}).filter(Boolean))];
+  schools.sort(function(a,b){return _gsNorm(b).length-_gsNorm(a).length;});
+  schools.some(function(sc){var sk=_gsNorm(sc);if(sk&&qn.indexOf(sk)!==-1){school=sc;schoolKey=sk;return true;}return false;});
+  var locs=[];
+  if(/\bhome\b/.test(qn))locs.push('HOME');
+  if(/\bcity\b/.test(qn))locs.push('CITY');
+  var matches=students.filter(function(s){
+    if(_gsGradeKey(s.grade)!==_gsGradeKey(grade))return false;
+    if(school&&_gsNorm(s.school)!==schoolKey)return false;
+    if(locs.length&&locs.indexOf(String(s.location||'').toUpperCase())===-1)return false;
+    return s.status!=='inactive';
+  });
+  return{grade:grade,school:school,locations:locs,students:matches};
+}
+function _gsStudentScopeCards(scope){
+  return scope.students.map(function(s){
+    return '<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:14px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
+      '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(_studentDisplayName(s))+(s.admissionNo?' <span style="font-size:11px;color:#3b82f6">#'+s.admissionNo+'</span>':'')+'</div>'+
+      '<div style="font-size:12px;color:var(--sub);margin-top:2px">Class '+esc(s.grade||'')+(s.school?' • '+esc(s.school):'')+(s.location?' • '+esc(s.location):'')+'</div></div>';
+  });
+}
+function _gsOpenStudentTestRecord(sid){
+  var stu=(db.students||[]).find(function(s){return s.id===sid;});
+  if(!stu)return;
+  _gsPushCheckpoint();closeGlobalSearch();go('poster');
+  setTimeout(function(){
+    _pgPopulateClasses();
+    var c=document.getElementById('pg-class'),st=document.getElementById('pg-student');
+    if(!c||!st)return;
+    c.value=stu.grade||'';
+    pgLoadStudents();
+    st.value=String(stu.id);
+    pgShowChart();
+    setTimeout(function(){var w=document.getElementById('pg-chart-wrap');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});},120);
+  },120);
+}
+function _gsTryNaturalStudentIntents(qRaw){
+  var qn=_gsNorm(qRaw);
+  if(!/\btest\b/.test(qn)||!(/\brecords?\b/.test(qn)||/\bprogress(?: chart| report)?\b/.test(qn)))return false;
+  var s=_gsFindStudentByNaturalName(qRaw);
+  if(!s)return false;
+  var res=document.getElementById('gsearch-results');
+  if(res){res.innerHTML='<div style="font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.02em;margin:14px 0 6px">TEST RECORD</div>'+
+    '<div onclick="_gsOpenStudentTestRecord('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:14px;padding:12px 14px;margin-bottom:6px;cursor:pointer">'+
+    '<div style="font-weight:bold;font-size:15px;color:var(--txt)">'+esc(_studentDisplayName(s))+'</div><div style="font-size:12px;color:var(--sub);margin-top:3px">Open Student Progress Chart • Class '+esc(s.grade||'')+(s.school?' • '+esc(s.school):'')+'</div></div>';
+  }
+  return true;
+}
+function _gsTryNaturalScopeIntent(qRaw){
+  var scope=_gsParseStudentScope(qRaw);if(!scope)return false;
+  var res=document.getElementById('gsearch-results');
+  if(!scope.students.length){if(res)res.innerHTML='<div style="text-align:center;color:var(--sub);padding:30px;font-size:14px">No students found for the requested class, school, or location.</div>';return true;}
+  var desc='Class '+scope.grade+(scope.school?' • '+scope.school:'')+(scope.locations.length?' • '+scope.locations.join(' / '):'');
+  if(res)res.innerHTML='<div style="font-size:13px;font-weight:800;color:var(--sub);letter-spacing:.02em;margin-bottom:6px">STUDENTS ('+scope.students.length+')</div><div style="font-size:12px;color:var(--sub);margin-bottom:10px">'+esc(desc)+'</div>'+_gsStudentScopeCards(scope).join('');
+  return true;
+}
 function runGlobalSearch(){
   var qRaw=(document.getElementById('gsearch-input').value||'').trim();
   var q=qRaw.toLowerCase();
   var res=document.getElementById('gsearch-results');
   if(!res)return;
   if(!q){res.innerHTML='<div style="text-align:center;color:var(--sub);padding:30px;font-size:14px">Start typing to search everything \u2014 students, payments, expenses, income, chapters, mock exams. Try "max trophies" or "highest attendance in July" too!</div>';return;}
+
+  // ── Flexible student-list and Test Records intents ──
+  if(_gsTryNaturalStudentIntents(qRaw))return;
+  if(_gsTryNaturalScopeIntent(qRaw))return;
 
   // ── Smart queries (max trophies/medals/gold/silver/bronze, highest attendance) ──
   var m;
