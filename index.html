@@ -14818,8 +14818,9 @@ function _hwCheckTest(i){
   var val = inp.value;
   var isExam=/\bexam\b/i.test(val);
   var isTest=!isExam&&/\btest\b/i.test(val);
+  var isToday=(dateTd.dataset.dateLabel||'')===_hwTodayLabel();
   var bg=isExam?'#fecaca':(isTest?'#bbf7d0':'');
-  var bold=isExam||isTest;
+  var bold=(isExam||isTest)&&!isToday;
   
   var row=dateTd.parentElement;
   if(row){
@@ -15280,7 +15281,8 @@ function _hwRememberCurrentInputs(){
   for(var i=0;i<count;i++){
     var inp=document.getElementById('hw-cell-'+i);
     var lbl=document.getElementById('hw-date-'+i);
-    var label=lbl?lbl.textContent.trim():('row-'+i);
+    // The visible date cell includes a TODAY badge; never include that badge in the data key.
+    var label=lbl?(lbl.dataset.dateLabel||lbl.textContent.trim().replace(/\s+TODAY\s*$/,'')):('row-'+i);
     if(inp)fresh[label]=inp.value;
   }
   _hwSavedData=fresh;
@@ -15377,12 +15379,8 @@ function generateHwChart(){
   h+='<tr><th style="border:1px solid #cbd5e1;padding:8px 10px;background:#e2e8f0;color:#1e293b;text-align:center">DATE</th><th style="border:1px solid #cbd5e1;padding:8px 10px;background:#e2e8f0;color:#1e293b;text-align:center">HOMEWORK</th></tr>';
   dates.forEach(function(d,i){
     var lbl=('0'+d.getDate()).slice(-2)+' '+monthNames[d.getMonth()]+' '+d.getFullYear()+' ('+dayNames[d.getDay()]+')';
-    var isToday=lbl===_hwTodayLabel();
-    var todayRow=isToday?'background:#ede9fe;border-top:2px solid #7c3aed;border-bottom:2px solid #7c3aed;':'';
-    var todayDate=isToday?'background:#ede9fe;color:#5b21b6;border-left:3px solid #7c3aed;':'';
-    var todayRight=isToday?'border-right:3px solid #7c3aed;':'';
-    h+='<tr style="'+todayRow+'"><td id="hw-date-'+i+'" data-date-label="'+esc(lbl)+'" style="border:1px solid #cbd5e1;padding:10px 8px;font-size:12px;font-weight:800;white-space:normal;word-break:break-word;line-height:1.35;vertical-align:top;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.01em;text-rendering:auto;'+todayRow+todayDate+'">'+lbl+(isToday?' <span style="display:inline-block;margin-left:4px;padding:2px 5px;border-radius:4px;background:#7c3aed;color:#fff;font-size:9px;letter-spacing:.04em;vertical-align:1px">TODAY</span>':'')+'</td>';
-    h+='<td id="hw-td-'+i+'" style="border:1px solid #cbd5e1;padding:4px;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;'+todayRow+todayRight+'"><textarea id="hw-cell-'+i+'" rows="1" oninput="_hwAutoSizeCell(this);_hwCheckTest('+i+');_hwRefreshLiveLayout()" style="display:block;width:100%;min-height:36px;resize:none;overflow:hidden;border:none;padding:8px 10px;font-size:13px;line-height:1.4;font-family:inherit;background:transparent;color:#0f172a;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;box-sizing:border-box" placeholder=""></textarea></td></tr>';
+    h+='<tr><td id="hw-date-'+i+'" data-date-label="'+esc(lbl)+'" style="border:1px solid #cbd5e1;padding:10px 8px;font-size:12px;font-weight:800;white-space:normal;word-break:break-word;line-height:1.35;vertical-align:top;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.01em;text-rendering:auto;">'+lbl+'</td>';
+    h+='<td id="hw-td-'+i+'" style="border:1px solid #cbd5e1;padding:4px;word-break:break-word;overflow-wrap:break-word;white-space:normal;vertical-align:top;"><textarea id="hw-cell-'+i+'" rows="1" oninput="_hwAutoSizeCell(this);_hwCheckTest('+i+');_hwRefreshLiveLayout()" style="display:block;width:100%;min-height:36px;resize:none;overflow:hidden;border:none;padding:8px 10px;font-size:13px;line-height:1.4;font-family:inherit;background:transparent;color:#0f172a;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;box-sizing:border-box" placeholder=""></textarea></td></tr>';
   });
   h+='</table></div>';
   h+='<button onclick="printHwChart()" style="width:100%;padding:12px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:bold;font-size:15px;border:none;margin-top:14px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">print</span>Print Homework Chart</button>';
@@ -15470,17 +15468,14 @@ function _buildHwChartStaticHTML(isPrint){
   for(var i=0;i<count;i++){
     var val=(document.getElementById('hw-cell-'+i)||{}).value||'';
     var rowLabel=labels[i]||'';
-    var isToday=rowLabel===_hwTodayLabel();
     var isExam=/\bexam\b/i.test(val);
     var isTest=!isExam&&/\btest\b/i.test(val);
     var bgClr=isExam?'#fecaca':(isTest?'#bbf7d0':'');
     var hiStyle=bgClr?'background:'+bgClr+';':'';
-    var todayStyle=isToday?'background:#ede9fe;border-top:2px solid #7c3aed;border-bottom:2px solid #7c3aed;':'';
-    var todayDateStyle=isToday?'background:#ede9fe;color:#5b21b6;border-left:3px solid #7c3aed;':'';
-    var todayRightStyle=isToday?'border-right:3px solid #7c3aed;':'';
-    var boldStyle=(isExam||isTest||isToday)?'font-weight:800;':'';
-    h+='<tr style="'+hiStyle+todayStyle+'"><td style="border:1px solid #cbd5e1;padding:10px 8px;font-size:'+dateFs+';font-weight:700;white-space:nowrap;line-height:1.35;vertical-align:top;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.01em;text-rendering:auto;'+hiStyle+todayStyle+todayDateStyle+boldStyle+'">'+esc(rowLabel)+(isToday?' <span style="display:inline-block;margin-left:4px;padding:2px 5px;border-radius:4px;background:#7c3aed;color:#fff;font-size:9px;letter-spacing:.04em;vertical-align:1px">TODAY</span>':'')+'</td>';
-    h+='<td style="border:1px solid #cbd5e1;padding:'+pad+';'+hiStyle+todayStyle+todayRightStyle+boldStyle+'word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;line-height:1.4;vertical-align:top;">'+esc(val)+'</td></tr>';
+    // Printables charts intentionally have no TODAY highlight.
+    var boldStyle=(isExam||isTest)?'font-weight:800;':'';
+    h+='<tr style="'+hiStyle+'"><td style="border:1px solid #cbd5e1;padding:10px 8px;font-size:'+dateFs+';font-weight:700;white-space:nowrap;line-height:1.35;vertical-align:top;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.01em;text-rendering:auto;'+hiStyle+boldStyle+'">'+esc(rowLabel)+'</td>';
+    h+='<td style="border:1px solid #cbd5e1;padding:'+pad+';'+hiStyle+boldStyle+'word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;line-height:1.4;vertical-align:top;">'+esc(val)+'</td></tr>';
   }
   h+='</table></div>';
   return h;
@@ -15730,17 +15725,20 @@ function _hwTouchStartGuard(e){
   if(t){_hwTouchStartX=t.clientX;_hwTouchStartY=t.clientY;}
 }
 var _hwLastTap = 0;
-function _hwBuildSavedZoomChart(entry){
+function _hwBuildSavedZoomChart(entry,showToday){
   if(!entry||!entry.fromDate||!entry.endDate)return '';
   var from=new Date(entry.fromDate+'T00:00:00'),to=new Date(entry.endDate+'T00:00:00');
   if(isNaN(from.getTime())||isNaN(to.getTime())||to<from)return '';
   var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var today=_hwTodayLabel(),h='<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;min-width:300px">';
+  var useToday=showToday!==false;
+  var today=_hwTodayLabel(),h='<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;background:#fff;border-radius:8px;padding:12px;box-sizing:border-box;min-width:300px">';
   h+='<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:6px 4px 10px"><div style="font-size:18px;font-weight:800">'+esc(entry.name||'HOMEWORK CHART')+'</div><div style="font-size:11px;color:#475569;font-weight:700;text-align:right">'+esc(entry.cls?'Class '+entry.cls:'')+(entry.school?' • '+esc(entry.school):'')+(entry.subject?' • '+esc(entry.subject):'')+'</div></div>';
   h+='<div style="text-align:center;font-weight:800;font-size:14px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:6px;margin-bottom:10px">HOMEWORK CHART</div><table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #cbd5e1"><tr><th style="border:1px solid #cbd5e1;padding:8px;background:#e2e8f0">DATE</th><th style="border:1px solid #cbd5e1;padding:8px;background:#e2e8f0">HOMEWORK</th></tr>';
   var cur=new Date(from),data=entry.hwData||{};
   while(cur<=to){
-    var lbl=('0'+cur.getDate()).slice(-2)+' '+months[cur.getMonth()]+' '+cur.getFullYear()+' ('+days[cur.getDay()]+')',isToday=lbl===today,val=data[lbl]||'',isExam=/\bexam\b/i.test(val),isTest=!isExam&&/\btest\b/i.test(val);
+    var lbl=('0'+cur.getDate()).slice(-2)+' '+months[cur.getMonth()]+' '+cur.getFullYear()+' ('+days[cur.getDay()]+')',isToday=useToday&&lbl===today;
+    // Support charts saved before TODAY was removed from the internal key.
+    var val=data[lbl]||data[lbl+' TODAY']||'',isExam=/\bexam\b/i.test(val),isTest=!isExam&&/\btest\b/i.test(val);
     var base=isToday?'background:#ede9fe;border-top:2px solid #7c3aed;border-bottom:2px solid #7c3aed;':(isExam?'background:#fecaca;':(isTest?'background:#bbf7d0;':''));
     var dateStyle=isToday?'background:#ede9fe;color:#5b21b6;border-left:3px solid #7c3aed;':'';
     var rightStyle=isToday?'border-right:3px solid #7c3aed;':'';
@@ -16222,7 +16220,8 @@ function renderDashHwCharts(){
     h+='<button onclick="hwDashShare('+idx+')" style="flex:1;min-width:70px;padding:6px 8px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">share</span>Share</button>';
     h+='<button onclick="hwDashRemove('+idx+')" style="padding:6px 8px;border-radius:8px;border:1px solid #ef4444;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>';
     h+='</div>';
-    h+='<div onclick="openHwZoom(this.querySelector(\'img\').src,'+idx+')" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'"><img src="'+entry.imgData+'" style="width:100%;border-radius:8px;border:1px solid var(--ibdr)" alt="Homework Chart"></div>';
+    var dashPreview=_hwBuildSavedZoomChart(entry,false);
+    h+=dashPreview?'<div onclick="openHwZoom(\'\','+idx+')" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'">'+dashPreview+'</div>':'<div onclick="openHwZoom(this.querySelector(\'img\').src,'+idx+')" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'"><img src="'+entry.imgData+'" style="width:100%;border-radius:8px;border:1px solid var(--ibdr)" alt="Homework Chart"></div>';
     h+='</div>';
   });
   cont.innerHTML=h;
