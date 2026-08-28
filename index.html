@@ -16220,8 +16220,8 @@ function renderDashHwCharts(){
     h+='<button onclick="hwDashShare('+idx+')" style="flex:1;min-width:70px;padding:6px 8px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px"><span class="material-symbols-outlined" style="font-size:14px">share</span>Share</button>';
     h+='<button onclick="hwDashRemove('+idx+')" style="padding:6px 8px;border-radius:8px;border:1px solid #ef4444;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>';
     h+='</div>';
-    var dashPreview=_hwBuildSavedZoomChart(entry,false);
-    h+=dashPreview?'<div onclick="openHwZoom(\'\','+idx+')" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'">'+dashPreview+'</div>':'<div onclick="openHwZoom(this.querySelector(\'img\').src,'+idx+')" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'"><img src="'+entry.imgData+'" style="width:100%;border-radius:8px;border:1px solid var(--ibdr)" alt="Homework Chart"></div>';
+    // Use the exact saved image used for sending; preserve the original click behavior.
+    h+='<div onclick="openHwZoom(this.querySelector(\'img\').src,'+idx+')" style="cursor:zoom-in;transition:transform 0.2s" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'scale(1)\'"><img src="'+entry.imgData+'" style="width:100%;border-radius:8px;border:1px solid var(--ibdr)" alt="Homework Chart"></div>';
     h+='</div>';
   });
   cont.innerHTML=h;
