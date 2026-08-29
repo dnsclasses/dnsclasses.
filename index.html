@@ -1332,6 +1332,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   <div id="bulk-att-selection-note" style="font-size:12px;color:var(--sub);text-align:center;margin:9px 0 4px"></div>
   <input id="bulk-att-absent-date" type="text" style="display:none">
   <div style="margin-top:8px"><button onclick="openBulkAbsentListDatePicker()" style="width:100%;padding:10px;border-radius:9px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.10);color:#ef4444;font-weight:800;font-size:13px">&#128197; Copy Class-wise Absent List</button></div>
+  <div style="margin-top:8px"><button onclick="openBulkVisualAttendanceReport()" style="width:100%;padding:10px;border-radius:9px;border:1px solid rgba(99,102,241,.55);background:rgba(99,102,241,.12);color:#818cf8;font-weight:800;font-size:13px">&#9679; Create Visual Bubble Report</button></div>
   <div style="display:flex;gap:8px;margin-top:8px"><button onclick="closeM('bulk-att-modal')" style="flex:1;padding:11px;border-radius:9px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);font-weight:700;font-size:13px">Cancel</button><button onclick="sendBulkAttendanceReportNow()" style="flex:1;padding:11px;border-radius:9px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:800;font-size:13px">Open WhatsApp</button></div>
 </div></div>
 <div id="bulk-att-month-modal" class="modal hidden" style="z-index:310" onclick="closeM('bulk-att-month-modal')"><div class="mbox" onclick="event.stopPropagation()" style="max-width:360px">
@@ -1339,6 +1340,11 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   <div id="bulk-att-month-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
   <div id="bulk-att-month-selection" style="font-size:12px;color:var(--sub);text-align:center;margin-top:12px;min-height:16px">No months selected</div>
   <div style="display:flex;gap:8px;margin-top:8px"><button onclick="closeM('bulk-att-month-modal')" style="flex:1;padding:10px;border-radius:9px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);font-weight:700">Cancel</button><button onclick="bulkAttDoneMonths()" style="flex:1;padding:10px;border-radius:9px;border:none;background:#25d366;color:#fff;font-weight:800">Done</button></div>
+</div></div>
+<div id="bulk-att-visual-modal" class="modal hidden" onclick="closeM('bulk-att-visual-modal')"><div class="mbox" onclick="event.stopPropagation()" style="max-width:520px;max-height:92vh;display:flex;flex-direction:column;padding:12px">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:#818cf8">Visual Attendance Report</div><button onclick="closeM('bulk-att-visual-modal')" style="width:32px;height:32px;border-radius:9px;background:var(--ibg);border:1px solid var(--ibdr);color:var(--sub);font-size:20px">×</button></div>
+  <div id="bulk-att-visual-report" style="overflow:auto;max-height:74vh;border-radius:10px"></div>
+  <div style="display:flex;gap:8px;margin-top:10px"><button onclick="bulkVisualAttendanceSave()" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:800;font-size:13px">Save Image</button><button onclick="bulkVisualAttendanceShare()" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:800;font-size:13px">Share Image</button><button data-bulk-att-pdf="1" onclick="bulkVisualAttendancePdf()" style="flex:1;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;font-weight:800;font-size:13px">Save PDF</button></div>
 </div></div>
 <div id="wa-modal" class="modal mbot hidden" onclick="closeM('wa-modal')"><div class="mbox" onclick="event.stopPropagation()"><div id="wa-title" style="font-weight:bold;font-size:16px;color:#25d366;margin-bottom:12px"></div><div id="wa-body"></div><button onclick="closeM('wa-modal')" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--ibdr);background:transparent;color:var(--sub);margin-top:8px;font-size:15px">Cancel</button></div></div>
 
@@ -4893,6 +4899,19 @@ function generateReport(sid){
   var _reportLabelCard=document.getElementById('rpt-progress-chart-card');
   if(_reportLabelCard&&typeof pgRenderChapterLabelsIn==='function')pgRenderChapterLabelsIn(_reportLabelCard,s.id);
 }
+function _reportCaptureScale(surface,cardId){
+  // Render report exports above CSS resolution so small attendance bubbles,
+  // labels, and percentage text stay crisp when shared or printed.
+  var rect=surface&&surface.getBoundingClientRect?surface.getBoundingClientRect():{width:0,height:0};
+  var dpr=Math.max(1,Number(window.devicePixelRatio)||1);
+  var scale=cardId==='rpt-attend-card'?Math.max(5,dpr*2):Math.max(4,dpr*2);
+  // Keep exports within browser canvas limits on very wide attendance tables.
+  var maxDim=8192,maxArea=26800000;
+  if(rect.width>0&&rect.height>0){
+    scale=Math.min(scale,maxDim/rect.width,maxDim/rect.height,Math.sqrt(maxArea/(rect.width*rect.height)));
+  }
+  return Math.max(1,Math.floor(scale*2)/2);
+}
 function _reportCaptureImage(cardId,headingText,cb){
   var sid=_rptCurrentSid;
   var s=(db.students||[]).find(function(x){return x.id===sid;});
@@ -5077,7 +5096,11 @@ function _reportCaptureImage(cardId,headingText,cb){
   });
   if(_cW>0)composite.style.width=_cW+'px';
   setTimeout(function(){
-    html2canvas(composite,{scale:cardId==='rpt-progress-chart-card'?4:4,backgroundColor:bg,useCORS:true,allowTaint:true,logging:false}).then(function(canvas){
+    html2canvas(composite,{scale:_reportCaptureScale(composite,cardId),backgroundColor:bg,useCORS:true,allowTaint:true,logging:false,imageTimeout:0,letterRendering:false,onclone:function(doc){
+        var root=doc.querySelector('[id="rpt-main"]')||doc.body;
+        if(root){root.style.webkitFontSmoothing='antialiased';root.style.textRendering='geometricPrecision';}
+        doc.querySelectorAll('img').forEach(function(img){img.style.imageRendering='auto';});
+      }}).then(function(canvas){
       document.body.removeChild(composite);
       document.body.style.zoom=_origZoom;
       document.body.style.width=_origWidth;
@@ -7482,13 +7505,18 @@ function renderAttend() {
   if (d && !d.value) d.value = _todayStr();
   if (attMode==='mark') renderMarkToday(); else renderAttendHistory();
 }
-var _bulkAttLoc='all',_bulkAttSelectedClasses=[],_bulkAttPeriod='overall',_bulkAttMonths=[],_bulkAttMonthPickerYear=(new Date()).getFullYear();
+var _bulkAttLoc='all',_bulkAttSelectedClasses=[],_bulkAttPeriod='overall',_bulkAttMonths=[],_bulkAttVisualActiveMonths=[],_bulkAttMonthPickerYear=(new Date()).getFullYear();
 function _bulkAttBaseStudents(){
   var students=_getSessionStudents().filter(function(s){
     return (s.status||'active')==='active';
   });
   if(_bulkAttLoc!=='all')students=students.filter(function(s){return (s.location||'Home')===_bulkAttLoc;});
   return students;
+}
+function _bulkAttVisualOverallMonths(students){
+  var months={};
+  students.forEach(function(s){Object.keys(s.attendance||{}).forEach(function(d){var rec=s.attendance[d]||{};if(rec.status&&rec.status!=='holiday')months[d.slice(0,7)]=1;});});
+  return Object.keys(months).sort();
 }
 function _bulkAttSortGrades(a,b){
   var na=parseInt(a),nb=parseInt(b);
@@ -7642,6 +7670,225 @@ function sendBulkAbsentStudentsNow(){
   var pkg=_waTarget==='business'?'com.whatsapp.w4b':'com.whatsapp';
   var intentUrl='intent://send?text='+txt+'#Intent;scheme=whatsapp;package='+pkg+';end';
   try{window.location.href=intentUrl;setTimeout(function(){window.open('https://wa.me/?text='+txt,'_blank');},800);}catch(e){window.open('https://wa.me/?text='+txt,'_blank');}
+}
+function _bulkAttVisualMonthData(s,year,month){
+  var att=s.attendance||{},prefix=year+'-'+('0'+(month+1)).slice(-2),days=[];
+  Object.keys(att).filter(function(d){return d.indexOf(prefix)===0;}).forEach(function(d){
+    var rec=att[d]||{};
+    if(rec.status!=='holiday')days.push({day:parseInt(d.slice(8,10),10),status:rec.status||'absent',minutes:rec.minutes||0});
+  });
+  days.sort(function(a,b){return a.day-b.day;});
+  var present=0,absent=0,late=0;
+  days.forEach(function(x){if(x.status==='present')present++;else if(x.status==='late')late++;else absent++;});
+  var total=present+absent+late,pct=total?Math.round((present+late)/total*100):0;
+  return {label:_SMOS[month]+' '+year,days:days,present:present,absent:absent,late:late,pct:pct,pctColor:pct>=75?'#16a34a':pct>=50?'#d97706':'#dc2626'};
+}
+function _bulkAttVisualBubble(day){
+  var color=day.status==='present'?'#22c55e':day.status==='late'?'#f59e0b':'#ef4444';
+  var late=day.status==='late'&&day.minutes?esc(String(day.minutes))+'m':'';
+  return '<span class="bav-bubble-item"><span class="bav-bubble" style="background:'+color+'">'+day.day+'</span><span class="bav-late">'+late+'</span></span>';
+}
+function _bulkAttVisualMonthBlock(s,year,month){
+  var data=_bulkAttVisualMonthData(s,year,month),h='<section class="bav-month" aria-label="'+esc(data.label)+' attendance">';
+  h+='<div class="bav-month-meta"><span class="bav-month-label">'+esc(data.label)+'</span>';
+  h+='<span class="bav-month-summary"><b style="color:'+data.pctColor+'">'+data.pct+'%</b><span class="bav-present">'+data.present+' P</span><span class="bav-absent">'+data.absent+' A</span><span class="bav-late-count">'+data.late+' L</span></span></div>';
+  if(data.days.length){
+    var bubbleRows=[];
+    for(var rowStart=0;rowStart<data.days.length;rowStart+=15){
+      bubbleRows.push('<div class="bav-bubble-row" role="list">'+data.days.slice(rowStart,rowStart+15).map(_bulkAttVisualBubble).join('')+'</div>');
+    }
+    h+='<div class="bav-bubble-track" data-bubble-count="'+data.days.length+'">'+bubbleRows.join('')+'</div>';
+  }
+  else h+='<div class="bav-empty">No attendance recorded for this month.</div>';
+  h+='</section>';return h;
+}
+function _bulkAttVisualReportTitle(classes,months){
+  var classPart=classes.length===1?'Class '+classes[0]:'Classes '+classes.join(', ');
+  var monthPart=months.slice().sort().map(function(v){return String(_SMOS[parseInt(v.slice(5,7),10)-1]||'').toUpperCase();}).join(' + ');
+  return classPart+' - '+monthPart+' Attendance';
+}
+function _bulkAttVisualHtml(students,classes,months){
+  var classLabel=classes.length===1?'Class '+classes[0]:'Classes '+classes.join(', ');
+  var sortedMonths=months.slice().sort();
+  var monthLabel=sortedMonths.map(function(v){return _SMOS[parseInt(v.slice(5,7),10)-1]+' '+v.slice(0,4);}).join(' + ');
+  var monthHeaderLines=[];
+  for(var mi=0;mi<sortedMonths.length;mi+=3){
+    monthHeaderLines.push(sortedMonths.slice(mi,mi+3).map(function(v){return esc(_SMOS[parseInt(v.slice(5,7),10)-1]+' '+v.slice(0,4));}).join(' + '));
+  }
+  var monthHeaderLabel=monthHeaderLines.join('<br>');
+  // Keep the report only as wide as one complete 15-bubble row, plus the
+  // existing 18px left/right report padding. This removes unused right-side
+  // whitespace while preserving the bubble spacing and all other styling.
+  var bubbleItemsPerRow=15,bubbleItemOuterWidth=22+5;
+  var bubbleContentWidth=bubbleItemsPerRow*bubbleItemOuterWidth;
+  var reportWidth=bubbleContentWidth+36;
+  var css='<style>'+
+    '.bav-report{display:block;width:'+reportWidth+'px;min-width:'+reportWidth+'px;max-width:none;background:#fff;color:#0f172a;padding:12px 18px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;overflow:visible}'+
+    '.bav-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,170px);align-items:center;gap:12px;padding-bottom:9px;margin-bottom:10px;border-bottom:3px solid #2563eb}'+
+    '.bav-brand{display:flex;align-items:center;gap:8px;min-width:0}.bav-logo{width:38px;height:38px;border-radius:50%;flex:0 0 auto}.bav-brand-copy{min-width:0}.bav-title{font-size:16px;font-weight:800;letter-spacing:1px;line-height:1.1}.bav-subtitle{font-size:10px;color:#64748b;margin-top:3px;line-height:1.2}.bav-header-meta{text-align:right;line-height:1.25;min-width:0;width:100%;max-width:170px;overflow-wrap:anywhere;word-break:break-word}.bav-class{font-size:13px;font-weight:800;color:#1e3a8a;white-space:normal;overflow-wrap:anywhere;word-break:break-word}.bav-period{font-size:11px;color:#475569;margin-top:3px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;word-break:break-word}'+
+    '.bav-student{margin:0 0 8px;padding:0 0 1px;page-break-inside:avoid;min-width:'+bubbleContentWidth+'px}.bav-student-name{display:block;min-width:'+bubbleContentWidth+'px;box-sizing:border-box;padding:4px 8px;border-left:4px solid #2563eb;border-radius:4px;background:#eff6ff;font-size:16px;font-weight:800;line-height:1.2;overflow-wrap:anywhere}'+
+    '.bav-month{width:'+bubbleContentWidth+'px;min-width:'+bubbleContentWidth+'px;margin-top:8px;padding:0 0 9px;border-bottom:1px solid #e5e7eb;overflow:visible}.bav-month-meta{display:grid;grid-template-columns:105px minmax(0,1fr);align-items:baseline;column-gap:16px;margin-bottom:6px;line-height:1.15;white-space:nowrap}.bav-month-label{font-size:13px;font-weight:800;color:#0f172a}.bav-month-summary{display:flex;align-items:baseline;justify-content:flex-end;text-align:right;font-size:12px;color:#475569;white-space:nowrap;min-width:0}.bav-month-summary b{font-size:13px}.bav-present{margin-left:8px;color:#16a34a}.bav-absent{margin-left:5px;color:#dc2626}.bav-late-count{margin-left:5px;color:#d97706}'+
+    '.bav-bubble-track{display:flex;flex-direction:column;align-items:flex-start;width:'+bubbleContentWidth+'px;min-width:'+bubbleContentWidth+'px;overflow:visible}.bav-bubble-row{display:flex;flex-wrap:nowrap;align-items:flex-start;width:100%;min-width:100%;overflow:visible}.bav-bubble-item{display:flex;flex-direction:column;align-items:center;width:22px;margin:0 5px 8px 0}.bav-bubble{width:22px;height:22px;box-sizing:border-box;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;text-align:center;padding:0;line-height:22px;font-size:9px;color:#fff;font-weight:700;flex-shrink:0}.bav-late{height:11px;line-height:11px;white-space:nowrap;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:800;color:#b45309;letter-spacing:0;word-spacing:0;font-variant-numeric:normal;font-feature-settings:"kern" 0,"liga" 0}.bav-empty{font-size:11px;color:#64748b;padding:5px 0}.bav-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px;padding-top:7px;border-top:1px solid #cbd5e1;font-size:10px;line-height:1.3;color:#475569}.bav-legend-present{color:#22c55e;font-weight:700}.bav-legend-late{color:#f59e0b;font-weight:700}.bav-legend-absent{color:#ef4444;font-weight:700}'+
+  '</style>';
+  var h='<div id="bulk-att-visual-canvas" class="bav-report">'+css;
+  h+='<header class="bav-header"><div class="bav-brand"><img class="bav-logo" src="'+_LOGO+'"><div class="bav-brand-copy"><div class="bav-title">DNS CLASSES</div><div class="bav-subtitle">Attendance Report</div></div></div>';
+  h+='<div class="bav-header-meta"><div class="bav-class">'+esc(classLabel)+'</div><div class="bav-period">'+esc(_bulkAttLoc==='all'?'All sections':_bulkAttLoc)+'<br>'+monthHeaderLabel+'</div></div></header>';
+  var groups={};students.forEach(function(s){var g=String(s.grade||'Other');if(!groups[g])groups[g]=[];groups[g].push(s);});
+  classes.slice().sort(_bulkAttSortGrades).forEach(function(g){
+    var rows=(groups[g]||[]).slice().sort(function(a,b){return (_studentDisplayName(a)||'').localeCompare(_studentDisplayName(b)||'');});
+    rows.forEach(function(s){
+      var studentName=_studentDisplayName(s)||'Unnamed';
+      h+='<article class="bav-student"><div class="bav-student-name">'+esc(studentName)+'</div>';
+      h+=sortedMonths.map(function(v){return _bulkAttVisualMonthBlock(s,parseInt(v.slice(0,4),10),parseInt(v.slice(5,7),10)-1);}).join('');
+      h+='</article>';
+    });
+  });
+  h+='<footer class="bav-legend"><span class="bav-legend-present">● Present</span><span class="bav-legend-late">● Late (minutes shown)</span><span class="bav-legend-absent">● Absent</span></footer></div>';
+  return h;
+}
+function openBulkVisualAttendanceReport(){
+  var selected=_bulkAttSelectedClasses.slice().sort(_bulkAttSortGrades);
+  if(!selected.length){showToast('Select at least one class',true);return;}
+  var students=_bulkAttBaseStudents().filter(function(s){return selected.indexOf(String(s.grade||'Other'))>=0;}).sort(function(a,b){return (_studentDisplayName(a)||'').localeCompare(_studentDisplayName(b)||'');});
+  if(!students.length){showToast('No students found for the selected classes',true);return;}
+  var months=_bulkAttPeriod==='month'?_bulkAttMonths.slice().sort():_bulkAttVisualOverallMonths(students);
+  if(!months.length){var now=new Date();months=[now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)];}
+  _bulkAttVisualActiveMonths=months.slice().sort();
+  var box=document.getElementById('bulk-att-visual-report');if(!box)return;
+  closeM('bulk-att-modal');box.innerHTML=_bulkAttVisualHtml(students,selected,months);openM('bulk-att-visual-modal');
+}
+function _bulkAttVisualCanvas(){return document.getElementById('bulk-att-visual-canvas');}
+function _bulkAttVisualCaptureSurface(source){
+  var sourceRect=source.getBoundingClientRect();
+  var layoutWidth=Math.ceil(source.offsetWidth||sourceRect.width);
+  var visualScale=layoutWidth?sourceRect.width/layoutWidth:1;
+  if(!isFinite(visualScale)||visualScale<=0)visualScale=1;
+  var layoutHeight=Math.ceil(sourceRect.height/visualScale);
+  var host=document.createElement('div');
+  host.setAttribute('data-bav-capture-host','true');
+  host.style.cssText='position:fixed;left:0;top:0;width:'+layoutWidth+'px;height:'+layoutHeight+'px;margin:0;padding:0;background:#fff;opacity:0;pointer-events:none;z-index:-10000;overflow:visible;zoom:'+(1/visualScale)+';';
+  var clone=source.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.setAttribute('data-bav-capture-target','true');
+  clone.style.width=layoutWidth+'px';
+  clone.style.minWidth=layoutWidth+'px';
+  clone.style.maxWidth='none';
+  clone.style.height=layoutHeight+'px';
+  clone.style.minHeight=layoutHeight+'px';
+  clone.style.maxHeight='none';
+  clone.style.boxSizing='border-box';
+  clone.style.overflow='visible';
+  host.appendChild(clone);
+  document.body.appendChild(host);
+  var images=[].slice.call(clone.querySelectorAll('img'));
+  var imageReady=Promise.all(images.map(function(img){
+    if(img.complete)return Promise.resolve();
+    return new Promise(function(resolve){img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true});});
+  }));
+  var fontsReady=document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve();
+  return Promise.all([imageReady,fontsReady]).then(function(){
+    void clone.offsetHeight;
+    return {host:host,target:clone,width:layoutWidth,height:layoutHeight,visualScale:visualScale};
+  });
+}
+function _bulkAttVisualCaptureOptions(surface){
+  var width=surface.width,height=surface.height,visualScale=surface.visualScale||1;
+  // Render to a controlled Full HD-width canvas so text stays crisp without
+  // creating an oversized file that WhatsApp will aggressively downscale.
+  var targetPixelWidth=1920;
+  var scale=width>0?Math.max(1,targetPixelWidth/width):1;
+  var maxDimension=32768,maxArea=120000000;
+  if(width>0&&height>0){
+    scale=Math.min(scale,maxDimension/width,maxDimension/height,Math.sqrt(maxArea/(width*height)));
+  }
+  scale=Math.max(1,Math.floor(scale*2)/2);
+  return {scale:scale,width:width,height:height,backgroundColor:'#fff',useCORS:true,logging:false,imageTimeout:0,letterRendering:false,scrollX:0,scrollY:0,windowWidth:width,windowHeight:height,
+    onclone:function(doc){
+      var captureHost=doc.querySelector('[data-bav-capture-host]');
+      if(captureHost){captureHost.style.opacity='1';captureHost.style.zIndex='0';captureHost.style.position='fixed';captureHost.style.left='0';captureHost.style.top='0';captureHost.style.width=width+'px';captureHost.style.height=height+'px';captureHost.style.overflow='visible';captureHost.style.zoom=String(1/visualScale);}
+      var captureTarget=doc.querySelector('[data-bav-capture-target]');
+      if(captureTarget){captureTarget.style.opacity='1';captureTarget.style.visibility='visible';captureTarget.style.width=width+'px';captureTarget.style.minWidth=width+'px';captureTarget.style.maxWidth='none';captureTarget.style.height=height+'px';captureTarget.style.minHeight=height+'px';captureTarget.style.maxHeight='none';captureTarget.style.overflow='visible';captureTarget.style.webkitFontSmoothing='antialiased';captureTarget.style.textRendering='geometricPrecision';}
+      var exportStyle=doc.createElement('style');
+      exportStyle.textContent='[data-bav-capture-target]{font-synthesis:none!important;font-kerning:normal!important;font-variant-ligatures:none!important} [data-bav-capture-target] .bav-month-meta{line-height:15px!important} [data-bav-capture-target] .bav-month-label{line-height:15px!important;white-space:nowrap!important} [data-bav-capture-target] .bav-month-summary{line-height:15px!important;white-space:nowrap!important} [data-bav-capture-target] .bav-bubble{line-height:22px!important;text-align:center!important;white-space:nowrap!important} [data-bav-capture-target] .bav-bubble-text{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;transform:translateY(-1px)!important} [data-bav-capture-target] .bav-late{line-height:11px!important;white-space:nowrap!important}';
+      doc.head.appendChild(exportStyle);
+      doc.querySelectorAll('[data-bav-capture-target] .bav-bubble').forEach(function(bubble){
+        var label=doc.createElement('span');
+        label.className='bav-bubble-text';
+        label.textContent=(bubble.textContent||'').trim();
+        bubble.textContent='';
+        bubble.appendChild(label);
+      });
+      doc.querySelectorAll('img').forEach(function(img){img.style.imageRendering='auto';});
+    }};
+}
+function _bulkAttVisualToCanvas(){
+  var source=_bulkAttVisualCanvas();
+  if(!source||typeof html2canvas==='undefined'){showToast('Image tool is still loading',true);return Promise.reject(new Error('html2canvas unavailable'));}
+  return _bulkAttVisualCaptureSurface(source).then(function(surface){
+    var options=_bulkAttVisualCaptureOptions(surface);
+    return html2canvas(surface.target,options).then(function(canvas){surface.host.remove();return canvas;},function(err){surface.host.remove();throw err;});
+  });
+}
+function bulkVisualAttendanceSave(){
+  var selected=_bulkAttSelectedClasses.slice().sort(_bulkAttSortGrades),months=_bulkAttPeriod==='month'?_bulkAttMonths.slice().sort():_bulkAttVisualActiveMonths.slice().sort();
+  if(!months.length){var now=new Date();months=[now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)];}
+  var imageFileName=_bulkAttVisualReportTitle(selected,months).replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim()+'.png';
+  _bulkAttVisualToCanvas().then(function(canvas){var a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=imageFileName;a.click();showToast('Visual attendance report saved!');}).catch(function(){showToast('Could not create image',true);});
+}
+function _bulkAttLoadJsPdf(){
+  if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve(window.jspdf.jsPDF);
+  var loader=document.getElementById('dns-jspdf-loader');
+  return new Promise(function(resolve,reject){
+    function ready(){if(window.jspdf&&window.jspdf.jsPDF)resolve(window.jspdf.jsPDF);else reject(new Error('PDF library unavailable'));}
+    function failed(){reject(new Error('PDF library failed to load'));}
+    if(loader){loader.addEventListener('load',ready,{once:true});loader.addEventListener('error',failed,{once:true});return;}
+    loader=document.createElement('script');loader.id='dns-jspdf-loader';loader.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';loader.async=true;loader.onload=ready;loader.onerror=failed;document.head.appendChild(loader);
+  });
+}
+function bulkVisualAttendancePdf(){
+  var btn=document.querySelector('[data-bulk-att-pdf="1"]');
+  if(btn){btn.disabled=true;btn.style.opacity='.65';btn.textContent='Preparing PDF...';}
+  showToast('Preparing PDF...');
+  Promise.all([_bulkAttLoadJsPdf(),_bulkAttVisualToCanvas()]).then(function(result){
+    var jsPDF=result[0],canvas=result[1];
+    var pdfWidth=420;
+    var pdfTotalHeight=pdfWidth*(canvas.height/canvas.width);
+    var pdfMonths=_bulkAttPeriod==='month'?_bulkAttMonths.slice().sort():_bulkAttVisualActiveMonths.slice().sort();
+    var pdfTitle=_bulkAttVisualReportTitle(_bulkAttSelectedClasses.slice().sort(_bulkAttSortGrades),pdfMonths);
+    if(!pdfTitle||pdfTitle===' -  Attendance'){
+      var fallbackNow=new Date();
+      pdfTitle=_bulkAttVisualReportTitle(_bulkAttSelectedClasses.slice().sort(_bulkAttSortGrades),[fallbackNow.getFullYear()+'-'+('0'+(fallbackNow.getMonth()+1)).slice(-2)]);
+    }
+    var pdfFileName=pdfTitle.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim()+'.pdf';
+    var pdf;
+    pdf=new jsPDF({orientation:'portrait',unit:'pt',format:[pdfWidth,pdfTotalHeight],compress:true});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.88),'JPEG',0,0,pdfWidth,pdfTotalHeight,undefined,'SLOW');
+    var pdfBlob=pdf.output('blob');
+    var pdfFile=new File([pdfBlob],pdfFileName,{type:'application/pdf'});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[pdfFile]}))){
+      return navigator.share({files:[pdfFile],title:pdfTitle,text:pdfTitle}).then(function(){showToast('PDF ready to share on WhatsApp.');}).catch(function(){
+        var fallbackUrl=URL.createObjectURL(pdfBlob),fallbackLink=document.createElement('a');
+        fallbackLink.href=fallbackUrl;fallbackLink.download=pdfFileName;fallbackLink.click();
+        setTimeout(function(){URL.revokeObjectURL(fallbackUrl);},1000);
+        showToast('Share canceled; PDF downloaded as '+pdfFileName);
+      });
+    }
+    pdf.save(pdfFileName);
+    showToast('PDF saved as '+pdfFileName);
+  }).catch(function(){showToast('Could not create PDF',true);}).then(function(){
+    if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='Save PDF';}
+  });
+}
+function bulkVisualAttendanceShare(){
+  var selected=_bulkAttSelectedClasses.slice().sort(_bulkAttSortGrades),months=_bulkAttPeriod==='month'?_bulkAttMonths.slice().sort():_bulkAttVisualActiveMonths.slice().sort();
+  if(!months.length){var now=new Date();months=[now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)];}
+  var shareTitle=_bulkAttVisualReportTitle(selected,months);
+  _bulkAttVisualToCanvas().then(function(canvas){return new Promise(function(resolve){canvas.toBlob(resolve,'image/png');});}).then(function(blob){
+    var imageFileName=shareTitle.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim()+'.png';
+    var file=new File([blob],imageFileName,{type:'image/png'});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){return navigator.share({files:[file],title:shareTitle,text:shareTitle});}
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);showToast('Image saved; share it on WhatsApp.');
+  }).catch(function(){showToast('Could not create image',true);});
 }
 function _bulkAttStatsForMonths(s,months){
   var total=0,absent=0,late=0,present=0;
