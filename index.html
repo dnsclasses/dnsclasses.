@@ -7791,8 +7791,9 @@ function _bulkAttVisualCaptureSurface(source){
     return {host:host,target:clone,width:layoutWidth,height:layoutHeight,visualScale:visualScale};
   });
 }
-function _bulkAttVisualCaptureOptions(surface){
+function _bulkAttVisualCaptureOptions(surface,exportMode){
   var width=surface.width,height=surface.height,visualScale=surface.visualScale||1;
+  var bubbleTextOffset=exportMode==='pdf'?'-0.5px':'-1px';
   // Render to a controlled Full HD-width canvas so text stays crisp without
   // creating an oversized file that WhatsApp will aggressively downscale.
   var targetPixelWidth=1920;
@@ -7809,7 +7810,7 @@ function _bulkAttVisualCaptureOptions(surface){
       var captureTarget=doc.querySelector('[data-bav-capture-target]');
       if(captureTarget){captureTarget.style.opacity='1';captureTarget.style.visibility='visible';captureTarget.style.width=width+'px';captureTarget.style.minWidth=width+'px';captureTarget.style.maxWidth='none';captureTarget.style.height=height+'px';captureTarget.style.minHeight=height+'px';captureTarget.style.maxHeight='none';captureTarget.style.overflow='visible';captureTarget.style.webkitFontSmoothing='antialiased';captureTarget.style.textRendering='geometricPrecision';}
       var exportStyle=doc.createElement('style');
-      exportStyle.textContent='[data-bav-capture-target]{font-synthesis:none!important;font-kerning:normal!important;font-variant-ligatures:none!important} [data-bav-capture-target] .bav-month-meta{line-height:15px!important} [data-bav-capture-target] .bav-month-label{line-height:15px!important;white-space:nowrap!important} [data-bav-capture-target] .bav-month-summary{line-height:15px!important;white-space:nowrap!important} [data-bav-capture-target] .bav-bubble{line-height:22px!important;text-align:center!important;white-space:nowrap!important} [data-bav-capture-target] .bav-bubble-text{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;transform:translateY(-1px)!important} [data-bav-capture-target] .bav-late{line-height:11px!important;white-space:nowrap!important}';
+      exportStyle.textContent='[data-bav-capture-target]{font-synthesis:none!important;font-kerning:normal!important;font-variant-ligatures:none!important} [data-bav-capture-target] .bav-month-meta{line-height:15px!important} [data-bav-capture-target] .bav-month-label{line-height:15px!important;white-space:nowrap!important} [data-bav-capture-target] .bav-month-summary{line-height:15px!important;white-space:nowrap!important} [data-bav-capture-target] .bav-bubble{line-height:22px!important;text-align:center!important;white-space:nowrap!important} [data-bav-capture-target] .bav-bubble-text{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;line-height:1!important;text-align:center!important;white-space:nowrap!important;transform:translateY('+bubbleTextOffset+')!important} [data-bav-capture-target] .bav-late{line-height:11px!important;white-space:nowrap!important}';
       doc.head.appendChild(exportStyle);
       doc.querySelectorAll('[data-bav-capture-target] .bav-bubble').forEach(function(bubble){
         var label=doc.createElement('span');
@@ -7821,11 +7822,11 @@ function _bulkAttVisualCaptureOptions(surface){
       doc.querySelectorAll('img').forEach(function(img){img.style.imageRendering='auto';});
     }};
 }
-function _bulkAttVisualToCanvas(){
+function _bulkAttVisualToCanvas(exportMode){
   var source=_bulkAttVisualCanvas();
   if(!source||typeof html2canvas==='undefined'){showToast('Image tool is still loading',true);return Promise.reject(new Error('html2canvas unavailable'));}
   return _bulkAttVisualCaptureSurface(source).then(function(surface){
-    var options=_bulkAttVisualCaptureOptions(surface);
+    var options=_bulkAttVisualCaptureOptions(surface,exportMode);
     return html2canvas(surface.target,options).then(function(canvas){surface.host.remove();return canvas;},function(err){surface.host.remove();throw err;});
   });
 }
@@ -7849,7 +7850,7 @@ function bulkVisualAttendancePdf(){
   var btn=document.querySelector('[data-bulk-att-pdf="1"]');
   if(btn){btn.disabled=true;btn.style.opacity='.65';btn.textContent='Preparing PDF...';}
   showToast('Preparing PDF...');
-  Promise.all([_bulkAttLoadJsPdf(),_bulkAttVisualToCanvas()]).then(function(result){
+  Promise.all([_bulkAttLoadJsPdf(),_bulkAttVisualToCanvas('pdf')]).then(function(result){
     var jsPDF=result[0],canvas=result[1];
     var pdfWidth=420;
     var pdfTotalHeight=pdfWidth*(canvas.height/canvas.width);
