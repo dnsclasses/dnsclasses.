@@ -2682,6 +2682,7 @@ function getCurrentCycle(s){
   var c=cycles[cycles.length-1],rec=(s.payments||{})[c.key];
   if(rec){
     var paid=getAmt(s,rec),full=Number(s.fees)||0;
+    if(isFeeBalanceWaived(s,c.key))return{key:c.key,label:c.label,isPaid:true,color:'#22c55e',text:'Paid ₹'+paid+' (balance waived)'};
     if(full>0&&paid>0&&paid<full)return{key:c.key,label:c.label,isPaid:false,isPartial:true,color:'#f97316',text:'Partial ₹'+(full-paid)+' due'};
     return{key:c.key,label:c.label,isPaid:true,color:'#22c55e',text:'Paid'};
   }
@@ -3580,9 +3581,11 @@ function renderDash(){
     getCycles(s).forEach(function(cy){
       var rec=(s.payments||{})[cy.key];
       var fullFee=Number(s.fees)||0;
+      var balanceWaived=isFeeBalanceWaived(s,cy.key);
       if(rec){
         var amt=getAmt(s,rec);
         if(loc==='Home')paidHome+=amt;else paidCity+=amt;
+        if(balanceWaived){paidList.push({s:s,c:cy,rec:rec});return;}
         if(fullFee>0&&amt>0&&amt<fullFee){
           var bal=fullFee-amt;
           totalPending+=bal;
@@ -3599,6 +3602,7 @@ function renderDash(){
         }
         else paidList.push({s:s,c:cy,rec:rec});
       }
+      else if(balanceWaived){return;}
       else if((s.status||'active')==='active'){
         var diff=calcDiff(cy.key);
         totalPending+=fullFee;
@@ -3836,6 +3840,7 @@ function dashSec(title,list,color){
 
 function alertCard(s,c,color,text,overrideAmt){
   var ph=phones(s);
+  var canWaive=overrideAmt!==undefined&&text.indexOf('paid')>=0&&text.indexOf('due')>=0&&!isFeeBalanceWaived(s,c.key);
   var _initial=(s.name||'?').trim().charAt(0).toUpperCase();
   var displayAmt=(overrideAmt!==undefined)?overrideAmt:Number(s.fees);
   return '<div style="background:'+color+'15;border:1px solid '+color+'40;border-radius:12px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px '+color+'12">'+
@@ -3850,6 +3855,7 @@ function alertCard(s,c,color,text,overrideAmt){
     '<div style="font-weight:bold;color:var(--acc);font-size:15px">₹'+displayAmt.toLocaleString()+'</div>'+
     '<div style="display:flex;gap:4px;margin-top:5px">'+
     (ph.length?'<button onclick="openWA('+s.id+')" style="padding:6px;border-radius:6px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center">'+_waIcon(18,'transparent')+'</button>':'')+
+    (canWaive?'<button onclick="event.stopPropagation();waiveFeeBalance('+s.id+',\''+c.key+'\')" style="padding:5px 9px;border-radius:14px;border:1px solid #f97316;background:rgba(249,115,22,.1);color:#f97316;font-size:11px;font-weight:bold">Dismiss</button>':'')+
     '<button onclick="logPay('+s.id+',\''+c.key+'\',false)" style="padding:5px 10px;border-radius:14px;border:1px solid #22c55e;background:rgba(34,197,94,.1);color:#22c55e;font-size:12px;font-weight:bold">✓ Paid</button>'+
     '</div></div></div>';
 }
@@ -5320,7 +5326,7 @@ function renderProfile(){
   if(!s){document.getElementById('prof-head').innerHTML='<div style="color:var(--sub);text-align:center;padding:30px">Student not found.</div>';return;}
   var cycles=getCycles(s),ph=phones(s);
   var totalPaid=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r?sum+getAmt(s,r):sum;},0);
-  var totalPend=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r?sum:sum+Number(s.fees||0);},0);
+  var totalPend=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r||isFeeBalanceWaived(s,cy.key)?sum:sum+Number(s.fees||0);},0);
   var _admLight=document.body.classList.contains('light');
   var _admBg=_admLight?'rgba(29,78,216,.12)':'rgba(96,165,250,.22)';
   var _admClr=_admLight?'#1d4ed8':'#93c5fd';
@@ -5412,11 +5418,15 @@ function renderProfile(){
     var paid=!!rec;
     var amt=paid?getAmt(s,rec):Number(s.fees||0);
     var isCustom=paid&&rec.customAmount&&Number(rec.customAmount)!==Number(s.fees);
+    var balanceWaived=isFeeBalanceWaived(s,cy.key);
     var diff=calcDiff(cy.key);
     var rowColor='#3b82f6',rowStatus='Due in '+Math.abs(diff)+'d';
     if(paid){
       var _ff=Number(s.fees)||0;
-      if(_ff>0&&amt>0&&amt<_ff){
+      if(balanceWaived){
+        rowColor='#22c55e';
+        rowStatus='✓ Paid ₹'+amt.toLocaleString()+' · Balance waived';
+      }else if(_ff>0&&amt>0&&amt<_ff){
         rowColor='#f97316';
         rowStatus='\u26a1 Partial \u20b9'+amt.toLocaleString()+' paid \u00b7 \u20b9'+(_ff-amt).toLocaleString()+' due';
       }else{
@@ -5463,6 +5473,7 @@ function handleMonthClick(e){
   else if(action==='showrec')showRec(sid,key);
   else if(action==='addnextcycle')addNextCycle(sid);
   else if(action==='unpay')unpay(sid,key);
+  else if(action==='waivefee')waiveFeeBalance(sid,key);
   else if(action==='markpaid')logPay(sid,key,false);
   else if(action==='rmmonth')askRmMonth(sid,key);
 }
@@ -5508,7 +5519,7 @@ function logPay(sid,key,isEdit){
     var trackNum=(rec&&rec.receiptId)?rec.receiptId:'DNS-'+Math.floor(100000+Math.random()*900000);
     var newRec={paidOn:new Date(dt).toISOString(),receiptId:trackNum,mode:_payMode};
     if(amtVal&&!isNaN(amtVal))newRec.customAmount=Number(amtVal);
-    db.students=db.students.map(function(x){if(x.id!==sid)return x;var p=Object.assign({},x.payments||{});p[key]=newRec;return Object.assign({},x,{payments:p});});
+    db.students=db.students.map(function(x){if(x.id!==sid)return x;var p=Object.assign({},x.payments||{});p[key]=newRec;var waivers=Object.assign({},x.feeWaivers||{});delete waivers[key];return Object.assign({},x,{payments:p,feeWaivers:waivers});});
     saveDB();closeM('pay-modal');showToast(isEdit?'Updated!':'Paid! '+trackNum);
     renderDailyCollection();
     openProf(sid);
@@ -5516,13 +5527,33 @@ function logPay(sid,key,isEdit){
   openM('pay-modal');
 }
 
+function waiveFeeBalance(sid,key){
+  var s=db.students.find(function(x){return x.id===sid;}),rec=s&&(s.payments||{})[key];
+  if(!s||!rec||Number(s.fees)<=getAmt(s,rec))return;
+  var cy=getCycles(s).find(function(c){return c.key===key;});
+  var rmDesc=document.getElementById('rm-desc'),rmOk=document.getElementById('rm-ok');
+  if(rmDesc)rmDesc.innerHTML='<b>'+(cy?cy.label:key)+'</b><br>Remove only the remaining balance reminder. The payment record will stay unchanged.';
+  if(rmOk){rmOk.textContent='Dismiss Due';rmOk.onclick=function(){
+    pushUndo();
+    db.students=db.students.map(function(st){
+      if(st.id!==sid)return st;
+      var waivers=Object.assign({},st.feeWaivers||{});
+      waivers[key]={amount:Number(st.fees)-getAmt(s,rec),at:new Date().toISOString()};
+      return Object.assign({},st,{feeWaivers:waivers});
+    });
+    saveDB();closeM('rm-modal');showToast('Remaining balance reminder removed.');refresh();if(profId===sid)renderProfile();
+  };}
+  openM('rm-modal');
+}
+
 function unpay(sid,key){
   pushUndo();
-  db.students=db.students.map(function(s){if(s.id!==sid)return s;var p=Object.assign({},s.payments||{});delete p[key];return Object.assign({},s,{payments:p});});
+  db.students=db.students.map(function(s){if(s.id!==sid)return s;var p=Object.assign({},s.payments||{});delete p[key];var waivers=Object.assign({},s.feeWaivers||{});delete waivers[key];return Object.assign({},s,{payments:p,feeWaivers:waivers});});
   saveDB();showToast('Payment removed.');refresh();
 }
 
 function askRmMonth(sid,key){
+  var rmOk=document.getElementById('rm-ok');if(rmOk)rmOk.textContent='Remove';
   var s=db.students.find(function(x){return x.id===sid;});
   var cy=getCycles(s).find(function(c){return c.key===key;});
   document.getElementById('rm-desc').innerHTML='<b>'+(cy?cy.label:key)+'</b><br>Removed from all records and totals.';
@@ -5619,6 +5650,8 @@ function openEditHist(sid,logId){
 }
 
 // ═══ RECEIPT ═══
+function isFeeBalanceWaived(s,key){return !!(s&&s.feeWaivers&&s.feeWaivers[key]);}
+
 function getTotalAttendStats(s) {
   var att=s.attendance||{};
   var present=0,absent=0,late=0;
