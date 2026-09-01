@@ -7034,8 +7034,10 @@ function _gsOpenStudentTestRecord(sid){
 }
 function _gsTryNaturalStudentIntents(qRaw){
   var qn=_gsNorm(qRaw);
-  if(!/\btest\b/.test(qn)||!(/\brecords?\b/.test(qn)||/\bprogress(?: chart| report)?\b/.test(qn)))return false;
-  var s=_gsFindStudentByNaturalName(qRaw);
+  var compactTest=/^t(?=[a-z0-9])/.test(qn);
+  if(!/\btest\b/.test(qn)&&!compactTest)return false;
+  var studentQuery=compactTest?qn.slice(1).trim():qn.replace(/\btest\b|\brecords?\b|\bprogress\b|\bchart\b|\breport\b/g,' ').replace(/\s+/g,' ').trim();
+  var s=_gsFindStudentByNaturalName(studentQuery||qRaw);
   if(!s)return false;
   var res=document.getElementById('gsearch-results');
   if(res){res.innerHTML='<div style="font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.02em;margin:14px 0 6px">TEST RECORD</div>'+
@@ -13106,10 +13108,10 @@ function pgEditCell(sid,chapter,tno){
   modal.dataset.pgEditModal='1';
   modal.className='modal';
   modal.style.cssText='display:flex;z-index:400';
-  modal.onclick=function(ev){if(ev.target===modal)pgCloseEditCellModal();};
+  modal.onclick=function(ev){if(ev.target===modal){ev.preventDefault();ev.stopPropagation();pgCloseEditCellModal();}};
   modal.addEventListener('pointerdown',function(ev){
-    if(ev.target===modal){ev.preventDefault();pgCloseEditCellModal();}
-  },{passive:false});
+    if(ev.target===modal){ev.preventDefault();ev.stopPropagation();var swallow=function(e){e.preventDefault();e.stopPropagation();document.removeEventListener('click',swallow,true);};document.addEventListener('click',swallow,true);pgCloseEditCellModal();}
+  },{capture:true,passive:false});
   modal.innerHTML='<div class="mbox" style="max-width:340px" onclick="event.stopPropagation()">'
     +'<div style="font-size:16px;font-weight:bold;color:var(--txt);margin-bottom:2px">'+esc(_studentDisplayName(stu))+'</div>'
     +'<div style="font-size:13px;color:var(--sub);margin-bottom:14px">'+esc(chapter)+' &middot; '+esc(tno)+'</div>'
@@ -13118,7 +13120,7 @@ function pgEditCell(sid,chapter,tno){
     +'<div id="pg-cell-err" style="color:'+(isDark?'#f87171':'#ef4444')+';font-size:12px;min-height:16px;margin-bottom:8px"></div>'
     +'<label class="flabel">OR MARK AS</label>'
     +'<div id="pg-cell-status-row" style="display:flex;gap:6px;margin-bottom:16px">'+statusBtnsHtml+'</div>'
-    +(!cur?'<button id="pg-cell-alert" type="button" style="width:100%;padding:10px;border-radius:14px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.4);color:#16a34a;font-weight:bold;font-size:12px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">campaign</span>Generate Test Alert</button>':'')
+    + '<button id="pg-cell-alert" type="button" style="width:100%;padding:10px;border-radius:14px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.4);color:#16a34a;font-weight:bold;font-size:12px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">campaign</span>Generate Test Alert</button>'
     +'<button onclick="pgLoadAllMarksForTest('+sid+',\''+esc(chapter)+'\',\''+esc(tno)+'\')" style="width:100%;padding:10px;border-radius:14px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#6366f1;font-weight:bold;font-size:12px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">group</span>Load All Marks for this Test</button>'
     +'<div style="display:flex;gap:8px">'
     +'<button id="pg-cell-clear" style="padding:11px 14px;border-radius:8px;background:rgba(100,116,139,.12);border:1px solid var(--ibdr);color:var(--sub);font-weight:bold;cursor:pointer">Clear</button>'
@@ -13482,8 +13484,8 @@ function pgOpenAverageColumnModal(sid,cls,chapter){
   modal.dataset.pgAverageModal='1';
   modal.className='modal';
   modal.style.cssText='display:flex;z-index:450';
-  modal.onclick=function(ev){if(ev.target===modal)_pgCloseAverageColumnModal();};
-  modal.addEventListener('pointerdown',function(ev){if(ev.target===modal){ev.preventDefault();_pgCloseAverageColumnModal();}},{passive:false});
+  modal.onclick=function(ev){if(ev.target===modal){ev.preventDefault();ev.stopPropagation();_pgCloseAverageColumnModal();}};
+  modal.addEventListener('pointerdown',function(ev){if(ev.target===modal){ev.preventDefault();ev.stopPropagation();var swallow=function(e){e.preventDefault();e.stopPropagation();document.removeEventListener('click',swallow,true);};document.addEventListener('click',swallow,true);_pgCloseAverageColumnModal();}},{capture:true,passive:false});
   var removeHtml=emptyStored.length?'<div style="font-size:11px;color:var(--sub);margin:14px 0 7px">EMPTY TEST COLUMNS</div>'+emptyStored.map(function(t){return '<button type="button" data-remove-test="'+esc(t)+'" style="width:100%;padding:11px 12px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#ef4444;font-weight:800;font-size:13px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;justify-content:space-between"><span>Remove '+esc(t)+' column</span><span class="material-symbols-outlined" style="font-size:17px">delete</span></button>';}).join(''):'';
   modal.innerHTML='<div class="mbox" onclick="event.stopPropagation()" style="max-width:360px;padding:18px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-size:16px;font-weight:800;color:var(--txt)">Manage Test Columns</div><button type="button" onclick="_pgCloseAverageColumnModal()" style="background:var(--ibg);border:1px solid var(--ibdr);border-radius:10px;padding:5px 9px;color:var(--sub);cursor:pointer">×</button></div>'
