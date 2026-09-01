@@ -2571,7 +2571,8 @@ function fmtMo(key){if(!key)return '';var p=key.split('-');return MO[parseInt(p[
 function mkD(y,m,d){return new Date(y,m,d,0,0,0,0);}
 function today0(){var now=new Date();return mkD(now.getFullYear(),now.getMonth(),now.getDate());}
 function dkey(y,m,d){return y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d).slice(-2);}
-function phones(s){var list=s.phones&&s.phones.length?s.phones:(s.phone?s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;}):[]);var marked=list.filter(function(p){return p&&p.whatsapp;});return marked.length?marked:list;}
+function allPhones(s){return s.phones&&s.phones.length?s.phones:(s.phone?s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;}):[]);}
+function phones(s){var list=allPhones(s),marked=list.filter(function(p){return p&&p.whatsapp;});return marked.length?marked:list;}
 function getAmt(s,rec){return(rec&&rec.customAmount)?Number(rec.customAmount):Number(s.fees||0);}
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _studentDisplayName(s,forceSurname){
@@ -5324,7 +5325,7 @@ function openProf(id){
 function renderProfile(){
   var s=db.students.find(function(x){return x.id===profId;});
   if(!s){document.getElementById('prof-head').innerHTML='<div style="color:var(--sub);text-align:center;padding:30px">Student not found.</div>';return;}
-  var cycles=getCycles(s),ph=phones(s);
+  var cycles=getCycles(s),ph=allPhones(s);
   var totalPaid=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r?sum+getAmt(s,r):sum;},0);
   var totalPend=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r||isFeeBalanceWaived(s,cy.key)?sum:sum+Number(s.fees||0);},0);
   var _admLight=document.body.classList.contains('light');
