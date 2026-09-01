@@ -2571,7 +2571,7 @@ function fmtMo(key){if(!key)return '';var p=key.split('-');return MO[parseInt(p[
 function mkD(y,m,d){return new Date(y,m,d,0,0,0,0);}
 function today0(){var now=new Date();return mkD(now.getFullYear(),now.getMonth(),now.getDate());}
 function dkey(y,m,d){return y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d).slice(-2);}
-function phones(s){if(s.phones&&s.phones.length)return s.phones;if(s.phone)return s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;});return[];}
+function phones(s){var list=s.phones&&s.phones.length?s.phones:(s.phone?s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;}):[]);var marked=list.filter(function(p){return p&&p.whatsapp;});return marked.length?marked:list;}
 function getAmt(s,rec){return(rec&&rec.customAmount)?Number(rec.customAmount):Number(s.fees||0);}
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _studentDisplayName(s,forceSurname){
@@ -5383,6 +5383,7 @@ function renderProfile(){
     '<button onclick="openSiblingModal('+s.id+')" style="padding:6px 9px;border-radius:17px;border:none;background:linear-gradient(160deg,#6366f1,#3730a3);color:#fff;font-size:12px;font-weight:bold;box-shadow:0 2px 6px rgba(79,70,229,.4),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.18)"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">link</span>Sibling</button>'+
     '<button onclick="openMR('+s.id+')" style="padding:6px 9px;border-radius:17px;border:none;background:linear-gradient(160deg,#a855f7,#7e22ce);color:#fff;font-size:12px;font-weight:bold;box-shadow:0 2px 6px rgba(168,85,247,.4),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.18)"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">assignment</span>Master</button>'+
     '<button onclick="openStudentReport('+s.id+')" style="padding:6px 9px;border-radius:17px;border:none;background:linear-gradient(160deg,#0ea5e9,#0369a1);color:#fff;font-size:12px;font-weight:bold;box-shadow:0 2px 6px rgba(14,165,233,.4),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.18)"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">description</span>Report</button>'+
+    '<button onclick="_gsOpenStudentTestRecord('+s.id+')" style="padding:6px 9px;border-radius:17px;border:none;background:linear-gradient(160deg,#8b5cf6,#6d28d9);color:#fff;font-size:12px;font-weight:bold;box-shadow:0 2px 6px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.18)"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">assignment</span>Test Record</button>'+
     '<button onclick="openLC('+s.id+')" style="padding:6px 9px;border-radius:17px;font-size:12px;font-weight:bold;border:none;background:linear-gradient(160deg,'+(s.status==='discontinued'?'#22c55e,#15803d':'#ef4444,#b91c1c')+');color:#fff;box-shadow:0 2px 6px '+(s.status==='discontinued'?'rgba(34,197,94,.4)':'rgba(239,68,68,.4)')+',inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.18)'+'">'+(s.status==='discontinued'?'<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">replay</span>Rejoin':'<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">cancel</span>Mark Left')+'</button>'+
     '</div></div>'+
     '<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
@@ -6596,7 +6597,7 @@ function pasteAllFields(){
   });
 }
 
-function addPhRow(num,tag){
+function addPhRow(num,tag,isWhatsApp){
   var container = document.getElementById('phone-rows');
   var row = document.createElement('div');
   row.className = 'ph-row';
@@ -6606,10 +6607,14 @@ function addPhRow(num,tag){
     <button type="button" class="ph-type-btn" style="width:95px;padding:12px 8px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:12px;cursor:pointer;text-align:center">${currentType}</button>
     <input type="hidden" class="ph-type-val" value="${currentType}">
     <input type="tel" class="ph-num" value="${num || ''}" placeholder="9876543210" style="flex:1;padding:12px 14px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px">
+    <button type="button" class="ph-wa" data-active="${isWhatsApp ? '1' : '0'}" title="Mark as WhatsApp number" style="padding:7px;border-radius:8px;border:1px solid ${isWhatsApp ? '#25d366' : 'var(--ibdr)'};background:${isWhatsApp ? 'rgba(37,211,102,.16)' : 'var(--ibg)'};color:${isWhatsApp ? '#16a34a' : 'var(--sub)'};cursor:pointer;line-height:0"><span class="material-symbols-outlined" style="font-size:18px">chat</span></button>
     <button type="button" onclick="this.parentElement.remove()" style="padding:6px;border-radius:8px;border:none;background:rgba(239,68,68,0.1);color:#ef4444;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>
   `;
   var btn = row.querySelector('.ph-type-btn');
   var val = row.querySelector('.ph-type-val');
+  var waBtn = row.querySelector('.ph-wa');
+  function syncWaButton(){var active=waBtn&&waBtn.dataset.active==='1';if(!waBtn)return;waBtn.style.borderColor=active?'#25d366':'var(--ibdr)';waBtn.style.background=active?'rgba(37,211,102,.16)':'var(--ibg)';waBtn.style.color=active?'#16a34a':'var(--sub)';}
+  if(waBtn){waBtn.onclick=function(){waBtn.dataset.active=waBtn.dataset.active==='1'?'0':'1';syncWaButton();};syncWaButton();}
   btn.onclick = function() {
     var opts = PTAGS.map(function(t) { return { label: t, value: t, active: t === val.value }; });
     _openGenericPickerManual(opts, function(v) { val.value = v; btn.textContent = v; }, 'Select Type');
@@ -6671,9 +6676,9 @@ function startEdit(sid){
   document.getElementById('f-notes').value=s.notes||'';
   var fdobEl=document.getElementById('f-dob');if(fdobEl)fdobEl.value=s.dob||'';
   document.getElementById('phone-rows').innerHTML='';
-  var ph=phones(s);
+  var ph=s.phones&&s.phones.length?s.phones:(s.phone?s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;}):[]);
   if(!ph.length)addPhRow('','Personal');
-  else ph.forEach(function(p){addPhRow(p.number,p.tag);});
+  else ph.forEach(function(p){addPhRow(p.number,p.tag,!!p.whatsapp);});
   go('add');
 }
 
@@ -6795,8 +6800,8 @@ function saveForm(){
   if(fees===''||isNaN(parseFloat(fees))||parseFloat(fees)<0){showToast('Enter monthly fees (0 allowed for free)',true);return;}
   var ph=[];
   document.querySelectorAll('#phone-rows > div').forEach(function(row){
-    var pn=row.querySelector('.ph-num'),pt=row.querySelector('.ph-type-val');
-    var num=pn?pn.value.trim():'';if(num)ph.push({number:num,tag:pt?pt.value:'Personal'});
+    var pn=row.querySelector('.ph-num'),pt=row.querySelector('.ph-type-val'),wb=row.querySelector('.ph-wa');
+    var num=pn?pn.value.trim():'';if(num)ph.push({number:num,tag:pt?pt.value:'Personal',whatsapp:!!(wb&&wb.dataset.active==='1')});
   });
   if(!ph.length){showToast('Add phone number',true);return;}
   try{
@@ -9125,6 +9130,8 @@ function renderDailyCollection(){
     dateEl.dataset.lastToday=_today;
   }
   var selDate=dateEl?dateEl.value:_today;
+  var _dailyDateBtn=document.getElementById('daily-date-pick-btn');
+  if(_dailyDateBtn&&selDate)_dailyDateBtn.textContent=_dnsCalLabel(_dnsCalParse(selDate));
   var _nextBtn=document.getElementById('daily-next-day-btn');
   if(_nextBtn)_nextBtn.style.opacity=selDate>=_today?'0.35':'1';
   // Collect all payments on selected date
@@ -16530,25 +16537,11 @@ function hwShareImage(){
     canvas.toBlob(function(blob){
       if(!blob){_hwDownload(canvas,preview.dataset.name||'homework_chart');return;}
       var file=new File([blob],'homework_'+name+'.png',{type:'image/png'});
-      if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      if(navigator.share){
         navigator.share({
           files:[file],
           title:shareText,
           text:shareText
-        }).then(function(){
-          showToast('Shared successfully!');
-        }).catch(function(err){
-          // User cancelled share sheet — fall back to save
-          if(err.name!=='AbortError'){
-            _hwDownload(canvas,preview.dataset.name||'homework_chart');
-          }
-        });
-      } else if(navigator.share){
-        // Can share text/URL but not files — share as data URL
-        var dataUrl=canvas.toDataURL('image/png');
-        navigator.share({
-          title:shareText,
-          text:shareText+'\n'+dataUrl
         }).then(function(){
           showToast('Shared successfully!');
         }).catch(function(){
