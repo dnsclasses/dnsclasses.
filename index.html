@@ -1656,17 +1656,22 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
         <button type="button" id="prn-loc-btn" onclick="openGenericPicker('prn-loc')" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;text-align:left;cursor:pointer">All Students</button>
       </div>
       <div style="grid-column:1 / -1"><label class="flabel">STUDENT</label>
-        <select id="prn-student" onchange="renderPrnChart();_gpSync('prn-student','prn-student-btn')" disabled style="display:none"><option value="">Select class first...</option></select>
+        <select id="prn-student" onchange="var _na=document.getElementById('prn-chart-show-na');if(_na)_na.checked=true;renderPrnChart();_gpSync('prn-student','prn-student-btn')" disabled style="display:none"><option value="">Select class first...</option></select>
         <button type="button" id="prn-student-btn" onclick="openGenericPicker('prn-student')" disabled style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:not-allowed">Select class first...</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:minmax(0,160px) 1fr;gap:12px;align-items:end;margin-bottom:12px">
-      <div>
-        <label class="flabel">EMPTY ROWS</label>
-        <input id="prn-chart-empty-rows" type="number" min="0" max="30" value="0" onchange="renderPrnChart();renderPrnChartBulkTools()" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
-      </div>
-      <div id="prn-chart-bulk-tools" style="display:flex;align-items:end">
-        <button id="prn-chart-bulk-btn" onclick="printPrnChartBatch()" disabled style="width:100%;min-height:48px;padding:0 18px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:800;font-size:14px;letter-spacing:.8px;border:none;cursor:not-allowed;opacity:.6;display:flex;align-items:center;justify-content:center;box-sizing:border-box">PRINT ALL</button>
+    <div style="width:100%;overflow:hidden;margin-bottom:12px">
+      <div id="prn-chart-options-row" style="display:grid;grid-template-columns:max-content max-content max-content;justify-content:space-between;align-items:center;column-gap:18px;min-width:max-content">
+        <label style="display:flex;align-items:center;gap:8px;width:max-content;font-size:11px;color:var(--sub);font-weight:700;line-height:1;white-space:nowrap">
+          <span>EMPTY ROWS</span>
+          <input id="prn-chart-empty-rows" type="number" min="0" max="30" value="0" aria-label="Empty rows" onchange="renderPrnChart();renderPrnChartBulkTools()" style="width:72px;min-width:72px;height:40px;padding:8px 10px;border-radius:12px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;box-sizing:border-box;text-align:center">
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;width:max-content;font-size:11px;color:var(--sub);font-weight:700;line-height:1;white-space:nowrap">
+          <input id="prn-chart-show-na" type="checkbox" checked onchange="renderPrnChart();renderPrnChartBulkTools()" style="accent-color:#2563eb;margin:0;width:20px;height:20px;flex:0 0 20px"> <span>SHOW NA</span>
+        </label>
+        <div id="prn-chart-bulk-tools" style="display:flex;align-items:center;justify-content:flex-end;width:max-content">
+          <button id="prn-chart-bulk-btn" onclick="printPrnChartBatch()" disabled style="width:140px;min-width:140px;height:40px;padding:0 12px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:800;font-size:12px;letter-spacing:.5px;border:none;cursor:not-allowed;opacity:.6;display:flex;align-items:center;justify-content:center;box-sizing:border-box;white-space:nowrap">PRINT ALL</button>
+        </div>
       </div>
     </div>
     <div id="prn-chart-preview"></div>
@@ -14620,7 +14625,8 @@ function printPrnChartBatch(){
   h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:4px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.meta{font-size:12px;color:#475569;margin:0 0 8px 2px;font-weight:700;letter-spacing:.3px}</style>';
   h+='</head><body>';
   studs.forEach(function(stu,idx){
-    var data=_buildPrnChartData(stu);
+    var showNA=(!document.getElementById('prn-chart-show-na')||document.getElementById('prn-chart-show-na').checked!==false);
+  var data=_buildPrnChartData(stu,showNA);
     h+='<div class="page">';
     h+=_buildPrnChartTableHTML(data,emptyRows,true);
     h+='</div>';
@@ -14633,7 +14639,8 @@ function printPrnChartBatch(){
 }
 
 
-function _buildPrnChartData(stu){
+function _buildPrnChartData(stu,showNA){
+  showNA=showNA!==false;
   _initChapters();
   var key=_chKeyCls(stu.grade||'Other',stu.school||'');
   var chs=db.chapters[key]||[];
@@ -14651,6 +14658,14 @@ function _buildPrnChartData(stu){
   });
   var rows=chs.map(function(ch,idx){
     var myTests=sp[ch.name]||{};
+    var peerTestPositions={};
+    _peers.forEach(function(x){
+      var peerTests=((db.progress[x.id]||{})[ch.name]||{});
+      Object.keys(peerTests).forEach(function(k){
+        var peerPos=parseInt(String(k).replace(/\D/g,''))||0;
+        if(peerPos>=1&&peerPos<=PRN_MAX_TEST)peerTestPositions[peerPos]=true;
+      });
+    });
     var posMap={};
     Object.keys(myTests).forEach(function(k){
       var pos=parseInt(String(k).replace(/\D/g,''))||0;
@@ -14659,7 +14674,7 @@ function _buildPrnChartData(stu){
     var cells=[];
     for(var p=1;p<=PRN_MAX_TEST;p++){
       var m=posMap[p];
-      if(!m){cells.push({blank:true});continue;}
+      if(!m){cells.push(showNA&&peerTestPositions[p]?{na:true}:{blank:true});continue;}
       var e=m.entry;
       if(typeof e.v!=='number'){cells.push({status:e.v});continue;}
       var myPct=e.total?e.v/e.total:0;
@@ -14736,6 +14751,7 @@ function _buildPrnChartTableHTML(data,emptyRows,isPrint){
       h+='<td style="border:1px solid #cbd5e1;'+NAME_CELL+'font-weight:600"><div style="font-size:'+_fs(10,isPrint)+';line-height:1.25;white-space:normal;word-wrap:break-word;overflow-wrap:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">'+esc(row.name)+'</div></td>';
       row.cells.forEach(function(c){
         if(c.blank)h+='<td style="border:1px solid #cbd5e1;'+CELL+'text-align:center"></td>';
+        else if(c.na)h+='<td style="border:1px solid #cbd5e1;'+CELL+'text-align:center;font-weight:700;color:#94a3b8">N/A</td>';
         else if(c.status)h+='<td style="border:1px solid #cbd5e1;'+CELL+'text-align:center;font-weight:bold;color:#dc2626">'+esc(c.status)+'</td>';
         else h+='<td style="border:1px solid #cbd5e1;'+CELL+'text-align:center;font-weight:bold;overflow:hidden">'
           +(c.medal?'<div style="font-size:'+_fs(9,isPrint)+';line-height:1">'+_prnMedalIcon(c.medal)+'</div>':'')
@@ -14766,7 +14782,8 @@ function renderPrnChart(){
   var stu=db.students.find(function(s){return s.id===sid;});
   if(!stu){preview.innerHTML='';return;}
   var emptyRows=parseInt((document.getElementById('prn-chart-empty-rows')||{}).value)||0;
-  var data=_buildPrnChartData(stu);
+  var showNA=(!document.getElementById('prn-chart-show-na')||document.getElementById('prn-chart-show-na').checked!==false);
+  var data=_buildPrnChartData(stu,showNA);
   var html=_buildPrnChartTableHTML(data,emptyRows);
   html+='<button onclick="printPrnChart('+sid+')" style="width:100%;padding:12px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:bold;font-size:15px;border:none;margin-top:14px;cursor:pointer"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px;margin-right:4px">print</span>Print Progress Chart</button>';
   preview.innerHTML=html;
@@ -14775,7 +14792,8 @@ function printPrnChart(sid){
   var stu=db.students.find(function(s){return s.id===sid;});
   if(!stu)return;
   var emptyRows=parseInt((document.getElementById('prn-chart-empty-rows')||{}).value)||0;
-  var data=_buildPrnChartData(stu);
+  var showNA=(!document.getElementById('prn-chart-show-na')||document.getElementById('prn-chart-show-na').checked!==false);
+  var data=_buildPrnChartData(stu,showNA);
   var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Progress Chart \u2014 '+esc(_studentDisplayName(stu))+'</title>';
   h+='<style>@page{margin:4mm}*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:auto}tr{page-break-inside:avoid}</style>';
   h+='</head><body>';
