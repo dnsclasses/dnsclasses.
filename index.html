@@ -4175,9 +4175,10 @@ function renderRankings(){
       var relScore=d.monthPct===null?null:(d.monthScore/_groupMaxScore*100);
       var pctColor=relScore===null?'var(--sub)':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
       var overallColor=d.pct===null?'var(--sub)':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
+      var overallBorder=d.pct===null?'var(--ibdr)':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
       var barW=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_groupMaxPossible*100)):0;
       var _cGrad=_pctGradBg(d.pct,!document.body.classList.contains('light'));
-      h+='<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 14px;background:'+_cGrad+';border-radius:11px;margin-bottom:6px;border:1px solid var(--ibdr)">';
+      h+='<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 14px;background:'+_cGrad+';border-radius:11px;margin-bottom:6px;border:1px solid '+overallBorder+'">';
       h+='<div style="font-size:'+(i<3&&d.pct!==null?'60':'15')+'px;width:'+(i<3&&d.pct!==null?'66':'28')+'px;text-align:center;font-weight:700;color:var(--sub);flex-shrink:0;line-height:1;padding-top:'+(i<3&&d.pct!==null?'2':'6')+'px;position:relative;left:'+(i<3&&d.pct!==null?'-16':'0')+'px">'+rank+'</div>';
       h+='<div style="flex:1;min-width:0;padding-top:'+(i<3&&d.pct!==null?'14':'0')+'px">';
       var _ac=_getRankAchievements(s,_gradeStArr);
@@ -4453,6 +4454,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var relScore=d.monthPct===null?null:(d.monthScore/_nbGroupMaxScore*100);
       var col=relScore===null?'#999':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
       var overallCol=d.pct===null?'#999':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
+      var overallBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
       var bw=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_nbGroupMaxPossible*100)):0;
       var ac=_getRankAchievements(s,_grSt);
       function _nbBldPills(troph,gold,silv,brnz){
@@ -4471,11 +4473,11 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       }
       var _nbChPills=_nbBldPills(ac.troph,ac.gold,ac.silv,ac.brnz);
       var _nbMkPills=_nbBldPills(ac.mTroph,ac.mGold,ac.mSilv,ac.mBrnz);
-      var _nbR=d.pct===null?153:d.pct>=100?253:d.pct>=90?22:d.pct>=75?22:d.pct>=60?74:220;
-      var _nbG=d.pct===null?153:d.pct>=100?224:d.pct>=90?101:d.pct>=75?163:d.pct>=60?222:38;
-      var _nbB=d.pct===null?153:d.pct>=100?71:d.pct>=90?52:d.pct>=75?74:d.pct>=60?128:38;
+      var _nbR=d.pct===null?153:d.pct>=100?253:d.pct>=90?22:d.pct>=75?101:d.pct>=60?209:d.pct>=40?234:220;
+      var _nbG=d.pct===null?153:d.pct>=100?224:d.pct>=90?101:d.pct>=75?163:d.pct>=60?176:d.pct>=40?88:38;
+      var _nbB=d.pct===null?153:d.pct>=100?71:d.pct>=90?52:d.pct>=75?13:d.pct>=60?0:d.pct>=40?12:38;
       var _nbGrad='linear-gradient(to right,rgba('+_nbR+','+_nbG+','+_nbB+',0.25) 0%,rgba('+_nbR+','+_nbG+','+_nbB+',0.08) 60%,transparent 85%)';
-      h+='<div class="card" style="background:'+_nbGrad+'">';
+      h+='<div class="card" style="background:'+_nbGrad+';border-color:'+overallBorder+'">';
       var _nbRkSz=d.pct!==null&&i<3?'100px':'36px';
       var _nbRkLeft=d.pct!==null&&i<3?'-34px':'0px';
       var _trendBadge=(monthYm&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26,s,_prevYmStr(monthYm)):'';
@@ -4647,10 +4649,12 @@ function printRankings(filterGrade,filterLoc,monthYm){
       else if(d.pct>=100){_prR=253;_prG=224;_prB=71;}   // #fde047 gold
       else if(d.pct>=90){_prR=22;_prG=101;_prB=52;}    // #166534 dark green
       else if(d.pct>=75){_prR=101;_prG=163;_prB=13;}    // #65a30d olive
-      else if(d.pct>=60){_prR=209;_prG=176;_prB=0;}    // #d1b000 gold
+      else if(d.pct>=60){_prR=209;_prG=176;_prB=0;}    // #d1b000 yellow
+      else if(d.pct>=40){_prR=234;_prG=88;_prB=12;}    // #ea580c orange
       else{_prR=220;_prG=38;_prB=38;}                  // #dc2626 red
+      var _prBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
       var _prGrad='linear-gradient(to right,rgba('+_prR+','+_prG+','+_prB+',0.25) 0%,rgba('+_prR+','+_prG+','+_prB+',0.08) 60%,transparent 85%)';
-      h+='<div class="card" style="background:'+_prGrad+'">';
+      h+='<div class="card" style="background:'+_prGrad+';border-color:'+_prBorder+'">';
       // Top: rank | name | pct
       h+='<div class="card-top">';
       var _rankSz=d.pct!==null&&i<3?'75px':'22px';
