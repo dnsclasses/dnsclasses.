@@ -4175,9 +4175,10 @@ function renderRankings(){
       var relScore=d.monthPct===null?null:(d.monthScore/_groupMaxScore*100);
       var pctColor=relScore===null?'var(--sub)':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
       var overallColor=d.pct===null?'var(--sub)':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
+      var overallBorder=d.pct===null?'var(--ibdr)':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
       var barW=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_groupMaxPossible*100)):0;
       var _cGrad=_pctGradBg(d.pct,!document.body.classList.contains('light'));
-      h+='<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 14px;background:'+_cGrad+';border-radius:11px;margin-bottom:6px;border:1px solid var(--ibdr)">';
+      h+='<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 14px;background:'+_cGrad+';border-radius:11px;margin-bottom:6px;border:1px solid '+overallBorder+'">';
       h+='<div style="font-size:'+(i<3&&d.pct!==null?'60':'15')+'px;width:'+(i<3&&d.pct!==null?'66':'28')+'px;text-align:center;font-weight:700;color:var(--sub);flex-shrink:0;line-height:1;padding-top:'+(i<3&&d.pct!==null?'2':'6')+'px;position:relative;left:'+(i<3&&d.pct!==null?'-16':'0')+'px">'+rank+'</div>';
       h+='<div style="flex:1;min-width:0;padding-top:'+(i<3&&d.pct!==null?'14':'0')+'px">';
       var _ac=_getRankAchievements(s,_gradeStArr);
@@ -4453,6 +4454,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var relScore=d.monthPct===null?null:(d.monthScore/_nbGroupMaxScore*100);
       var col=relScore===null?'#999':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
       var overallCol=d.pct===null?'#999':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
+      var overallBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
       var bw=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_nbGroupMaxPossible*100)):0;
       var ac=_getRankAchievements(s,_grSt);
       function _nbBldPills(troph,gold,silv,brnz){
@@ -4475,7 +4477,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var _nbG=d.pct===null?153:d.pct>=100?224:d.pct>=90?101:d.pct>=75?163:d.pct>=60?176:d.pct>=40?88:38;
       var _nbB=d.pct===null?153:d.pct>=100?71:d.pct>=90?52:d.pct>=75?13:d.pct>=60?0:d.pct>=40?12:38;
       var _nbGrad='linear-gradient(to right,rgba('+_nbR+','+_nbG+','+_nbB+',0.25) 0%,rgba('+_nbR+','+_nbG+','+_nbB+',0.08) 60%,transparent 85%)';
-      h+='<div class="card" style="background:'+_nbGrad+'">';
+      h+='<div class="card" style="background:'+_nbGrad+';border-color:'+overallBorder+'">';
       var _nbRkSz=d.pct!==null&&i<3?'100px':'36px';
       var _nbRkLeft=d.pct!==null&&i<3?'-34px':'0px';
       var _trendBadge=(monthYm&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26,s,_prevYmStr(monthYm)):'';
@@ -4650,8 +4652,9 @@ function printRankings(filterGrade,filterLoc,monthYm){
       else if(d.pct>=60){_prR=209;_prG=176;_prB=0;}    // #d1b000 yellow
       else if(d.pct>=40){_prR=234;_prG=88;_prB=12;}    // #ea580c orange
       else{_prR=220;_prG=38;_prB=38;}                  // #dc2626 red
+      var _prBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
       var _prGrad='linear-gradient(to right,rgba('+_prR+','+_prG+','+_prB+',0.25) 0%,rgba('+_prR+','+_prG+','+_prB+',0.08) 60%,transparent 85%)';
-      h+='<div class="card" style="background:'+_prGrad+'">';
+      h+='<div class="card" style="background:'+_prGrad+';border-color:'+_prBorder+'">';
       // Top: rank | name | pct
       h+='<div class="card-top">';
       var _rankSz=d.pct!==null&&i<3?'75px':'22px';
@@ -5742,7 +5745,7 @@ function showRec(sid,key){
   var cy=getCycles(s).find(function(c){return c.key===key;});
   document.getElementById('r-id').textContent=rec.receiptId||'—';
   document.getElementById('r-date').textContent=rec.paidOn?fmtD(rec.paidOn):fmtD(new Date().toISOString());
-  document.getElementById('r-name').textContent=s.name;
+  document.getElementById('r-name').textContent=_studentDisplayName(s,true);
   document.getElementById('r-grade').textContent=s.grade||'Other';
   document.getElementById('r-subject').textContent=getSubjects(s);
   document.getElementById('r-cycle').textContent=(cy?cy.label:key).toUpperCase();
@@ -5812,7 +5815,7 @@ function sendRecText(){
   if(rMo<0){rMo=11;rYr--;}
   var rAst=getAttendStats(s,rYr,rMo,null),rMN=MO[rMo]+' '+rYr;
   var rAttTxt=rAst.total>0?'\n\n\ud83d\udcca *Attendance \u2014 '+rMN+'*\nYour attendance for '+rMN+':\n\u2705 Present: '+rAst.present+'\n\u274c Absent: '+rAst.absent+'\n\ud83d\udfe1 Late: '+rAst.late+'\n\ud83d\udcca Attendance %: '+rAst.pct+'%':'';
-  var msg='*FEE RECEIPT \u2014 DNS CLASSES*\n\n*Receipt No:* '+(rec.receiptId||'\u2014')+'\n*Date:* '+(rec.paidOn?fmtD(rec.paidOn):fmtD(new Date().toISOString()))+'\n\n*Student:* '+s.name.toUpperCase()+'\n*Class:* '+(s.grade||'Other')+' | *Subject:* '+getSubjects(s)+'\n*Period:* '+(cy?cy.label:lastRecKey).toUpperCase()+'\n\n*Amount Paid:* \u20b9'+amt.toLocaleString()+'.00\n*Payment Mode:* '+(rec.mode==='online'?'\ud83d\udcf1 Online':'\ud83d\udcb5 Cash')+'\n*Status:* Cleared \u2705'+rAttTxt+'\n\nThank you! \ud83d\ude4f\n\u2014 DNS CLASSES';
+  var msg='*FEE RECEIPT \u2014 DNS CLASSES*\n\n*Receipt No:* '+(rec.receiptId||'\u2014')+'\n*Date:* '+(rec.paidOn?fmtD(rec.paidOn):fmtD(new Date().toISOString()))+'\n\n*Student:* '+_studentDisplayName(s,true).toUpperCase()+'\n*Class:* '+(s.grade||'Other')+' | *Subject:* '+getSubjects(s)+'\n*Period:* '+(cy?cy.label:lastRecKey).toUpperCase()+'\n\n*Amount Paid:* \u20b9'+amt.toLocaleString()+'.00\n*Payment Mode:* '+(rec.mode==='online'?'\ud83d\udcf1 Online':'\ud83d\udcb5 Cash')+'\n*Status:* Cleared \u2705'+rAttTxt+'\n\nThank you! \ud83d\ude4f\n\u2014 DNS CLASSES';
   openWAUrl(ph[0].number,msg);
 }
 
@@ -5879,7 +5882,7 @@ function openMR(sid){
     '<div style="font-size:13px;font-weight:bold;margin-top:5px;border:1px solid #0f172a;display:inline-block;padding:2px 10px">\u2605 MASTER FEE STATEMENT \u2605</div></div>'+
     '<div style="font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:6px;color:#334155;border-bottom:1px dashed #e2e8f0;padding-bottom:10px;margin-bottom:10px;word-break:break-word">'+
     '<div style="overflow:hidden;text-overflow:ellipsis"><b>Receipt No:</b> '+mrNo+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Date:</b> '+today+'</div>'+
-    '<div style="overflow:hidden;text-overflow:ellipsis"><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(_studentDisplayName(s))+'</span></div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Class:</b> '+(s.grade||'Other')+'</div>'+
+    '<div style="overflow:hidden;text-overflow:ellipsis"><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(_studentDisplayName(s,true))+'</span></div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Class:</b> '+(s.grade||'Other')+'</div>'+ 
     '<div style="overflow:hidden;text-overflow:ellipsis"><b>Subject:</b> '+getSubjects(s)+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Fee:</b> \u20b9'+Number(s.fees).toLocaleString()+'/mo</div>'+
     '<div style="overflow:hidden;text-overflow:ellipsis"><b>Joined:</b> '+fmtD(s.joiningDate)+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Due Day:</b> '+ord(getDueDay(s))+' every month</div></div>'+
     (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><div class="mr-table-scroll" data-no-swipe="1"><table style="width:100%;border-collapse:collapse;min-width:400px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 2px;font-size:9px;text-align:left">#</th><th style="padding:4px 2px;font-size:9px;text-align:left">PERIOD</th><th style="padding:4px 2px;font-size:9px;text-align:left">PAID ON</th><th style="padding:4px 2px;font-size:9px;text-align:right">AMOUNT</th><th style="padding:4px 2px;font-size:9px;text-align:center">MODE</th><th style="padding:4px 2px;font-size:9px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table></div>':'')+
@@ -5944,7 +5947,7 @@ function sendMRText(){
   var mts=getTotalAttendStats(s);
   var mAtt=mts.total>0?'\n\n\ud83d\udcca *ATTENDANCE SUMMARY*\nYour attendance till '+fmtD(new Date().toISOString())+':'
     +'\n\u2705 Present: '+mts.present+'\n\u274c Absent: '+mts.absent+'\n\ud83d\udfe1 Late: '+mts.late+'\n\ud83d\udcca Attendance %: '+mts.pct+'%':'';
-  var msg='*\u2605 MASTER FEE STATEMENT \u2014 DNS CLASSES \u2605*\n\n*Student:* '+s.name.toUpperCase()+'\n*Class:* '+(s.grade||'Other')+' | *Subject:* '+getSubjects(s)+'\n*Date:* '+fmtD(new Date().toISOString())+'\n\n\u2705 *PAID ('+paid.length+' months)*\n'+(rows||'None')+'\n\n'+(unpaid.length?'\u26a0\ufe0f *PENDING ('+unpaid.length+' months)*\n'+unpaid.map(function(c,i){return (i+1)+'. '+c.label;}).join('\n')+'\n\n':'')+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n*Total Paid:* \u20b9'+tPaid.toLocaleString()+'\n*Outstanding:* \u20b9'+tPend.toLocaleString()+mAtt+'\n\nThank you! \ud83d\ude4f\n\u2014 DNS CLASSES';
+  var msg='*\u2605 MASTER FEE STATEMENT \u2014 DNS CLASSES \u2605*\n\n*Student:* '+_studentDisplayName(s,true).toUpperCase()+'\n*Class:* '+(s.grade||'Other')+' | *Subject:* '+getSubjects(s)+'\n*Date:* '+fmtD(new Date().toISOString())+'\n\n\u2705 *PAID ('+paid.length+' months)*\n'+(rows||'None')+'\n\n'+(unpaid.length?'\u26a0\ufe0f *PENDING ('+unpaid.length+' months)*\n'+unpaid.map(function(c,i){return (i+1)+'. '+c.label;}).join('\n')+'\n\n':'')+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n*Total Paid:* \u20b9'+tPaid.toLocaleString()+'\n*Outstanding:* \u20b9'+tPend.toLocaleString()+mAtt+'\n\nThank you! \ud83d\ude4f\n\u2014 DNS CLASSES';
   openWAUrl(ph[0].number,msg);
 }
 
@@ -14736,7 +14739,13 @@ function _buildPrnChartData(stu,showNA){
       var m=posMap[p];
       if(!m){cells.push(showNA&&peerTestPositions[p]?{na:true}:{blank:true});continue;}
       var e=m.entry;
-      if(typeof e.v!=='number'){cells.push({status:e.v});continue;}
+      if(typeof e.v!=='number'){
+        // Some older/manual records store NA directly as a status. Treat it
+        // the same as the generated grey NA cells so SHOW NA controls both.
+        var _status=String(e.v===undefined?'':e.v).trim();
+        if(!showNA&&_status.toUpperCase()==='NA'){cells.push({blank:true});continue;}
+        cells.push({status:e.v});continue;
+      }
       var myPct=e.total?e.v/e.total:0;
       var higher=0,comparable=0;
       _peers.forEach(function(x){
