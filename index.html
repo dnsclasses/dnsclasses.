@@ -2261,6 +2261,32 @@ function _tieBreakByHistory(a,b,fromYm){
 }
 var _selectedRankMonth=null;
 var _rankTopN=0;
+function setRankMonths(el){
+  var vals=Array.prototype.slice.call(el&&el.selectedOptions||[]).map(function(o){return o.value;});
+  if(vals.indexOf('ALL')>=0)vals=['ALL'];
+  _selectedRankMonth=vals.join(',');
+  renderRankings();
+}
+function toggleRankMonth(ym){
+  var vals=String(_selectedRankMonth||'').split(',').filter(function(v){return v;});
+  if(ym==='ALL')vals=vals.indexOf('ALL')>=0?[]:['ALL'];
+  else{var had=vals.indexOf(ym)>=0;vals=vals.filter(function(v){return v!=='ALL'&&v!==ym;});if(!had)vals.push(ym);}
+  _selectedRankMonth=vals.join(',');
+  renderRankings();
+}
+function _rankMonthDisplay(ym,months){
+  if(ym==='ALL')return 'Overall (All Time)';
+  var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return String(ym||'').split(',').filter(function(v){return v;}).map(function(v){var p=v.split('-');return (months?names[parseInt(p[1],10)-1].slice(0,3):names[parseInt(p[1],10)-1])+' '+p[0];}).join(' + ');
+}
+function _rankMonthDisplayHtml(ym){
+  if(ym==='ALL')return 'Overall (All Time)';
+  var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var vals=String(ym||'').split(',').filter(function(v){return v;}).map(function(v){var p=v.split('-');return names[parseInt(p[1],10)-1].slice(0,3)+' '+p[0];});
+  var lines=[];
+  for(var i=0;i<vals.length;i+=2)lines.push(vals.slice(i,i+2).join(' + '));
+  return lines.map(esc).join('<br>');
+}
 function _loadRankTopN(){
   var n=parseInt(localStorage.getItem('dns_rank_top_n')||'0',10);
   return isNaN(n)||n<1?0:Math.min(n,9999);
@@ -2284,6 +2310,13 @@ function applyRankTopCustom(){
 // Reconstructs any month's marks for a student: live data for the current month,
 // or (next month's archived baseline − this month's archived baseline) for past months.
 function _getMonthlyFigures(s,ym){
+  if(typeof ym==='string'&&ym.indexOf(',')>=0){
+    var _months=ym.split(',').filter(function(v){return v;});
+    var _sum={score:0,max:0,given:0};
+    _months.forEach(function(_m){var _part=_getMonthlyFigures(s,_m);_sum.score+=_part.score||0;_sum.max+=_part.max||0;_sum.given+=_part.given||0;});
+    _sum.pct=_sum.max>0?Math.round(_sum.score/_sum.max*100):null;
+    return _sum;
+  }
   if(ym==='ALL'){
     var c=_computeStudentTotals(s);
     return{score:c.score,max:c.max,given:c.given,pct:c.max>0?Math.round(c.score/c.max*100):null};
@@ -4119,17 +4152,21 @@ function renderRankings(){
   var _now=new Date(),_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var _curYm=_now.toISOString().slice(0,7);
   var _histKeys=Object.keys((db.settings&&db.settings.rankHistory)||{}).sort().reverse();
-  if(!_selectedRankMonth||(_histKeys.indexOf(_selectedRankMonth)<0&&_selectedRankMonth!==_curYm&&_selectedRankMonth!=='ALL'))_selectedRankMonth=_curYm;
+  if(_selectedRankMonth===null)_selectedRankMonth=_curYm;
+  var _rankMonthValues=String(_selectedRankMonth||'').split(',').filter(function(v){return v;});
+  if(_rankMonthValues.some(function(v){return _histKeys.indexOf(v)<0&&v!==_curYm&&v!=='ALL';}))_rankMonthValues=[_curYm];
+  if(_rankMonthValues.indexOf('ALL')>=0)_rankMonthValues=['ALL'];
+  _selectedRankMonth=_rankMonthValues.join(',');
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">';
   h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0">';
-  h+='<select id="pr-rankmonth" data-label="Select Month" onchange="_selectedRankMonth=this.value;renderRankings();" style="font-size:11px;font-weight:800;color:var(--acc);background:var(--card);border:1px solid var(--ibdr);border-radius:20px;padding:5px 12px;letter-spacing:0.5px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1">';
+  h+='<div id="pr-rankmonth" data-label="Select Month" style="display:flex;flex-wrap:wrap;gap:6px;max-width:100%;align-items:center">';
   _histKeys.forEach(function(ym){
     var parts=ym.split('-');var mLbl=_MONTHS[parseInt(parts[1])-1]+' '+parts[0];
     var isCur=ym===_curYm;
-    h+='<option value="'+ym+'"'+(ym===_selectedRankMonth?' selected':'')+'>'+mLbl+(isCur?' (Current)':'')+'</option>';
+    h+='<button type="button" onclick="toggleRankMonth(\''+ym+'\')" style="padding:6px 11px;border-radius:20px;font-size:11px;font-weight:800;color:'+(_rankMonthValues.indexOf(ym)>=0?'var(--btntxt)':'var(--txt)')+';background:'+(_rankMonthValues.indexOf(ym)>=0?'var(--btn)':'var(--ibg)')+';border:1px solid '+(_rankMonthValues.indexOf(ym)>=0?'var(--btn)':'var(--ibdr)')+';cursor:pointer;white-space:nowrap">'+mLbl+(isCur?' (Current)':'')+'</button>';
   });
-  h+='<option value="ALL"'+(_selectedRankMonth==='ALL'?' selected':'')+'>\ud83c\udfc6 Overall (All Time)</option>';
-  h+='</select>';
+  h+='<button type="button" onclick="toggleRankMonth(\'ALL\')" style="padding:6px 11px;border-radius:20px;font-size:11px;font-weight:800;color:'+(_rankMonthValues.indexOf('ALL')>=0?'var(--btntxt)':'var(--txt)')+';background:'+(_rankMonthValues.indexOf('ALL')>=0?'var(--btn)':'var(--ibg)')+';border:1px solid '+(_rankMonthValues.indexOf('ALL')>=0?'var(--btn)':'var(--ibdr)')+';cursor:pointer;white-space:nowrap">\ud83c\udfc6 Overall (All Time)</button>';
+  h+='</div>';
   h+='<label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--sub);white-space:nowrap">Top <input id="pr-ranktop-custom" type="number" min="1" max="9999" inputmode="numeric" placeholder="____" value="'+(_rankTopN>0?_rankTopN:'')+'" oninput="setRankTopNLive(this.value)" onchange="setRankTopN(this.value)" onkeydown="if(event.key===\'Enter\'){setRankTopN(this.value);this.blur();}" style="width:70px;font-size:13px;font-weight:800;color:var(--txt);background:var(--card);border:1px solid var(--ibdr);border-radius:9px;padding:6px 8px;box-sizing:border-box;text-align:center"></label>';
   h+='<button onclick="openRankExcludeModal()" style="padding:7px 16px;border-radius:14px;font-size:13px;font-weight:700;background:var(--ibg);color:var(--txt);border:1px solid var(--ibdr);cursor:pointer;touch-action:manipulation;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:13px">person_off</span>Exclude<span id="rank-excl-count-badge" style="'+(_rankExclCount>0?'':'display:none;')+'background:#ef4444;color:#fff;font-size:10px;font-weight:800;border-radius:14px;padding:1px 7px;min-width:8px;text-align:center">'+_rankExclCount+'</span></button>';
   h+='</div>';
@@ -4153,14 +4190,14 @@ function renderRankings(){
       if(a.data.pct===null)return 1;
       if(b.data.pct===null)return -1;
       if(a.data.monthScore!==b.data.monthScore)return b.data.monthScore-a.data.monthScore;
-      return _tieBreakByHistory(a.s,b.s,_selectedRankMonth);
+      return _tieBreakByHistory(a.s,b.s,_rankMonthValues.length===1?_selectedRankMonth:'ALL');
     });
     // Compute rank movement from the complete class/group first. The Top N
     // control is display-only and must never change a student's rank or delta.
     var _gradeStArr=students.map(function(it){return it.s;});
     var _availableTests=_getRankAvailableTestCount(_gradeStArr);
     students.forEach(function(it){it.data.totalTests=_availableTests;});
-    var _prevRankMap=_computeGradeRankMap(_gradeStArr,_prevYmStr(_selectedRankMonth));
+    var _prevRankMap=_rankMonthValues.length===1?_computeGradeRankMap(_gradeStArr,_prevYmStr(_selectedRankMonth)):{};
     if(_rankTopN>0)students=students.slice(0,_rankTopN);
     if(!students.length)return;
     var _groupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthMax||0;})));
@@ -4182,7 +4219,7 @@ function renderRankings(){
       h+='<div style="font-size:'+(i<3&&d.pct!==null?'60':'15')+'px;width:'+(i<3&&d.pct!==null?'66':'28')+'px;text-align:center;font-weight:700;color:var(--sub);flex-shrink:0;line-height:1;padding-top:'+(i<3&&d.pct!==null?'2':'6')+'px;position:relative;left:'+(i<3&&d.pct!==null?'-16':'0')+'px">'+rank+'</div>';
       h+='<div style="flex:1;min-width:0;padding-top:'+(i<3&&d.pct!==null?'14':'0')+'px">';
       var _ac=_getRankAchievements(s,_gradeStArr);
-      var _trendBadge=(_selectedRankMonth!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,11,s,_prevYmStr(_selectedRankMonth)):'';
+      var _trendBadge=(_rankMonthValues.length===1&&_selectedRankMonth!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,11,s,_prevYmStr(_selectedRankMonth)):'';
       h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden"><span style="font-weight:700;font-size:15px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(_studentDisplayName(s))+'</span>'+_trendBadge+'</div>'+(d.pct!==null?'<div style="width:44px;flex-shrink:0">'+_buildGaugeMeter(d.pct,44,false)+'</div>':'')+'</div>';
       if(d.pct!==null){
         h+='<div style="margin-top:6px;height:5px;background:var(--ibdr);border-radius:3px;overflow:hidden">';
@@ -4257,7 +4294,8 @@ function showPrintRankMenu(){
   var _MONTHS2=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var _histKeys2=Object.keys((db.settings&&db.settings.rankHistory)||{}).sort().reverse();
   if(_histKeys2.indexOf(_curYm2)<0)_histKeys2.unshift(_curYm2);
-  var selMonth=_curYm2;
+  var selMonths=String(_selectedRankMonth||_curYm2).split(',').filter(function(v){return v;});
+  if(selMonths.indexOf('ALL')>=0)selMonths=['ALL'];
   var m=document.createElement('div');
   // Full-screen overlay with card background pinned to bottom
   m.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;flex-direction:column;justify-content:flex-end';
@@ -4274,9 +4312,9 @@ function showPrintRankMenu(){
     h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">';
     _histKeys2.forEach(function(ym){
       var parts=ym.split('-');var mLbl=_MONTHS2[parseInt(parts[1])-1].slice(0,3)+' '+parts[0];
-      h+='<button onclick="_prkSel(\'month\',\''+ym+'\')" style="padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:'+(selMonth===ym?btn:ibg)+';color:'+(selMonth===ym?btntxt:txt)+';touch-action:manipulation">'+mLbl+(ym===_curYm2?' (Current)':'')+'</button>';
+      h+='<button onclick="_prkSel(\'month\',\''+ym+'\')" style="padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:'+(selMonths.indexOf(ym)>=0?btn:ibg)+';color:'+(selMonths.indexOf(ym)>=0?btntxt:txt)+';touch-action:manipulation">'+mLbl+(ym===_curYm2?' (Current)':'')+'</button>';
     });
-    h+='<button onclick="_prkSel(\'month\',\'ALL\')" style="padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:'+(selMonth==='ALL'?btn:ibg)+';color:'+(selMonth==='ALL'?btntxt:txt)+';touch-action:manipulation">\ud83c\udfc6 Overall</button>';
+    h+='<button onclick="_prkSel(\'month\',\'ALL\')" style="padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:'+(selMonths.indexOf('ALL')>=0?btn:ibg)+';color:'+(selMonths.indexOf('ALL')>=0?btntxt:txt)+';touch-action:manipulation">\ud83c\udfc6 Overall</button>';
     h+='</div>';
     h+='<div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:0.02em;margin-bottom:6px">CLASS</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">';
@@ -4303,7 +4341,7 @@ function showPrintRankMenu(){
   }
   window._prkSel=function(type,val){
     if(type==='grade')selGrade=(val===''?null:val);
-    else if(type==='month')selMonth=val;
+    else if(type==='month'){if(val==='ALL')selMonths=selMonths.indexOf('ALL')>=0?[]:['ALL'];else{var hadMonth=selMonths.indexOf(val)>=0;selMonths=selMonths.filter(function(v){return v!=='ALL'&&v!==val;});if(!hadMonth)selMonths.push(val);}}
     else selLoc=(val===''||val==='null')?null:val;
     render();
   };
@@ -4311,13 +4349,13 @@ function showPrintRankMenu(){
     m.remove();
     _prkUnlock();
     window.scrollTo(0,_prkScrollY);
-    printRankings(selGrade,selLoc,selMonth);
+    printRankings(selGrade,selLoc,selMonths.join(','));
   };
   window._prkGoNB=function(){
     m.remove();
     _prkUnlock();
     window.scrollTo(0,_prkScrollY);
-    printNoticeBoard(selGrade,selLoc,selMonth);
+    printNoticeBoard(selGrade,selLoc,selMonths.join(','));
   };
   var _prkNav=document.getElementById('nav-bar');
   function _prkUnlock(){
@@ -4369,6 +4407,8 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
   var monthYear;
   if(monthYm==='ALL'){
     monthYear='Overall (All Time)';
+  } else if(String(monthYm||'').indexOf(',')>=0){
+    monthYear=_rankMonthDisplay(monthYm,false);
   } else {
     var _nbTitleYm=monthYm||now.toISOString().slice(0,7);
     var _nbTitleParts=_nbTitleYm.split('-');
@@ -4414,6 +4454,8 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
   h+='<div class="hdr-text"><h1>DNS CLASSES</h1><h2>Notice Board Rankings \u2014 '+_tg+_tl+'</h2></div>';
   if(monthYm==='ALL'){
     h+='<div class="hdr-month"><div class="month" style="font-size:32px">OVERALL</div><div class="year">All Time</div></div>';
+  } else if(String(monthYm||'').indexOf(',')>=0){
+    h+='<div class="hdr-month" style="width:310px;min-width:310px;padding-right:2px"><div class="month" style="font-size:29px;line-height:1.25;white-space:nowrap">'+_rankMonthDisplayHtml(monthYm)+'</div><div class="year"></div></div>';
   } else {
     var _nbEffYm=monthYm||now.toISOString().slice(0,7);
     var _nbYmParts=_nbEffYm.split('-');
@@ -4438,7 +4480,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
     });
     // Build the historical rank map before applying the print Top N filter.
     var _grSt=students.map(function(it){return it.s;});
-    var _prevRankMap=_computeGradeRankMap(_grSt,_prevYmStr(monthYm));
+    var _prevRankMap=String(monthYm||'').indexOf(',')<0?_computeGradeRankMap(_grSt,_prevYmStr(monthYm)):{};
     if(_printTopN>0)students=students.slice(0,_printTopN);
     var _nbGroupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.d.monthMax||0;})));
     var _nbGroupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.d.monthScore||0;})));
@@ -4480,7 +4522,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       h+='<div class="card" style="background:'+_nbGrad+';border-color:'+overallBorder+'">';
       var _nbRkSz=d.pct!==null&&i<3?'100px':'36px';
       var _nbRkLeft=d.pct!==null&&i<3?'-34px':'0px';
-      var _trendBadge=(monthYm&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26,s,_prevYmStr(monthYm)):'';
+      var _trendBadge=(monthYm&&String(monthYm).indexOf(',')<0&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26,s,_prevYmStr(monthYm)):'';
       h+='<div class="top"><div class="rank" style="font-size:'+_nbRkSz+';line-height:1;position:relative;left:'+_nbRkLeft+'">'+rk+'</div><div class="name" style="display:flex;align-items:center;gap:14px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:155px;flex-shrink:0">'+_buildGaugeMeter(d.pct,155,true)+'</div>':'')+'</div><div style="flex-shrink:0;text-align:right">';
       h+='<div class="pct" style="color:'+col+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:24px;font-weight:600;color:#888">/'+_nbGroupMaxPossible+'</span>':'--')+'</div>';
       if(d.pct!==null)h+='<div style="font-size:36px;font-weight:800;color:'+overallCol+';margin-top:3px">'+d.pct+'%</div>';
@@ -4540,6 +4582,8 @@ function printRankings(filterGrade,filterLoc,monthYm){
   var monthYear;
   if(monthYm==='ALL'){
     monthYear='Overall (All Time)';
+  } else if(String(monthYm||'').indexOf(',')>=0){
+    monthYear=_rankMonthDisplay(monthYm,false);
   } else {
     var _effYm=monthYm||now.toISOString().slice(0,7);
     var _effYmParts=_effYm.split('-');
@@ -4587,7 +4631,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
   h+='<div class="hdr">';
   h+='<img src="'+_LOGO+'">';
   h+='<div class="hdr-text"><h1>DNS CLASSES</h1><h2>Student Rankings \u2014 '+_tg+_tl+'</h2></div>';
-  h+='<div class="hdr-month"><div class="month">'+MONTHS[now.getMonth()]+'</div><div class="year">'+now.getFullYear()+'</div></div>';
+  h+='<div class="hdr-month" style="width:310px;min-width:310px;padding-right:2px">'+(String(monthYm||'').indexOf(',')>=0?'<div class="month" style="font-size:27px;line-height:1.25;white-space:nowrap">'+_rankMonthDisplayHtml(monthYm)+'</div><div class="year"></div>':'<div class="month">'+MONTHS[now.getMonth()]+'</div><div class="year">'+now.getFullYear()+'</div>')+'</div>';
   h+='</div>';
   h+='<hr class="divider">';
   grades.forEach(function(g){
@@ -4607,7 +4651,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
     // Calculate previous-month ranks from the complete class/group. The print
     // Top N option must only limit visible rows, never movement values.
     var _pGrSt=students.map(function(it){return it.s;});
-    var _prevRankMap=_computeGradeRankMap(_pGrSt,_prevYmStr(monthYm));
+    var _prevRankMap=String(monthYm||'').indexOf(',')<0?_computeGradeRankMap(_pGrSt,_prevYmStr(monthYm)):{};
     if(_printTopN>0)students=students.slice(0,_printTopN);
     var _pGroupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthMax||0;})));
     var _pGroupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthScore||0;})));
@@ -4661,7 +4705,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
       var _rankLeft=d.pct!==null&&i<3?'-18px':'0px';
       h+='<div class="rank" style="font-size:'+_rankSz+';line-height:1;position:relative;left:'+_rankLeft+'">'+rankTxt+'</div>';
       var _nSz=d.pct!==null&&i<3?'30px':'26px';
-      var _trendBadge=(monthYm&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,17,s,_prevYmStr(monthYm)):'';
+      var _trendBadge=(monthYm&&String(monthYm).indexOf(',')<0&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,17,s,_prevYmStr(monthYm)):'';
       h+='<div class="name" style="font-size:'+_nSz+';display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:85px;flex-shrink:0">'+_buildGaugeMeter(d.pct,85,false)+'</div>':'')+'</div>';
       h+='<div style="flex-shrink:0;text-align:right">';
       h+='<div class="pct" style="color:'+pctColor+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:16px;font-weight:600;color:#888">/'+_pGroupMaxPossible+'</span>':'--')+'</div>';
@@ -5863,6 +5907,18 @@ function _initMasterReceiptScroll(){
     sc.addEventListener('pointercancel',pend);
   });
 }
+function _masterReceiptLifecycleHtml(s){
+  var items=[];
+  if(s.joiningDate)items.push('<span style="color:#2563eb"><b>Joined:</b> '+esc(fmtD(s.joiningDate))+'</span>');
+  (s.history||[]).forEach(function(h){
+    if(!h||!h.date)return;
+    var label=h.type==='discontinued'?'Discontinued':'Rejoined';
+    var color=h.type==='discontinued'?'#dc2626':'#16a34a';
+    items.push('<span style="color:'+color+'"><b>'+label+':</b> '+esc(fmtD(h.date))+'</span>');
+  });
+  if(!items.length)return '';
+  return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px"><div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">▸ JOINING DETAILS</div><div style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:bold;line-height:1.5">'+items.join('')+'</div></div>';
+}
 function openMR(sid){
   var s=db.students.find(function(x){return x.id===sid;});if(!s)return;
   lastMRecSid=sid;
@@ -5873,7 +5929,7 @@ function openMR(sid){
   var tPend=unpaid.reduce(function(sum,c){return sum+Number(s.fees||0);},0);
   var mrNo='DNS-M-'+Math.floor(100000+Math.random()*900000);
   var today=fmtD(new Date().toISOString());
-  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+(isDark?'#4ade80':'#16a34a')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 2px;font-size:10px;text-align:center">'+mE+'</td><td style="padding:5px 2px;font-size:9px;color:#64748b;white-space:nowrap">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
+  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+('#15803d')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 2px;font-size:10px;text-align:center">'+mE+'</td><td style="padding:5px 2px;font-size:9px;color:#64748b;white-space:nowrap">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
   var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees).toLocaleString()+'</td><td style="padding:5px 2px;font-size:9px;color:#94a3b8">\u2014</td></tr>';}).join('');
   document.getElementById('mrprint').innerHTML=
     '<div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px">'+
@@ -5885,13 +5941,13 @@ function openMR(sid){
     '<div style="overflow:hidden;text-overflow:ellipsis"><b>Student:</b> <span style="text-transform:uppercase;font-weight:bold">'+esc(_studentDisplayName(s,true))+'</span></div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Class:</b> '+(s.grade||'Other')+'</div>'+ 
     '<div style="overflow:hidden;text-overflow:ellipsis"><b>Subject:</b> '+getSubjects(s)+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Fee:</b> \u20b9'+Number(s.fees).toLocaleString()+'/mo</div>'+
     '<div style="overflow:hidden;text-overflow:ellipsis"><b>Joined:</b> '+fmtD(s.joiningDate)+'</div><div style="text-align:right;overflow:hidden;text-overflow:ellipsis"><b>Due Day:</b> '+ord(getDueDay(s))+' every month</div></div>'+
-    (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><div class="mr-table-scroll" data-no-swipe="1"><table style="width:100%;border-collapse:collapse;min-width:400px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 2px;font-size:9px;text-align:left">#</th><th style="padding:4px 2px;font-size:9px;text-align:left">PERIOD</th><th style="padding:4px 2px;font-size:9px;text-align:left">PAID ON</th><th style="padding:4px 2px;font-size:9px;text-align:right">AMOUNT</th><th style="padding:4px 2px;font-size:9px;text-align:center">MODE</th><th style="padding:4px 2px;font-size:9px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table></div>':'')+
+    (paid.length?'<div style="font-size:13px;font-weight:bold;color:'+('#15803d')+';margin-bottom:5px">\u2705 PAID ('+paid.length+')</div><div class="mr-table-scroll" data-no-swipe="1"><table style="width:100%;border-collapse:collapse;min-width:400px"><thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:4px 2px;font-size:9px;text-align:left">#</th><th style="padding:4px 2px;font-size:9px;text-align:left">PERIOD</th><th style="padding:4px 2px;font-size:9px;text-align:left">PAID ON</th><th style="padding:4px 2px;font-size:9px;text-align:right">AMOUNT</th><th style="padding:4px 2px;font-size:9px;text-align:center">MODE</th><th style="padding:4px 2px;font-size:9px;text-align:left">RECEIPT#</th></tr></thead><tbody>'+pRows+'</tbody></table></div>':'')+
     (unpaid.length?'<div style="font-size:13px;font-weight:bold;color:'+(isDark?'#f87171':'#ef4444')+';margin-bottom:5px">\u26a0\ufe0f PENDING ('+unpaid.length+')</div><div class="mr-table-scroll" data-no-swipe="1"><table style="width:100%;border-collapse:collapse;min-width:400px"><thead><tr style="background:#fef2f2;border-bottom:2px solid #fca5a5"><th style="padding:4px 2px;font-size:9px;text-align:left">#</th><th style="padding:4px 2px;font-size:9px;text-align:left">PERIOD</th><th style="padding:4px 2px;font-size:9px;text-align:left">STATUS</th><th style="padding:4px 2px;font-size:9px;text-align:right">AMOUNT</th><th style="padding:4px 2px;font-size:9px;text-align:left">NOTE</th></tr></thead><tbody>'+uRows+'</tbody></table></div>':'')+
     '<div style="border-top:2px solid #0f172a;padding-top:10px">'+
     '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0"><span>Total Billed ('+cycles.length+' months)</span><span style="font-weight:bold">\u20b9'+(tPaid+tPend).toLocaleString()+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0;color:'+(isDark?'#4ade80':'#16a34a')+'"><span>Total Paid ('+paid.length+' months)</span><span style="font-weight:bold">\u20b9'+tPaid.toLocaleString()+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #e2e8f0;color:'+('#15803d')+'"><span>Total Paid ('+paid.length+' months)</span><span style="font-weight:bold">\u20b9'+tPaid.toLocaleString()+'</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:'+(tPend>0?'#ef4444':'#16a34a')+';font-weight:bold"><span>Outstanding</span><span>\u20b9'+tPend.toLocaleString()+'</span></div></div>'+
-    '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:#16a34a">\u2705 Present: '+ts.present+'</span>'+'<span style="color:#dc2626">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()
+    '<div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;border-top:1px dashed #cbd5e1;padding-top:10px"><b style="color:#0f172a">DNS&nbsp;CLASSES&nbsp;&mdash;&nbsp;Official&nbsp;Fee&nbsp;Statement</b><br>Generated&nbsp;'+today+'</div>'+(function(){var ts=getTotalAttendStats(s);if(ts.total===0)return '';var pctCol=ts.pct>=80?'#16a34a':ts.pct>=60?'#d97706':'#dc2626';return '<div style="border-top:1px dashed #cbd5e1;margin-top:14px;padding-top:12px">'+'<div style="font-size:12px;font-weight:bold;color:#0f172a;letter-spacing:0.02em;margin-bottom:6px">\u25b8 ATTENDANCE SUMMARY</div>'+'<div style="font-size:12px;color:#475569;margin-bottom:6px">Your&nbsp;attendance&nbsp;till <b style="color:#0f172a">'+today+'</b>:</div>'+'<div style="display:flex;gap:14px;font-size:11px;font-weight:bold;flex-wrap:wrap;margin-bottom:5px">'+'<span style="color:#16a34a">\u2705 Present: '+ts.present+'</span>'+'<span style="color:#dc2626">\u274c Absent: '+ts.absent+'</span>'+'<span style="color:#f59e0b">\ud83d\udfe1 Late: '+ts.late+'</span>'+'</div>'+'<div style="font-size:11px;font-weight:bold;color:'+pctCol+'">\ud83d\udcca Attendance %: '+ts.pct+'%</div>'+'</div>';})()+_masterReceiptLifecycleHtml(s)
   openM('mrec-modal');
   setTimeout(_initMasterReceiptScroll,0);
 }
