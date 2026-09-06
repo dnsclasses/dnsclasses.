@@ -3183,6 +3183,26 @@ function _testDaysUntil(dateStr){
   var d=new Date(dateStr+'T00:00:00');
   return Math.round((d-today)/86400000);
 }
+function dashOpenTestRecord(reminderId){
+  var r=(db.settings&&db.settings.testReminders||[]).find(function(x){return String(x.id)===String(reminderId);});
+  if(!r){showToast('Test reminder not found',true);return;}
+  var raw=String((r.topics&&r.topics[0])||'').trim();
+  var match=raw.match(/^(.*?)\s+(?:--\s*)?(T\d+)\s*$/i);
+  if(!match||!r.cls){showToast('This test does not have class and test number details',true);return;}
+  var chapter=match[1].trim(),tno=match[2].toUpperCase();
+  var stu=(db.students||[]).find(function(s){return String(s.grade||'Other')===String(r.cls);})
+    ||(db.students||[]).find(function(s){return _parseGradeNum(s.grade||'')===_parseGradeNum(r.cls);});
+  if(!stu){showToast('No student found for '+r.cls,true);return;}
+  pgLoadAllMarksForTest(stu.id,chapter,tno);
+  setTimeout(function(){
+    var loc=document.getElementById('pr-loc');if(loc)loc.value='';
+    var school=document.getElementById('pr-school');if(school){school.value='';delete school.dataset.progressContextSchool;}
+    posterLoadStudents();
+    var topic=document.getElementById('pr-topic');if(topic){var opt=Array.prototype.find.call(topic.options||[],function(o){return o.value===chapter;});if(!opt){opt=document.createElement('option');opt.value=chapter;opt.textContent=chapter;topic.appendChild(opt);}topic.value=chapter;}
+    var tn=document.getElementById('pr-tno');if(tn)tn.value=tno;
+    if(typeof _restoreScoreState==='function')_restoreScoreState();
+  },550);
+}
 function renderDashTests(){
   if(!db.settings)db.settings={};
   // Keep dismissed reminders removed, but keep every saved reminder visible after
@@ -3232,6 +3252,7 @@ function renderDashTests(){
         h+='<div style="display:flex;gap:5px;margin-top:8px;align-items:center">';
         h+='<button class="wa-btn" onclick="resendTestAlert(\''+r.id+'\')" style="padding:6px;border-radius:8px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+_waIcon(16,'transparent')+'</button>';
         h+='<button onclick="togglePaperMade(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(r.paperMade?'#22c55e':_btnBdr)+';background:'+(r.paperMade?'#22c55e':_btnBg)+';color:'+(r.paperMade?'#fff':_btnTxt)+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.paperMade?'\u2705 Ready':'\ud83d\udcdd Paper')+'</button>';
+        h+='<button onclick="dashOpenTestRecord(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">edit_note</span>Marks</button>';
         h+='<button onclick="editReminderDate(\''+r.id+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:10px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;margin-right:3px">event</span>Date</button>';
         if(isToday&&!r.flashStopped)h+='<button onclick="stopReminderFlash(\''+r.id+'\')" title="Stop Flash" style="padding:6px 8px;border-radius:8px;border:1px solid '+_btnBdr+';background:'+_btnBg+';color:'+_btnTxt+';font-size:13px;cursor:pointer;flex-shrink:0">\ud83d\udd15</button>';
         h+='<button onclick="dismissReminder(\''+r.id+'\')" style="padding:6px 9px;border-radius:8px;border:none;background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:11px;font-weight:bold;cursor:pointer;flex-shrink:0">\u2715</button>';
@@ -10432,7 +10453,7 @@ function sendResultCardToWA(){
   var total=parseFloat(document.getElementById('pr-total').value)||20;
   var studsRaw=document.getElementById('pr-students').dataset.studs;
   if(!studsRaw){showToast('Select a class first',true);return;}
-  var studs=JSON.parse(studsRaw),scored=[],absent=[],np=[],ng=[],na=[];
+  var studs=JSON.parse(studsRaw).filter(function(s){var full=(db.students||[]).find(function(x){return x.id===s.id;});return full&&full.status!=='inactive'&&full.status!=='discontinued';}),scored=[],absent=[],np=[],ng=[],na=[];
   studs.forEach(function(s){
     var mk=document.getElementById('pm_'+s.id),raw=mk?(mk.value||'').trim():'';
     var ab=document.getElementById('pa_'+s.id),npe=document.getElementById('pnp_'+s.id),nge=document.getElementById('png_'+s.id),nae=document.getElementById('pna_'+s.id);
@@ -10477,10 +10498,10 @@ function sendResultCardToWA(){
   var recognitionGroups=rankGroups.filter(function(g){return g.rank<=3;});
   var topRankNames=top.map(function(s){return s.name;});
   var rankRows=scored.map(function(s){
-    var p=pct(s.marks),c=scoreColor(p),barBg=scoreBarBackground(p),barBorder=scoreBarBorder(p),tone=medalTone(s.rank);
+      var p=pct(s.marks),c=scoreColor(p),barBg=scoreBarBackground(p),barBorder=scoreBarBorder(p),tone=medalTone(s.rank);
     return '<div style="display:flex;align-items:center;gap:14px;padding:'+(largeClass?'11px 0':'14px 0')+';border-bottom:1px solid #e8edf2;min-width:0">'+
       '<div style="width:64px;flex:0 0 64px;text-align:center"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:50px;height:36px;padding:0 10px;'+rankBadgeStyle(p,s.rank,tone)+'border-radius:9px;font-size:16px;line-height:1;font-weight:700;text-align:center"><span style="position:relative;top:-1px">#'+s.rank+'</span></span></div>'+
-      '<div style="flex:1;min-width:0"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:15px"><div style="min-width:0;flex:1;font-size:'+(largeClass?'20px':'22px')+';line-height:1.38;font-weight:700;color:'+(p>=100?'#78350f':'#1d2b3a')+';overflow-wrap:anywhere;word-break:normal">'+esc(s.name)+'</div><div style="flex:0 0 auto;display:flex;align-items:baseline;gap:9px;white-space:nowrap"><span style="font-size:'+(largeClass?'20px':'22px')+';line-height:1.28;font-weight:700;color:#1d2b3a">'+markText(s.marks)+' / '+markText(total)+'</span><span style="font-size:15px;line-height:1.25;font-weight:700;color:'+c+';margin-left:5px">'+percentText(p,true)+'</span></div></div><div style="height:5px;margin-top:9px;background:#edf1f4;border-radius:8px;overflow:hidden"><div style="height:100%;width:'+p.toFixed(2)+'%;background:'+barBg+';'+barBorder+'border-radius:8px"></div></div></div></div>';
+      '<div style="flex:1;min-width:0"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:15px"><div style="min-width:0;flex:1;font-size:'+(largeClass?'24px':'26px')+';line-height:1.38;font-weight:700;color:'+(p>=100?'#78350f':'#1d2b3a')+';overflow-wrap:anywhere;word-break:normal">'+esc(s.name)+'</div><div style="flex:0 0 auto;display:flex;align-items:baseline;gap:9px;white-space:nowrap"><span style="font-size:'+(largeClass?'24px':'26px')+';line-height:1.28;font-weight:700;color:#1d2b3a">'+markText(s.marks)+' / '+markText(total)+'</span><span style="font-size:15px;line-height:1.25;font-weight:700;color:'+c+';margin-left:5px">'+percentText(p,true)+'</span></div></div><div style="height:5px;margin-top:9px;background:#edf1f4;border-radius:8px;overflow:hidden"><div style="height:100%;width:'+p.toFixed(2)+'%;background:'+barBg+';'+barBorder+'border-radius:8px"></div></div></div></div>';
   }).join('');
   var recognitionHasLargeTie=recognitionGroups.some(function(g){return g.students.length>3||g.students.map(function(x){return x.name;}).join(', ').length>48;});
   var recognitionLayoutVertical=false;
@@ -10496,7 +10517,7 @@ function sendResultCardToWA(){
   }).join('');
   var statusGroup=function(title,arr,accent){
     if(!arr.length)return '';
-    return '<div style="padding:14px 0;border-bottom:1px solid #e8edf2"><div style="display:flex;align-items:center;gap:9px"><span style="width:8px;height:8px;border-radius:50%;background:'+accent+';display:inline-block;flex:0 0 auto"></span><span style="font-size:13px;line-height:1.25;font-weight:700;letter-spacing:1.5px;color:'+accent+'">'+esc(title.toUpperCase())+'</span><span style="font-size:13px;line-height:1.25;color:#8793a1;font-weight:700">('+arr.length+')</span></div><div style="font-size:17px;line-height:1.5;color:#4b5b6d;font-weight:700;margin-top:7px;white-space:normal;overflow-wrap:anywhere;word-break:break-word">'+arr.map(function(name,index){return '<span style="display:inline-block;vertical-align:middle">'+esc(name)+'</span>'+(index<arr.length-1?'<span style="display:inline-block;margin:0 8px;vertical-align:middle">•</span>':'');}).join('')+'</div></div>';
+    return '<div style="padding:14px 0;border-bottom:1px solid #e8edf2"><div style="display:flex;align-items:center;gap:9px"><span style="width:8px;height:8px;border-radius:50%;background:'+accent+';display:inline-block;flex:0 0 auto"></span><span style="font-size:17px;line-height:1.25;font-weight:700;letter-spacing:1.5px;color:'+accent+'">'+esc(title.toUpperCase())+'</span><span style="font-size:17px;line-height:1.25;color:#8793a1;font-weight:700">('+arr.length+')</span></div><div style="font-size:21px;line-height:1.5;color:#4b5b6d;font-weight:700;margin-top:7px;white-space:normal;overflow-wrap:anywhere;word-break:break-word">'+arr.map(function(name,index){return '<span style="display:inline-block;vertical-align:middle">'+esc(name)+'</span>'+(index<arr.length-1?'<span style="display:inline-block;margin:0 8px;vertical-align:middle">•</span>':'');}).join('')+'</div></div>';
   };
   var logo=(typeof LOGO_DATA!=='undefined'&&LOGO_DATA)?LOGO_DATA:'';
   var clsRaw=(document.getElementById('pr-class').value||'All Classes').trim();
@@ -10533,7 +10554,7 @@ function sendResultCardToWA(){
   var card=document.createElement('div');
   card.id='pr-result-card-capture';
   card.style.cssText='position:absolute;left:-100000px;top:0;width:'+reportWidth+'px;box-sizing:border-box;padding:24px;background:#eef2f5;color:#1d2b3a;font-family:Google Sans,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;word-spacing:normal;letter-spacing:0;';
-  var stat=function(label,value,detail){return '<div style="flex:1;min-width:0;text-align:center;padding:0 12px"><div style="font-size:14px;line-height:1.2;font-weight:700;letter-spacing:1.3px;color:#70808f">'+label+'</div><div style="font-size:30px;line-height:1.2;font-weight:700;color:#1d2b3a;margin-top:6px">'+value+'</div><div style="font-size:14px;line-height:1.25;color:#718192;margin-top:5px">'+detail+'</div></div>';};
+  var stat=function(label,value,detail){return '<div style="flex:1;min-width:0;text-align:center;padding:0 12px"><div style="font-size:18px;line-height:1.2;font-weight:700;letter-spacing:1.3px;color:#70808f">'+label+'</div><div style="font-size:40px;line-height:1.2;font-weight:700;color:#1d2b3a;margin-top:6px">'+value+'</div><div style="font-size:17px;line-height:1.25;color:#718192;margin-top:5px">'+detail+'</div></div>';};
   card.innerHTML='<div style="background:#fff;border:1px solid #dbe3ea;border-radius:18px;padding:'+(largeClass?'25px 30px':'32px 38px')+';box-shadow:0 9px 24px rgba(28,43,61,.08)">'+
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:2px solid #1e3b57"><div style="display:flex;align-items:center;gap:13px;min-width:0"><img src="'+logo+'" style="width:52px;height:52px;object-fit:contain;border-radius:10px"><div style="min-width:0"><div style="font-size:'+(largeClass?'28px':'31px')+';line-height:1.15;font-weight:700;letter-spacing:1.4px;color:#17334e">DNS CLASSES</div><div style="font-size:11px;line-height:1.3;font-weight:700;letter-spacing:2px;color:#8291a0;margin-top:5px">ACADEMIC PERFORMANCE REPORT</div>'+school+'</div></div><div style="text-align:right;flex:0 0 auto"><div style="font-size:10px;line-height:1.2;font-weight:700;letter-spacing:1.5px;color:#8b98a5">CLASS</div><div style="font-size:'+(largeClass?'30px':'34px')+';line-height:1.15;font-weight:700;color:#17334e;margin-top:4px;white-space:nowrap">'+esc(classLabel)+'</div></div></div>'+ 
     '<div style="padding:'+(largeClass?'22px 0 17px':'28px 0 20px')+'"><div style="font-size:12px;line-height:1.2;font-weight:700;letter-spacing:2px;color:#c58a16">TEST RESULTS</div><div style="font-size:'+chapterTitleSize+'px;line-height:1.3;font-weight:600;letter-spacing:normal;color:#17334e;margin-top:10px;max-width:100%;overflow-wrap:anywhere;word-break:normal">'+chapterLineMarkup+'</div></div>'+ 
@@ -10541,13 +10562,13 @@ function sendResultCardToWA(){
       stat('HIGHEST',top.length?markText(top[0].marks):'—',top.length?percentText(pct(top[0].marks)):'No score')+
       '<div style="width:1px;background:#e3e9ee"></div>'+stat('AVERAGE',scored.length?markText(average):'—',scored.length?percentText(pct(average)):'No score')+
       '<div style="width:1px;background:#e3e9ee"></div>'+stat('LOWEST',scored.length?markText(scored[scored.length-1].marks):'—',scored.length?percentText(pct(scored[scored.length-1].marks)):'No score')+'</div>'+ 
-    '<div style="margin-top:'+(largeClass?'22px':'30px')+'"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:2px solid #17334e"><div style="font-size:12px;line-height:1.2;font-weight:700;letter-spacing:2px;color:#c58a16">RECOGNITION</div><div style="font-size:13px;line-height:1.25;color:#657789;font-weight:700;white-space:nowrap">'+visualText('Ranks 1–3 • all ties shown')+'</div></div><div style="display:flex;flex-direction:row;align-items:stretch;margin-top:8px">'+(podium||'<div style="width:100%;padding:18px 0;color:#718096">No scored students yet.</div>')+'</div></div>'+ 
+    '<div style="margin-top:'+(largeClass?'22px':'30px')+';padding:16px 18px 10px;background:linear-gradient(135deg,#fffdf4,#fff8df);border:1.5px solid #e7c766;border-radius:14px;box-shadow:0 4px 12px rgba(180,134,20,.10)"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:2px solid #c58a16"><div style="font-size:14px;line-height:1.2;font-weight:800;letter-spacing:2px;color:#9a6b00">🏆 RECOGNITION</div><div style="font-size:13px;line-height:1.25;color:#657789;font-weight:700;white-space:nowrap">'+visualText('Ranks 1–3 • all ties shown')+'</div></div><div style="display:flex;flex-direction:row;align-items:stretch;margin-top:8px">'+(podium||'<div style="width:100%;padding:18px 0;color:#718096">No scored students yet.</div>')+'</div></div>'+ 
     '<div style="margin-top:'+(largeClass?'22px':'30px')+'"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:2px solid #17334e"><div style="font-size:12px;line-height:1.2;font-weight:700;letter-spacing:2px;color:#17334e">CLASS PERFORMANCE</div><div style="font-size:13px;line-height:1.25;color:#657789;font-weight:700;white-space:nowrap">'+visualText(scored.length?'All scored students':'No scored students')+'</div></div><div style="margin-top:2px">'+(rankRows||'<div style="padding:22px 0;color:#718096">No scored students yet.</div>')+'</div></div>'+ 
     '<div style="margin-top:'+(largeClass?'20px':'28px')+';border-top:1px solid #e3e9ee">'+
       statusGroup('Absent',absent,'#d34855')+
       statusGroup('Not prepared',np,'#c58a16')+
       statusGroup('Not given',ng,'#6c7b8b')+
-      statusGroup('Not attempted',na,'#6c7b8b')+
+      statusGroup('Not applicable',na,'#6c7b8b')+
     '</div>'+ 
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:19px;padding-top:13px;border-top:1px solid #e3e9ee"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;line-height:1.25;color:#718192;font-weight:700;letter-spacing:normal;word-spacing:normal"><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#fef08a,#fde047);border:1.5px solid #b45309;margin-right:4px"></i>100<span style="margin-left:3px">%</span></span><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#15803d;margin-right:4px"></i>80<span style="margin-left:3px">%</span> +</span><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:4px"></i>60<span style="margin-left:3px">%</span> - 79<span style="margin-left:3px">%</span></span><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc7037;margin-right:4px"></i>40<span style="margin-left:3px">%</span> - 59<span style="margin-left:3px">%</span></span><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#d34855;margin-right:4px"></i>Below<span style="margin-left:4px">40</span><span style="margin-left:3px">%</span></span></div><div style="font-size:11px;line-height:1.25;color:#9aa6b2;font-weight:700;white-space:nowrap;word-spacing:4px;letter-spacing:normal">DNS CLASSES</div></div>'+ 
   '</div>';
