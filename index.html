@@ -3190,13 +3190,17 @@ function dashOpenTestRecord(reminderId){
   var match=raw.match(/^(.*?)\s+(?:--\s*)?(T\d+)\s*$/i);
   if(!match||!r.cls){showToast('This test does not have class and test number details',true);return;}
   var chapter=match[1].trim(),tno=match[2].toUpperCase();
-  var stu=(db.students||[]).find(function(s){return String(s.grade||'Other')===String(r.cls);})
+  var norm=function(v){return String(v||'').replace(/\s+/g,' ').trim().toLowerCase();};
+  var alertNames=String(r.forWho||'').split(/\s*,\s*/).map(norm).filter(Boolean);
+  var stu=(r.isStudent&&alertNames.length?(db.students||[]).find(function(s){
+    return alertNames.indexOf(norm(_studentDisplayName(s,true)))>=0||alertNames.indexOf(norm(s.name))>=0;
+  }):null)
+    ||(db.students||[]).find(function(s){return String(s.grade||'Other')===String(r.cls);})
     ||(db.students||[]).find(function(s){return _parseGradeNum(s.grade||'')===_parseGradeNum(r.cls);});
   if(!stu){showToast('No student found for '+r.cls,true);return;}
   pgLoadAllMarksForTest(stu.id,chapter,tno);
   setTimeout(function(){
     var loc=document.getElementById('pr-loc');if(loc)loc.value='';
-    var school=document.getElementById('pr-school');if(school){school.value='';delete school.dataset.progressContextSchool;}
     posterLoadStudents();
     var topic=document.getElementById('pr-topic');if(topic){var opt=Array.prototype.find.call(topic.options||[],function(o){return o.value===chapter;});if(!opt){opt=document.createElement('option');opt.value=chapter;opt.textContent=chapter;topic.appendChild(opt);}topic.value=chapter;}
     var tn=document.getElementById('pr-tno');if(tn)tn.value=tno;
@@ -10508,7 +10512,7 @@ function sendResultCardToWA(){
   var podium=recognitionGroups.map(function(group){
     var p=pct(group.marks),c=scoreColor(p),tone=medalTone(group.rank),isFirst=group.rank===1;
     var symbol=group.marks===total?'👑':medal(group.rank);
-    var recognitionNameSize=largeClass?22:24;var names;var recognitionNamesRow=function(students){return students.map(function(x,index){return (index?'<span style="display:inline-block;margin:0 5px;vertical-align:middle">•</span>':'')+'<span style="display:inline-block;white-space:nowrap;letter-spacing:normal;word-spacing:normal;font-kerning:normal;font-variant-ligatures:normal">'+esc(x.name)+'</span>';}).join('');};if(group.students.length>3){var nameRows=[];for(var rowStart=0;rowStart<group.students.length;rowStart+=3){nameRows.push('<div style="display:flex;justify-content:center;align-items:center;width:100%;text-align:center">'+recognitionNamesRow(group.students.slice(rowStart,rowStart+3))+'</div>');}names='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;text-align:center">'+nameRows.join('')+'</div>';}else{names='<div style="display:flex;justify-content:center;align-items:center;width:100%;text-align:center">'+recognitionNamesRow(group.students)+'</div>'; }
+    var recognitionNameSize=largeClass?22:24;var names;var recognitionNamesRow=function(students){return students.map(function(x,index){return (index?'<span style=\"display:inline-block;margin:0 5px;vertical-align:middle\">•</span>':'')+'<span style=\"display:inline-block;white-space:nowrap;letter-spacing:normal;word-spacing:normal;font-kerning:normal;font-variant-ligatures:normal\">'+esc(x.name)+'</span>';}).join('');};var nameRows=[];for(var rowStart=0;rowStart<group.students.length;rowStart+=2){nameRows.push('<div style=\"display:flex;justify-content:center;align-items:center;width:100%;text-align:center\">'+recognitionNamesRow(group.students.slice(rowStart,rowStart+2))+'</div>');}names='<div style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;text-align:center\">'+nameRows.join('')+'</div>'; 
     var tiedLabel=group.students.length>1?group.students.length+' students tied':'1 student';
     var tiedLabelMarkup='<span style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><span>'+String(group.students.length)+'</span><span>'+(group.students.length===1?'Student':'Students')+'</span><span>tied</span></span>';
     var groupStyle=recognitionLayoutVertical?'width:100%;box-sizing:border-box;text-align:center;padding:12px 8px 15px;border-left:0;border-bottom:1px solid #edf1f4':'flex:1;min-width:0;text-align:center;padding:8px 18px;border-left:0';
