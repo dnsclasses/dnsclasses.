@@ -2358,6 +2358,12 @@ function _getMonthlyFigures(s,ym){
   var effYm=ym||curYm;
   var hist=(db.settings&&db.settings.rankHistory)||{};
   var _monthArchive=hist[effYm];
+  // Prefer explicit save-time month metadata before consulting snapshots.
+  // This is essential for students who joined after the month-start snapshot.
+  if(effYm===curYm){
+    var _dated=_computeDatedMonthlyTotals(s,curYm);
+    if(_dated.hasDated)return{score:_dated.score,max:_dated.max,given:_dated.given,pct:_dated.pct};
+  }
   // A student added after the month's snapshot has no baseline. Do not use a
   // zero baseline for that student, because that would reinterpret every old
   // cumulative test as a test in the selected month.
@@ -2367,19 +2373,11 @@ function _getMonthlyFigures(s,ym){
   var baseline=(_monthArchive&&_monthArchive[s.id])||{score:0,max:0,given:0};
   var endData;
   if(effYm===curYm){
-    // Prefer explicit save-time month metadata. This is exact and does not
-    // depend on cumulative snapshots or class-level guesses.
-    var _dated=_computeDatedMonthlyTotals(s,curYm);
-    if(_dated.hasDated)return{score:_dated.score,max:_dated.max,given:_dated.given,pct:_dated.pct};
-    // Backward compatibility for records saved before dates were introduced.
-    // The current-month archive is the cumulative end of the previous month;
-    // subtracting it recovers only records added after that archive. This also
-    // keeps older active tests visible even before they receive date metadata.
-    if(!_monthArchive||Object.prototype.hasOwnProperty.call(_monthArchive,s.id)===false)return{score:0,max:0,given:0,pct:null};
-    endData=_computeStudentTotals(s,true);
-    // The current month's snapshot is the cumulative total at the start of
-    // this month. Subtracting it from the live cumulative total gives only
-    // marks from tests conducted in the current month.
+    // Undated legacy records cannot be assigned reliably to the current
+    // month. Do not infer them from cumulative totals: otherwise old marks
+    // can appear as fabricated current-month scores or denominators. They can
+    // be repaired by selecting TEST DATE and saving the test again.
+    return{score:0,max:0,given:0,pct:null};
   } else {
     var ny=_nextYmStr(effYm);
     endData=(hist[ny]&&hist[ny][s.id])||baseline;
