@@ -664,6 +664,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
     </div>
     <div style="min-width:0"><label class="flabel">TEST No.</label><select id="pr-tno" onchange="_restoreScoreState()" style="width:100%;padding:10px 4px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;text-align:center"><option value="">Select test...</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="T4">T4</option><option value="T5">T5</option><option value="T6">T6</option><option value="T7">T7</option><option value="T8">T8</option><option value="T9">T9</option><option value="T10">T10</option><option value="T11">T11</option><option value="T12">T12</option><option value="T13">T13</option><option value="T14">T14</option><option value="T15">T15</option><option value="T16">T16</option><option value="T17">T17</option><option value="T18">T18</option><option value="T19">T19</option><option value="T20">T20</option></select></div>
     <div style="min-width:0"><label class="flabel">TOTAL</label><input id="pr-total" type="number" min="1" max="200" value="20" style="width:100%;padding:10px 6px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;box-sizing:border-box;text-align:center"></div>
+    <div style="min-width:0"><label class="flabel">TEST DATE</label><div id="pr-recorded-date-btn" onclick="_openThemedDatePicker('pr-recorded-date')" style="width:100%;padding:10px 6px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center">Select date...</div><input id="pr-recorded-date" type="text" style="display:none"></div>
   </div>
 
   <div id="pr-students" style="margin-bottom:14px"></div>
@@ -2309,6 +2310,38 @@ function applyRankTopCustom(){
 }
 // Reconstructs any month's marks for a student: live data for the current month,
 // or (next month's archived baseline − this month's archived baseline) for past months.
+function _computeDatedMonthlyTotals(s,ym){
+  var out={score:0,max:0,given:0,hasDated:false};
+  var progress=db.progress&&db.progress[s.id]?db.progress[s.id]:{};
+  var ck=_chKeyCls(s.grade||'Other',s.school||'');
+  var valid=new Set((db.chapters&&(db.chapters[ck]||db.chapters[s.grade||'Other'])||[]).map(function(c){return c.name;}));
+  Object.keys(progress).forEach(function(ch){
+    if(!valid.has(ch))return;
+    Object.keys(progress[ch]||{}).forEach(function(tno){
+      var e=progress[ch][tno];
+      if(!e||e.recordedMonth!==ym)return;
+      out.hasDated=true;
+      if(e.total&&e.v==='AB'){out.max+=Number(e.total)||0;out.given++;}
+      else if(e.total&&typeof e.v==='number'){out.score+=Number(e.v)||0;out.max+=Number(e.total)||0;out.given++;}
+    });
+  });
+  var mocks=(db.mockExams&&db.mockExams[s.id])||[];
+  mocks.forEach(function(e){
+    var d=String(e&& (e.recordedMonth||e.dateGivenMonth||'')||'');
+    if(d!==ym)return;
+    out.hasDated=true;
+    if(e.total){out.score+=Number(e.marks)||0;out.max+=Number(e.total)||0;out.given++;}
+  });
+  out.score=Math.round(out.score*100)/100;
+  out.max=Math.round(out.max*100)/100;
+  out.pct=out.max>0?Math.round(out.score/out.max*100):null;
+  return out;
+}
+function _rankTestRegistryHas(ym,grade){
+  var rt=db.settings&&db.settings.rankTests&&db.settings.rankTests[ym];
+  if(!rt)return false;
+  return !!rt[String(grade||'').trim()];
+}
 function _getMonthlyFigures(s,ym){
   if(typeof ym==='string'&&ym.indexOf(',')>=0){
     var _months=ym.split(',').filter(function(v){return v;});
@@ -2324,10 +2357,29 @@ function _getMonthlyFigures(s,ym){
   var curYm=new Date().toISOString().slice(0,7);
   var effYm=ym||curYm;
   var hist=(db.settings&&db.settings.rankHistory)||{};
-  var baseline=(hist[effYm]&&hist[effYm][s.id])||{score:0,max:0,given:0};
+  var _monthArchive=hist[effYm];
+  // A student added after the month's snapshot has no baseline. Do not use a
+  // zero baseline for that student, because that would reinterpret every old
+  // cumulative test as a test in the selected month.
+  if(effYm===curYm&&_monthArchive&&Object.prototype.hasOwnProperty.call(_monthArchive,s.id)===false){
+    return{score:0,max:0,given:0,pct:null};
+  }
+  var baseline=(_monthArchive&&_monthArchive[s.id])||{score:0,max:0,given:0};
   var endData;
   if(effYm===curYm){
+    // Prefer explicit save-time month metadata. This is exact and does not
+    // depend on cumulative snapshots or class-level guesses.
+    var _dated=_computeDatedMonthlyTotals(s,curYm);
+    if(_dated.hasDated)return{score:_dated.score,max:_dated.max,given:_dated.given,pct:_dated.pct};
+    // Backward compatibility for records saved before dates were introduced.
+    // The current-month archive is the cumulative end of the previous month;
+    // subtracting it recovers only records added after that archive. This also
+    // keeps older active tests visible even before they receive date metadata.
+    if(!_monthArchive||Object.prototype.hasOwnProperty.call(_monthArchive,s.id)===false)return{score:0,max:0,given:0,pct:null};
     endData=_computeStudentTotals(s,true);
+    // The current month's snapshot is the cumulative total at the start of
+    // this month. Subtracting it from the live cumulative total gives only
+    // marks from tests conducted in the current month.
   } else {
     var ny=_nextYmStr(effYm);
     endData=(hist[ny]&&hist[ny][s.id])||baseline;
@@ -2380,6 +2432,8 @@ function _restoreScoreState(){
     var sr=document.getElementById('pr-students').dataset.studs;
     if(!sr)return;
     var studs=JSON.parse(sr);
+    var _datePicker=document.getElementById('pr-recorded-date');
+    if(_datePicker){_datePicker.value=_todayStr();_datePicker.dispatchEvent(new Event('input',{bubbles:true}));_datePicker.dispatchEvent(new Event('change',{bubbles:true}));}
     // Step 1: Hard-reset ALL students first - a fresh test always starts completely blank.
     // Everything is reset (value, checked, disabled, opacity, background, pointer-events)
     // so nothing from the previously viewed test can survive.
@@ -2402,8 +2456,10 @@ function _restoreScoreState(){
     var hasSaved=false;
     studs.forEach(function(s){
       var source = (useDraft && draft.entries[s.id]) ? draft.entries[s.id] : (db.progress && db.progress[s.id] && db.progress[s.id][chapter] && db.progress[s.id][chapter][tno]);
-      if(!source)return;
-      hasSaved=true;
+if(!source)return;
+       hasSaved=true;
+       var _dateEl=document.getElementById('pr-recorded-date');
+       if(_dateEl&&source.recordedAt&&!_dateEl.value)_dateEl.value=String(source.recordedAt).slice(0,10);
       var mk=document.getElementById('pm_'+s.id);
       var ab=document.getElementById('pa_'+s.id);
       var np=document.getElementById('pnp_'+s.id);
@@ -2516,6 +2572,8 @@ function resetScoreChart(){
   if(topic){topic.innerHTML='<option value="">Select class first...</option>';topic.disabled=true;if(typeof _prUpdateTopicBtn==='function')_prUpdateTopicBtn();}
   if(tno)tno.value='';
   if(total)total.value='20';
+   var recordedDate=document.getElementById('pr-recorded-date');
+   if(recordedDate){recordedDate.value=_todayStr();recordedDate.dispatchEvent(new Event('input',{bubbles:true}));recordedDate.dispatchEvent(new Event('change',{bubbles:true}));}
   // Clear all mark inputs and checkboxes for each student
   var cont=document.getElementById('pr-students');
   var studsRaw=cont?cont.dataset.studs:'';
@@ -2984,13 +3042,19 @@ function _initDateButtons(){
     ['mgr-exp-date','Select date...'],['mgr-edit-exp-date','Select date...'],
     ['mgr-inc-date','Select date...'],['mgr-edit-inc-date','Select date...'],
     ['pay-date','Select date...'],['mock-date-checked','Select date...'],
-    ['mock-date','Select date...'],['inv-start','Select date...'],
+    ['mock-date','Select date...'],['pr-recorded-date','Select date...'],['inv-start','Select date...'],
     ['inv-maturity','Select date...'],['reminder-date-input','Select date...'],
     ['editcycle-start','Select date...'],['edithist-date','Select date...'],
     ['lc-date','Select date...'],['prn-hw-from','Select date...'],
     ['prn-hw-to','Select date...'],['daily-date-pick','Select date...']
   ];
   fields.forEach(function(f){ _dnsCalBindBtn(f[0]+'-btn', f[0], f[1]); });
+  var _testDate=document.getElementById('pr-recorded-date');
+  if(_testDate&&!_testDate.value){
+    _testDate.value=_todayStr();
+    _testDate.dispatchEvent(new Event('input',{bubbles:true}));
+    _testDate.dispatchEvent(new Event('change',{bubbles:true}));
+  }
 }
 
 function _initThemedCalendars(){
@@ -4176,6 +4240,22 @@ function toggleRankExclude(sid,checked){
     countBadge.style.display=n>0?'':'none';
   }
 }
+function _getCommonRankMonthMax(items,getter){
+  var counts={};
+  (items||[]).forEach(function(item){
+    var n=Number(getter(item)||0);
+    if(!isFinite(n)||n<=0)return;
+    n=Math.round(n*100)/100;
+    var key=String(n);
+    counts[key]=(counts[key]||0)+1;
+  });
+  var best=0,bestCount=0;
+  Object.keys(counts).forEach(function(key){
+    var n=Number(key),c=counts[key];
+    if(c>bestCount||(c===bestCount&&(best===0||n<best))){best=n;bestCount=c;}
+  });
+  return best||1;
+}
 function renderRankings(){
   var block=document.getElementById('bc-rank-content');
   if(!block)return;
@@ -4251,7 +4331,7 @@ function renderRankings(){
     var _prevRankMap=_rankMonthValues.length===1?_computeGradeRankMap(_gradeStArr,_prevYmStr(_selectedRankMonth)):{};
     if(_rankTopN>0)students=students.slice(0,_rankTopN);
     if(!students.length)return;
-    var _groupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthMax||0;})));
+    var _groupMaxPossible=_getCommonRankMonthMax(students,function(it){return it.data.monthMax;});
     var _groupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthScore||0;})));
     h+='<div style="margin-bottom:20px">';
     h+='<div style="font-size:14px;font-weight:800;color:var(--acc);margin-bottom:8px;padding:5px 0;border-bottom:2px solid var(--acc)">'
@@ -4312,7 +4392,7 @@ function renderRankings(){
       }
       h+='</div>';
       h+='<div style="flex-shrink:0;text-align:right">';
-      h+='<div style="font-size:17px;font-weight:800;color:'+pctColor+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:11px;font-weight:600;color:var(--sub);opacity:0.85">/'+_groupMaxPossible+'</span>':'--')+'</div>';
+      h+='<div style="font-size:17px;font-weight:800;color:'+pctColor+'">'+(d.monthMax>0?d.monthScore+'<span style="font-size:11px;font-weight:600;color:var(--sub);opacity:0.85">/'+_groupMaxPossible+'</span>':'--')+'</div>';
       if(d.pct!==null)h+='<div style="font-size:20px;font-weight:800;color:'+overallColor+';margin-top:2px">'+d.pct+'%</div>';
       h+='</div>';
       h+='</div>';
@@ -4533,7 +4613,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
     var _grSt=students.map(function(it){return it.s;});
     var _prevRankMap=String(monthYm||'').indexOf(',')<0?_computeGradeRankMap(_grSt,_prevYmStr(monthYm)):{};
     if(_printTopN>0)students=students.slice(0,_printTopN);
-    var _nbGroupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.d.monthMax||0;})));
+    var _nbGroupMaxPossible=_getCommonRankMonthMax(students,function(it){return it.d.monthMax;});
     var _nbGroupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.d.monthScore||0;})));
     var _clsLbl=esc(g);
     if(_subKeys.length>1){
@@ -4575,7 +4655,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var _nbRkLeft=d.pct!==null&&i<3?'-34px':'0px';
       var _trendBadge=(monthYm&&String(monthYm).indexOf(',')<0&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26,s,_prevYmStr(monthYm)):'';
       h+='<div class="top"><div class="rank" style="font-size:'+_nbRkSz+';line-height:1;position:relative;left:'+_nbRkLeft+'">'+rk+'</div><div class="name" style="display:flex;align-items:center;gap:14px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:155px;flex-shrink:0">'+_buildGaugeMeter(d.pct,155,true)+'</div>':'')+'</div><div style="flex-shrink:0;text-align:right">';
-      h+='<div class="pct" style="color:'+col+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:24px;font-weight:600;color:#888">/'+_nbGroupMaxPossible+'</span>':'--')+'</div>';
+      h+='<div class="pct" style="color:'+col+'">'+(d.monthMax>0?d.monthScore+'<span style="font-size:24px;font-weight:600;color:#888">/'+_nbGroupMaxPossible+'</span>':'--')+'</div>';
       if(d.pct!==null)h+='<div style="font-size:36px;font-weight:800;color:'+overallCol+';margin-top:3px">'+d.pct+'%</div>';
       h+='</div></div>';
       h+='<div class="mid"><div class="bar-bg"><div class="bar-fill" style="width:'+bw+'%;background:'+overallCol+'"></div></div>';
@@ -4704,7 +4784,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
     var _pGrSt=students.map(function(it){return it.s;});
     var _prevRankMap=String(monthYm||'').indexOf(',')<0?_computeGradeRankMap(_pGrSt,_prevYmStr(monthYm)):{};
     if(_printTopN>0)students=students.slice(0,_printTopN);
-    var _pGroupMaxPossible=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthMax||0;})));
+    var _pGroupMaxPossible=_getCommonRankMonthMax(students,function(it){return it.data.monthMax;});
     var _pGroupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthScore||0;})));
     var _clsLbl=esc(g);
     if(_subKeys.length>1){
@@ -4759,7 +4839,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
       var _trendBadge=(monthYm&&String(monthYm).indexOf(',')<0&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,17,s,_prevYmStr(monthYm)):'';
       h+='<div class="name" style="font-size:'+_nSz+';display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:85px;flex-shrink:0">'+_buildGaugeMeter(d.pct,85,false)+'</div>':'')+'</div>';
       h+='<div style="flex-shrink:0;text-align:right">';
-      h+='<div class="pct" style="color:'+pctColor+'">'+(d.pct!==null?d.monthScore+'<span style="font-size:16px;font-weight:600;color:#888">/'+_pGroupMaxPossible+'</span>':'--')+'</div>';
+      h+='<div class="pct" style="color:'+pctColor+'">'+(d.monthMax>0?d.monthScore+'<span style="font-size:16px;font-weight:600;color:#888">/'+_pGroupMaxPossible+'</span>':'--')+'</div>';
       if(d.pct!==null)h+='<div style="font-size:24px;font-weight:800;color:'+overallColor+';margin-top:2px">'+d.pct+'%</div>';
       h+='</div>';
       h+='</div>';
@@ -12763,7 +12843,7 @@ function _recordProgressMarks(){
       if(!db.progress[s.id])db.progress[s.id]={};
       if(!db.progress[s.id][chapter])db.progress[s.id][chapter]={};
       var isNA=document.getElementById('pna_'+s.id)&&document.getElementById('pna_'+s.id).checked;
-      var progressContext={total:total,school:String(fullStudent.school||fullStudent.schoolName||fullStudent.school_name||'').trim(),grade:String(fullStudent.grade||'').trim(),location:String(fullStudent.location||'Home').trim()};
+      var _dateEl=document.getElementById('pr-recorded-date');var _chosenDate=_dateEl&&_dateEl.value?_dateEl.value:'';var _recordedAt=_chosenDate?new Date(_chosenDate+'T12:00:00').toISOString():new Date().toISOString();var _recordedMonth=_chosenDate?_chosenDate.slice(0,7):_recordedAt.slice(0,7);var progressContext={total:total,recordedAt:_recordedAt,recordedMonth:_recordedMonth,school:String(fullStudent.school||fullStudent.schoolName||fullStudent.school_name||'').trim(),grade:String(fullStudent.grade||'').trim(),location:String(fullStudent.location||'Home').trim()};
       if(isNA)db.progress[s.id][chapter][tno]=Object.assign({v:'NA'},progressContext);
       else if(isAbs)db.progress[s.id][chapter][tno]=Object.assign({v:'AB'},progressContext);
       else if(isNP)db.progress[s.id][chapter][tno]=Object.assign({v:'NP'},progressContext);
@@ -12773,6 +12853,11 @@ function _recordProgressMarks(){
     });
     var hasPersisted=studs.some(function(s){return db.progress[s.id]&&db.progress[s.id][chapter]&&db.progress[s.id][chapter][tno];});
     if(!hasPersisted)throw new Error('Progress entry was not created for '+chapter+' '+tno);
+    if(!db.settings)db.settings={};
+    if(!db.settings.rankTests)db.settings.rankTests={};
+    var _rankYm=new Date().toISOString().slice(0,7);
+    if(!db.settings.rankTests[_rankYm])db.settings.rankTests[_rankYm]={};
+    db.settings.rankTests[_rankYm][String(cls||'').trim()]=true;
     saveDB();
     showToast('Progress recorded!');
     _refreshAllProgressViews();
