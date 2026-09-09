@@ -377,7 +377,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
       </div>
       <div onclick="toggleDashSection('collect')" id="fc-dash-collect" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(245,158,11,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-orange);font-size:17px">payments</span></div>
-        <div id="s-dash-collect" class="m3-stat-num" style="font-size:14px">₹0</div><div class="m3-stat-label" style="font-size:9px">Collections</div>
+        <div id="s-dash-collect" class="m3-stat-num" style="font-size:14px;line-height:1.05"><div>₹0</div><div style="font-size:10px;color:var(--sub);font-weight:600;margin-top:3px">/₹0</div></div><div class="m3-stat-label" style="font-size:9px">Collections</div>
       </div>
       <div onclick="toggleDashSection('daily')" id="fc-dash-daily" class="m3-card" style="cursor:pointer;padding:12px 4px;text-align:center;box-shadow:none">
         <div class="m3-stat-icon" style="background:rgba(139,92,246,.12);width:32px;height:32px;margin:0 auto 6px"><span class="material-symbols-outlined" style="color:var(--m3-purple);font-size:17px">calendar_today</span></div>
@@ -3381,7 +3381,7 @@ function _updateDashSmallCards(){
   var todayStr=_todayStr();
   var _light=document.body.classList.contains('light');
 
-  var collectThisMonth=0,collectToday=0;
+  var collectThisMonth=0,collectToday=0,expectedThisMonth=0;
   (db.students||[]).forEach(function(s){
     Object.keys(s.payments||{}).forEach(function(key){
       var rec=s.payments[key];
@@ -3390,13 +3390,20 @@ function _updateDashSmallCards(){
       if(key.indexOf(prefix)===0)collectThisMonth+=amt;
       if(rec.paidOn&&rec.paidOn.slice(0,10)===todayStr)collectToday+=amt;
     });
+    // Use the same fee-cycle rules as the Fees section so the expected
+    // amount includes each student's monthly fee only when their fee cycle
+    // falls in the selected month.
+    if(Number(s.fees)>0&&typeof getCycles==='function'){
+      var _hasMonthCycle=getCycles(s).some(function(cy){return cy&&String(cy.key||'').indexOf(prefix)===0;});
+      if(_hasMonthCycle)expectedThisMonth+=Number(s.fees)||0;
+    }
   });
   var manualInc=0;
   ((db.manager&&db.manager.income)||[]).forEach(function(e){
     if(e.date&&e.date.indexOf(prefix)===0)manualInc+=Number(e.amount||0);
   });
   var elC=document.getElementById('s-dash-collect');
-  if(elC)elC.textContent='\u20b9'+Math.round(collectThisMonth).toLocaleString();
+  if(elC)elC.innerHTML='<div>₹'+Math.round(collectThisMonth).toLocaleString()+'</div><div style="font-size:10px;color:var(--sub);font-weight:600;margin-top:3px">/₹'+Math.round(expectedThisMonth).toLocaleString()+'</div>';
   var elD=document.getElementById('s-dash-daily');
   if(elD)elD.textContent='\u20b9'+Math.round(collectToday).toLocaleString();
 
