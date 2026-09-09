@@ -3390,12 +3390,19 @@ function _updateDashSmallCards(){
       if(key.indexOf(prefix)===0)collectThisMonth+=amt;
       if(rec.paidOn&&rec.paidOn.slice(0,10)===todayStr)collectToday+=amt;
     });
-    // Use the same fee-cycle rules as the Fees section so the expected
-    // amount includes each student's monthly fee only when their fee cycle
-    // falls in the selected month.
-    if(Number(s.fees)>0&&typeof getCycles==='function'){
-      var _hasMonthCycle=getCycles(s).some(function(cy){return cy&&String(cy.key||'').indexOf(prefix)===0;});
-      if(_hasMonthCycle)expectedThisMonth+=Number(s.fees)||0;
+    // Expected fees are based on every non-free student whose fee-paying
+    // run overlaps the selected month, not only on the exact due-day key.
+    // This ensures all students chargeable in the month are included.
+    if(Number(s.fees)>0&&s.joiningDate){
+      var _mp=prefix.split('-'),_my=Number(_mp[0]),_mm=Number(_mp[1])-1;
+      var _monthStart=new Date(_my,_mm,1),_monthEnd=new Date(_my,_mm+1,0,23,59,59,999);
+      var _excluded=(s.excludedMonths||[]).indexOf(prefix)>=0;
+      var _feeRunOverlaps=!_excluded&&getRuns(s).some(function(run){
+        var _from=run&&run.from?new Date(run.from):new Date(s.joiningDate);
+        var _to=run&&run.to?new Date(run.to):null;
+        return _from<=_monthEnd&&(!_to||_to>=_monthStart);
+      });
+      if(_feeRunOverlaps)expectedThisMonth+=Number(s.fees)||0;
     }
   });
   var manualInc=0;
