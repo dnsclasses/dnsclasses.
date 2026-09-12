@@ -2178,7 +2178,7 @@ function _buildGaugeMeter(pct,size,showLabels){
   var zones=[
     {c:'#dc2626',emoji:'\ud83d\ude21'},  // red — very angry
     {c:'#f2700f',emoji:'\ud83d\ude1f'},  // orange — worried
-    {c:'#d1b000',emoji:'\ud83d\ude10'},  // gold — neutral
+    {c:'#a16207',emoji:'\ud83d\ude10'},  // gold — neutral
     {c:'#65a30d',emoji:'\ud83d\ude42'},  // olive — content
     {c:'#166534',emoji:'\ud83d\ude04'}   // dark green — happy
   ];
@@ -2384,6 +2384,9 @@ function _getMonthlyFigures(s,ym){
   }
   var mScore=Math.round(Math.max(0,endData.score-baseline.score)*100)/100;
   var mMax=Math.round(Math.max(0,endData.max-baseline.max)*100)/100;
+  // Defensive data integrity: a student's marks can never exceed the
+  // maximum marks recorded for that month's tests.
+  if(mMax>0&&mScore>mMax)mScore=mMax;
   var mGiven=Math.max(0,endData.given-baseline.given);
   var mPct=mMax>0?Math.round(mScore/mMax*100):null;
   return{score:mScore,max:mMax,given:mGiven,pct:mPct};
@@ -4190,7 +4193,7 @@ function _pctGradBg(pct,dk){
   if(pct>=100){r=253;g=224;b=71;}      // #fde047 gold (full marks)
   else if(pct>=90){r=22;g=101;b=52;}   // #166534 dark green
   else if(pct>=75){r=101;g=163;b=13;}   // #65a30d olive
-  else if(pct>=60){r=209;g=176;b=0;}   // #d1b000 gold
+  else if(pct>=60){r=183;g=121;b=31;}   // #b7791f medium gold
   else if(pct>=40){r=234;g=88;b=12;}   // #ea580c darker orange
   else{r=220;g=38;b=38;}               // #dc2626 red
   var a=dk?'0.25':'0.15';
@@ -4353,9 +4356,9 @@ function renderRankings(){
       var medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'';
       var rank=d.pct!==null?(medal||(i+1)+'.'):'--';
       var relScore=d.monthPct===null?null:(d.monthScore/_groupMaxScore*100);
-      var pctColor=relScore===null?'var(--sub)':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
-      var overallColor=d.pct===null?'var(--sub)':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
-      var overallBorder=d.pct===null?'var(--ibdr)':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
+      var pctColor=relScore===null?'var(--sub)':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#b7791f':relScore>=40?'#f2700f':'#ef4444';
+      var overallColor=d.pct===null?'var(--sub)':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#b7791f':d.pct>=40?'#f2700f':'#ef4444';
+      var overallBorder=d.pct===null?'var(--ibdr)':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#b7791f':d.pct>=40?'#c2410c':'#b91c1c';
       var barW=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_groupMaxPossible*100)):0;
       var _cGrad=_pctGradBg(d.pct,!document.body.classList.contains('light'));
       h+='<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 14px;background:'+_cGrad+';border-radius:11px;margin-bottom:6px;border:1px solid '+overallBorder+'">';
@@ -4405,7 +4408,7 @@ function renderRankings(){
       h+='</div>';
       h+='<div style="flex-shrink:0;text-align:right">';
       h+='<div style="font-size:17px;font-weight:800;color:'+pctColor+'">'+(d.monthMax>0?d.monthScore+'<span style="font-size:11px;font-weight:600;color:var(--sub);opacity:0.85">/'+_groupMaxPossible+'</span>':'--')+'</div>';
-      if(d.pct!==null)h+='<div style="font-size:20px;font-weight:800;color:'+overallColor+';margin-top:2px">'+d.pct+'%</div>';
+      if(d.pct!==null)h+='<div style="font-size:20px;font-weight:800;color:'+overallColor+';margin-top:2px;letter-spacing:.2px;text-shadow:0 1px 1px rgba(0,0,0,.22)">'+d.pct+'%</div>';
       h+='</div>';
       h+='</div>';
     });
@@ -4413,7 +4416,7 @@ function renderRankings(){
    });
   });
   h+='<div style="display:flex;flex-wrap:wrap;gap:7px 13px;align-items:center;padding:10px 4px;margin-top:6px;border-top:1px solid var(--ibdr)">';
-  [['#166534','\u226590% Excellent'],['#65a30d','\u226575% Very Good'],['#d1b000','\u226560% Good'],['#f2700f','\u226540% Average'],['#dc2626','<40% Needs Work']
+  [['#166534','\u226590% Excellent'],['#65a30d','\u226575% Very Good'],['#b7791f','\u226560% Good'],['#f2700f','\u226540% Average'],['#dc2626','<40% Needs Work']
   ].forEach(function(l){
     h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--sub);white-space:nowrap">';
     h+='<span style="width:13px;height:13px;border-radius:3px;background:'+l[0]+';display:inline-block;flex-shrink:0'+(l[0]==='#fde047'?';border:2px solid #78350f':'')+'"></span>'+l[1]+'</span>';
@@ -4637,9 +4640,9 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var s=item.s,d=item.d;
       var rk=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':(i+1)+'.';
       var relScore=d.monthPct===null?null:(d.monthScore/_nbGroupMaxScore*100);
-      var col=relScore===null?'#999':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
-      var overallCol=d.pct===null?'#999':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
-      var overallBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
+      var col=relScore===null?'#999':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#b7791f':relScore>=40?'#f2700f':'#ef4444';
+      var overallCol=d.pct===null?'#999':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#b7791f':d.pct>=40?'#f2700f':'#ef4444';
+      var overallBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#b7791f':d.pct>=40?'#c2410c':'#b91c1c';
       var bw=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_nbGroupMaxPossible*100)):0;
       var ac=_getRankAchievements(s,_grSt);
       function _nbBldPills(troph,gold,silv,brnz){
@@ -4668,7 +4671,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       var _trendBadge=(monthYm&&String(monthYm).indexOf(',')<0&&monthYm!=='ALL'&&d.pct!==null)?_rankTrendBadge(_prevRankMap[s.id],i+1,26,s,_prevYmStr(monthYm)):'';
       h+='<div class="top"><div class="rank" style="font-size:'+_nbRkSz+';line-height:1;position:relative;left:'+_nbRkLeft+'">'+rk+'</div><div class="name" style="display:flex;align-items:center;gap:14px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:155px;flex-shrink:0">'+_buildGaugeMeter(d.pct,155,true)+'</div>':'')+'</div><div style="flex-shrink:0;text-align:right">';
       h+='<div class="pct" style="color:'+col+'">'+(d.monthMax>0?d.monthScore+'<span style="font-size:24px;font-weight:600;color:#888">/'+_nbGroupMaxPossible+'</span>':'--')+'</div>';
-      if(d.pct!==null)h+='<div style="font-size:36px;font-weight:800;color:'+overallCol+';margin-top:3px">'+d.pct+'%</div>';
+      if(d.pct!==null)h+='<div style="font-size:36px;font-weight:800;color:'+overallCol+';margin-top:3px;letter-spacing:.3px;text-shadow:0 2px 2px rgba(0,0,0,.22)">'+d.pct+'%</div>';
       h+='</div></div>';
       h+='<div class="mid"><div class="bar-bg"><div class="bar-fill" style="width:'+bw+'%;background:'+overallCol+'"></div></div>';
       h+='<div class="stats">'+(d.pct!==null?d.tests+'/'+d.totalTests+' tests \u00b7 '+d.monthTests+' this month':'No tests yet')+'</div></div>';
@@ -4683,7 +4686,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
    });
   });
   h+='<div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:18px 4px;margin-top:8px;border-top:2px solid #ccc">';
-  [['#166534','\u226590% Excellent'],['#65a30d','\u226575% Very Good'],['#d1b000','\u226560% Good'],['#f2700f','\u226540% Average'],['#dc2626','<40% Needs Work']
+  [['#166534','\u226590% Excellent'],['#65a30d','\u226575% Very Good'],['#b7791f','\u226560% Good'],['#f2700f','\u226540% Average'],['#dc2626','<40% Needs Work']
   ].forEach(function(l){
     h+='<span style="display:inline-flex;align-items:center;gap:10px;font-size:26px;font-weight:700;color:#444;white-space:nowrap">';
     h+='<span style="width:26px;height:26px;border-radius:6px;background:'+l[0]+';display:inline-block;flex-shrink:0"></span>'+l[1]+'</span>';
@@ -4810,8 +4813,8 @@ function printRankings(filterGrade,filterLoc,monthYm){
       var rankEmoji=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'';
       var rankTxt=d.pct!==null?(rankEmoji||(i+1)+'.'):'--';
       var relScore=d.monthPct===null?null:(d.monthScore/_pGroupMaxScore*100);
-      var pctColor=relScore===null?'#999':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#d1b000':relScore>=40?'#f2700f':'#ef4444';
-      var overallColor=d.pct===null?'#999':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#d1b000':d.pct>=40?'#f2700f':'#ef4444';
+      var pctColor=relScore===null?'#999':relScore>=100?'#b45309':relScore>=90?'#166534':relScore>=75?'#65a30d':relScore>=60?'#b7791f':relScore>=40?'#f2700f':'#ef4444';
+      var overallColor=d.pct===null?'#999':d.pct>=100?'#b45309':d.pct>=90?'#166534':d.pct>=75?'#65a30d':d.pct>=60?'#b7791f':d.pct>=40?'#f2700f':'#ef4444';
       var barW=d.monthPct!==null?Math.min(100,Math.round(d.monthScore/_pGroupMaxPossible*100)):0;
       // Achievements
       var _pac=_getRankAchievements(s,_pGrSt);
@@ -4836,10 +4839,10 @@ function printRankings(filterGrade,filterLoc,monthYm){
       else if(d.pct>=100){_prR=253;_prG=224;_prB=71;}   // #fde047 gold
       else if(d.pct>=90){_prR=22;_prG=101;_prB=52;}    // #166534 dark green
       else if(d.pct>=75){_prR=101;_prG=163;_prB=13;}    // #65a30d olive
-      else if(d.pct>=60){_prR=209;_prG=176;_prB=0;}    // #d1b000 yellow
+      else if(d.pct>=60){_prR=183;_prG=121;_prB=31;}    // #b7791f medium gold
       else if(d.pct>=40){_prR=234;_prG=88;_prB=12;}    // #ea580c orange
       else{_prR=220;_prG=38;_prB=38;}                  // #dc2626 red
-      var _prBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#a16207':d.pct>=40?'#c2410c':'#b91c1c';
+      var _prBorder=d.pct===null?'#999':d.pct>=100?'#92400e':d.pct>=90?'#14532d':d.pct>=75?'#4d7c0f':d.pct>=60?'#b7791f':d.pct>=40?'#c2410c':'#b91c1c';
       var _prGrad='linear-gradient(to right,rgba('+_prR+','+_prG+','+_prB+',0.25) 0%,rgba('+_prR+','+_prG+','+_prB+',0.08) 60%,transparent 85%)';
       h+='<div class="card" style="background:'+_prGrad+';border-color:'+_prBorder+'">';
       // Top: rank | name | pct
@@ -4852,7 +4855,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
       h+='<div class="name" style="font-size:'+_nSz+';display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0">'+esc(_studentDisplayName(s))+(_trendBadge?' '+_trendBadge:'')+'</span>'+(d.pct!==null?'<div style="width:85px;flex-shrink:0">'+_buildGaugeMeter(d.pct,85,false)+'</div>':'')+'</div>';
       h+='<div style="flex-shrink:0;text-align:right">';
       h+='<div class="pct" style="color:'+pctColor+'">'+(d.monthMax>0?d.monthScore+'<span style="font-size:16px;font-weight:600;color:#888">/'+_pGroupMaxPossible+'</span>':'--')+'</div>';
-      if(d.pct!==null)h+='<div style="font-size:24px;font-weight:800;color:'+overallColor+';margin-top:2px">'+d.pct+'%</div>';
+      if(d.pct!==null)h+='<div style="font-size:24px;font-weight:800;color:'+overallColor+';margin-top:2px;letter-spacing:.2px;text-shadow:0 1px 1px rgba(0,0,0,.22)">'+d.pct+'%</div>';
       h+='</div>';
       h+='</div>';
       // Mid: bar | tests | score
@@ -4873,7 +4876,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
    });
   });
   h+='<div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:14px 4px;margin-top:6px;border-top:1.5px solid #ccc">';
-  [['#166534','\u226590% Excellent'],['#65a30d','\u226575% Very Good'],['#d1b000','\u226560% Good'],['#f2700f','\u226540% Average'],['#dc2626','<40% Needs Work']
+  [['#166534','\u226590% Excellent'],['#65a30d','\u226575% Very Good'],['#b7791f','\u226560% Good'],['#f2700f','\u226540% Average'],['#dc2626','<40% Needs Work']
   ].forEach(function(l){
     h+='<span style="display:inline-flex;align-items:center;gap:7px;font-size:16px;font-weight:600;color:#555;white-space:nowrap">';
     h+='<span style="width:16px;height:16px;border-radius:4px;background:'+l[0]+';display:inline-block;flex-shrink:0"></span>'+l[1]+'</span>';
