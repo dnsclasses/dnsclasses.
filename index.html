@@ -2434,7 +2434,7 @@ function _restoreScoreState(){
     if(!sr)return;
     var studs=JSON.parse(sr);
     var _datePicker=document.getElementById('pr-recorded-date');
-    if(_datePicker){_datePicker.value=_todayStr();_datePicker.dispatchEvent(new Event('input',{bubbles:true}));_datePicker.dispatchEvent(new Event('change',{bubbles:true}));}
+    var _savedDate='';
     // Step 1: Hard-reset ALL students first - a fresh test always starts completely blank.
     // Everything is reset (value, checked, disabled, opacity, background, pointer-events)
     // so nothing from the previously viewed test can survive.
@@ -2459,8 +2459,13 @@ function _restoreScoreState(){
       var source = (useDraft && draft.entries[s.id]) ? draft.entries[s.id] : (db.progress && db.progress[s.id] && db.progress[s.id][chapter] && db.progress[s.id][chapter][tno]);
 if(!source)return;
        hasSaved=true;
-       var _dateEl=document.getElementById('pr-recorded-date');
-       if(_dateEl&&source.recordedAt&&!_dateEl.value)_dateEl.value=String(source.recordedAt).slice(0,10);
+       var _dateSource=source;
+       // Draft entries contain marks but may not carry date metadata; use the
+       // persisted record for the date whenever it exists.
+       var _persistedDateSource=(db.progress&&db.progress[s.id]&&db.progress[s.id][chapter]&&db.progress[s.id][chapter][tno])||null;
+       if(_persistedDateSource&&(!_dateSource.recordedAt&&!_dateSource.recordedMonth))_dateSource=_persistedDateSource;
+       if(!_savedDate&&_dateSource.recordedAt)_savedDate=String(_dateSource.recordedAt).slice(0,10);
+       if(!_savedDate&&_dateSource.recordedMonth)_savedDate=String(_dateSource.recordedMonth).slice(0,7)+'-01';
       var mk=document.getElementById('pm_'+s.id);
       var ab=document.getElementById('pa_'+s.id);
       var np=document.getElementById('pnp_'+s.id);
@@ -2477,6 +2482,12 @@ if(!source)return;
         [ab,np,ng,na].forEach(function(o){if(o){o.disabled=true;o.checked=false;if(o.parentElement){o.parentElement.style.opacity='0.35';o.parentElement.style.pointerEvents='none';}}});
       }
     });
+    // Existing tests use their saved date; new or legacy-undated tests start today.
+    if(_datePicker){
+      _datePicker.value=_savedDate||_todayStr();
+      _datePicker.dispatchEvent(new Event('input',{bubbles:true}));
+      _datePicker.dispatchEvent(new Event('change',{bubbles:true}));
+    }
     // Show banner if editing saved marks
     var banner=document.getElementById('pr-edit-banner');
     if(banner){
