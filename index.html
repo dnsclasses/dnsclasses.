@@ -2485,9 +2485,10 @@ if(!source)return;
         [ab,np,ng,na].forEach(function(o){if(o){o.disabled=true;o.checked=false;if(o.parentElement){o.parentElement.style.opacity='0.35';o.parentElement.style.pointerEvents='none';}}});
       }
     });
-    // Existing tests use their saved date; new or legacy-undated tests start today.
+    // Existing tests use their saved date; new or legacy-undated tests stay blank
+    // until the user explicitly selects and saves a test date.
     if(_datePicker){
-      _datePicker.value=_savedDate||_todayStr();
+      _datePicker.value=_savedDate||'';
       _datePicker.dispatchEvent(new Event('input',{bubbles:true}));
       _datePicker.dispatchEvent(new Event('change',{bubbles:true}));
     }
@@ -2588,7 +2589,7 @@ function resetScoreChart(){
   if(tno)tno.value='';
   if(total)total.value='20';
    var recordedDate=document.getElementById('pr-recorded-date');
-   if(recordedDate){recordedDate.value=_todayStr();recordedDate.dispatchEvent(new Event('input',{bubbles:true}));recordedDate.dispatchEvent(new Event('change',{bubbles:true}));}
+   if(recordedDate){recordedDate.value='';recordedDate.dispatchEvent(new Event('input',{bubbles:true}));recordedDate.dispatchEvent(new Event('change',{bubbles:true}));}
   // Clear all mark inputs and checkboxes for each student
   var cont=document.getElementById('pr-students');
   var studsRaw=cont?cont.dataset.studs:'';
@@ -3064,12 +3065,6 @@ function _initDateButtons(){
     ['prn-hw-to','Select date...'],['daily-date-pick','Select date...']
   ];
   fields.forEach(function(f){ _dnsCalBindBtn(f[0]+'-btn', f[0], f[1]); });
-  var _testDate=document.getElementById('pr-recorded-date');
-  if(_testDate&&!_testDate.value){
-    _testDate.value=_todayStr();
-    _testDate.dispatchEvent(new Event('input',{bubbles:true}));
-    _testDate.dispatchEvent(new Event('change',{bubbles:true}));
-  }
 }
 
 function _initThemedCalendars(){
@@ -12951,7 +12946,15 @@ function _recordProgressMarks(){
       if(!db.progress[s.id])db.progress[s.id]={};
       if(!db.progress[s.id][chapter])db.progress[s.id][chapter]={};
       var isNA=document.getElementById('pna_'+s.id)&&document.getElementById('pna_'+s.id).checked;
-      var _dateEl=document.getElementById('pr-recorded-date');var _chosenDate=_dateEl&&_dateEl.value?_dateEl.value:'';var _recordedAt=_chosenDate?new Date(_chosenDate+'T12:00:00').toISOString():new Date().toISOString();var _recordedMonth=_chosenDate?_chosenDate.slice(0,7):_recordedAt.slice(0,7);var progressContext={total:total,recordedAt:_recordedAt,recordedMonth:_recordedMonth,school:String(fullStudent.school||fullStudent.schoolName||fullStudent.school_name||'').trim(),grade:String(fullStudent.grade||'').trim(),location:String(fullStudent.location||'Home').trim()};
+      // Do not assign today's date implicitly. A test date is metadata only when
+      // the user selected one; otherwise the date picker remains "Select date...".
+      var _dateEl=document.getElementById('pr-recorded-date');
+      var _chosenDate=_dateEl&&_dateEl.value?_dateEl.value:'';
+      var progressContext={total:total,school:String(fullStudent.school||fullStudent.schoolName||fullStudent.school_name||'').trim(),grade:String(fullStudent.grade||'').trim(),location:String(fullStudent.location||'Home').trim()};
+      if(_chosenDate){
+        progressContext.recordedAt=new Date(_chosenDate+'T12:00:00').toISOString();
+        progressContext.recordedMonth=_chosenDate.slice(0,7);
+      }
       if(isNA)db.progress[s.id][chapter][tno]=Object.assign({v:'NA'},progressContext);
       else if(isAbs)db.progress[s.id][chapter][tno]=Object.assign({v:'AB'},progressContext);
       else if(isNP)db.progress[s.id][chapter][tno]=Object.assign({v:'NP'},progressContext);
