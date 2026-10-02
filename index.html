@@ -2334,6 +2334,9 @@ function _computeDatedMonthlyTotals(s,ym){
   });
   out.score=Math.round(out.score*100)/100;
   out.max=Math.round(out.max*100)/100;
+  // Keep malformed legacy entries from producing an impossible fraction such
+  // as 98/60 in the current month.
+  if(out.max>0&&out.score>out.max)out.score=out.max;
   out.pct=out.max>0?Math.round(out.score/out.max*100):null;
   return out;
 }
@@ -4282,6 +4285,85 @@ function _getCommonRankMonthMax(items,getter){
   });
   return best||1;
 }
+function _getRankPeriodMax(students,period){
+  // The ranking denominator is the sum of the maximum marks for every
+  // assessment conducted in the selected period, not a student's personal
+  // total and not the most common total among students.
+  var periods=period==='ALL'?null:String(period||'').split(',').filter(function(v){return v;});
+  var tests={},mocks={},periodSeen={};
+  (students||[]).forEach(function(s){
+    var progress=db.progress&&db.progress[s.id]?db.progress[s.id]:{};
+    var ck=_chKeyCls(s.grade||'Other',s.school||'');
+    var valid=new Set((db.chapters&&(db.chapters[ck]||db.chapters[s.grade||'Other'])||[]).map(function(c){return c.name;}));
+    Object.keys(progress).forEach(function(ch){
+      if(!valid.has(ch))return;
+      Object.keys(progress[ch]||{}).forEach(function(tno){
+        var e=progress[ch][tno];
+        if(!e||!e.total||(typeof e.v!=='number'&&e.v!=='AB'))return;
+        var ym=String(e.recordedMonth||'').slice(0,7);
+        if(periods&&periods.indexOf(ym)<0)return;
+        if(periods&&ym)periodSeen[ym]=true;
+        var key=ch+'::'+tno+(periods?'::'+(ym||'undated'):'');
+        tests[key]=Math.max(Number(tests[key]||0),Number(e.total)||0);
+      });
+    });
+    var mockL=(db.mockExams&&db.mockExams[s.id])||[];
+    mockL.forEach(function(e,i){
+      if(!e||!e.total)return;
+      var ym=String(e.recordedMonth||e.dateGivenMonth||'').slice(0,7);
+      if(periods&&periods.indexOf(ym)<0)return;
+      if(periods&&ym)periodSeen[ym]=true;
+      var key=String(i)+(periods?'::'+(ym||'undated'):'');
+      mocks[key]=Math.max(Number(mocks[key]||0),Number(e.total)||0);
+    });
+  });
+  var total=Object.keys(tests).reduce(function(sum,k){return sum+tests[k];},0)
+    +Object.keys(mocks).reduce(function(sum,k){return sum+mocks[k];},0);
+  // When a multi-month selection mixes dated records with older snapshot-only
+  // records, fill in each selected month that has no dated test metadata.
+  if(periods){
+    periods.forEach(function(ym){
+      if(periodSeen[ym])return;
+      var legacyMonthMax=0;
+      (students||[]).forEach(function(s){
+        var f=_getMonthlyFigures(s,ym);
+        legacyMonthMax=Math.max(legacyMonthMax,Number(f&&f.max)||0);
+      });
+      total+=legacyMonthMax;
+    });
+  }
+  // Legacy snapshots may predate recordedMonth metadata. Preserve their
+  // historical denominator using the largest reconstructed group total.
+  if(total<=0){
+    (students||[]).forEach(function(s){
+      var f=_getMonthlyFigures(s,period);
+      total=Math.max(total,Number(f&&f.max)||0);
+    });
+  }
+  return Math.round(total*100)/100||1;
+}
+function _getRankDisplayMax(items,getter,period){
+  // The denominator must be large enough for every displayed student. Using
+  // the most common student's personal max can pair a score such as 98 with
+  // 60 when another student has the valid 100-mark monthly assessment.
+  // The same rule also prevents cumulative overall values such as 480/40.
+  if(period==='ALL'||String(period||'').indexOf(',')>=0){
+    var max=0;
+    (items||[]).forEach(function(item){
+      var n=Number(getter(item)||0);
+      var score=Number(item&&item.data&&item.data.score||item&&item.d&&item.d.score||0);
+      if(isFinite(score)&&score>n)n=score;
+      if(isFinite(n)&&n>max)max=n;
+    });
+    return Math.round(max*100)/100||1;
+  }
+  var max=0;
+  (items||[]).forEach(function(item){
+    var n=Number(getter(item)||0);
+    if(isFinite(n)&&n>max)max=n;
+  });
+  return Math.round(max*100)/100||1;
+}
 function renderRankings(){
   var block=document.getElementById('bc-rank-content');
   if(!block)return;
@@ -4355,9 +4437,9 @@ function renderRankings(){
     var _availableTests=_getRankAvailableTestCount(_gradeStArr);
     students.forEach(function(it){it.data.totalTests=_availableTests;});
     var _prevRankMap=_rankMonthValues.length===1?_computeGradeRankMap(_gradeStArr,_prevYmStr(_selectedRankMonth)):{};
+    var _groupMaxPossible=_getRankPeriodMax(_gradeStudentsRaw,_selectedRankMonth);
     if(_rankTopN>0)students=students.slice(0,_rankTopN);
     if(!students.length)return;
-    var _groupMaxPossible=_getCommonRankMonthMax(students,function(it){return it.data.monthMax;});
     var _groupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthScore||0;})));
     h+='<div style="margin-bottom:20px">';
     h+='<div style="font-size:14px;font-weight:800;color:var(--acc);margin-bottom:8px;padding:5px 0;border-bottom:2px solid var(--acc)">'
@@ -4638,8 +4720,8 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
     // Build the historical rank map before applying the print Top N filter.
     var _grSt=students.map(function(it){return it.s;});
     var _prevRankMap=String(monthYm||'').indexOf(',')<0?_computeGradeRankMap(_grSt,_prevYmStr(monthYm)):{};
+    var _nbGroupMaxPossible=_getRankPeriodMax(_gradeStudentsRaw,monthYm);
     if(_printTopN>0)students=students.slice(0,_printTopN);
-    var _nbGroupMaxPossible=_getCommonRankMonthMax(students,function(it){return it.d.monthMax;});
     var _nbGroupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.d.monthScore||0;})));
     var _clsLbl=esc(g);
     if(_subKeys.length>1){
@@ -4787,8 +4869,8 @@ function printRankings(filterGrade,filterLoc,monthYm){
   h+='</style></head><body>';
   h+='<div class="hdr">';
   h+='<img src="'+_LOGO+'">';
-  h+='<div class="hdr-text"><h1>DNS CLASSES</h1><h2>Student Rankings \u2014 '+_tg+_tl+'</h2></div>';
-  h+='<div class="hdr-month" style="width:310px;min-width:310px;padding-right:2px">'+(String(monthYm||'').indexOf(',')>=0?'<div class="month" style="font-size:27px;line-height:1.25;white-space:nowrap">'+_rankMonthDisplayHtml(monthYm)+'</div><div class="year"></div>':'<div class="month">'+MONTHS[now.getMonth()]+'</div><div class="year">'+now.getFullYear()+'</div>')+'</div>';
+  h+='<div class="hdr-text"><h1>DNS CLASSES</h1><h2>Student Rankings — '+_tg+_tl+'</h2></div>';
+  h+='<div class="hdr-month" style="width:310px;min-width:310px;padding-right:2px">'+(monthYm==='ALL'?'<div class="month" style="font-size:27px;line-height:1.25;white-space:nowrap">OVERALL</div><div class="year">All Time</div>':String(monthYm||'').indexOf(',')>=0?'<div class="month" style="font-size:27px;line-height:1.25;white-space:nowrap">'+_rankMonthDisplayHtml(monthYm)+'</div><div class="year"></div>':'<div class="month">'+MONTHS[now.getMonth()]+'</div><div class="year">'+now.getFullYear()+'</div>')+'</div>';
   h+='</div>';
   h+='<hr class="divider">';
   grades.forEach(function(g){
@@ -4809,8 +4891,8 @@ function printRankings(filterGrade,filterLoc,monthYm){
     // Top N option must only limit visible rows, never movement values.
     var _pGrSt=students.map(function(it){return it.s;});
     var _prevRankMap=String(monthYm||'').indexOf(',')<0?_computeGradeRankMap(_pGrSt,_prevYmStr(monthYm)):{};
+    var _pGroupMaxPossible=_getRankPeriodMax(_gradeStudentsRaw,monthYm);
     if(_printTopN>0)students=students.slice(0,_printTopN);
-    var _pGroupMaxPossible=_getCommonRankMonthMax(students,function(it){return it.data.monthMax;});
     var _pGroupMaxScore=Math.max(1,Math.max.apply(null,students.map(function(it){return it.data.monthScore||0;})));
     var _clsLbl=esc(g);
     if(_subKeys.length>1){
