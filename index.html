@@ -2041,14 +2041,19 @@ function _computeStudentTotals(s,countAbsences){
   });
   var mockL=(db.mockExams&&db.mockExams[s.id])||[];
   mockL.forEach(function(e){if(e.total){totalScore+=e.marks;totalMax+=e.total;given++;total++;}});
+  // Defensive integrity rule: stored marks cannot exceed the applicable
+  // maximum. This keeps Overall percentages at or below 100% even when an
+  // old record or a later-edited maximum contains inconsistent values.
+  if(totalMax>0&&totalScore>totalMax)totalScore=totalMax;
   return{score:Math.round(totalScore*100)/100,max:Math.round(totalMax*100)/100,given:given,total:total};
 }
 // Count assessments available to the class/group. A test is available when at
 // least one student has a numeric result or an explicit confirmed absence (AB).
 // Individual overall percentages still use only that student's present tests; AB
 // is included only in monthly ranking totals when explicitly requested.
-function _getRankAvailableTestCount(students){
-  var keys={};
+function _getRankAvailableTestCount(students,period){
+  var keys={},mockKeys={};
+  var periods=period==='ALL'?null:String(period||'').split(',').filter(function(v){return v;});
   (students||[]).forEach(function(s){
     var progress=db.progress&&db.progress[s.id]?db.progress[s.id]:{};
     var ck=_chKeyCls(s.grade||'Other',s.school||'');
@@ -2057,15 +2062,26 @@ function _getRankAvailableTestCount(students){
       if(!valid.has(ch))return;
       Object.keys(progress[ch]||{}).forEach(function(tno){
         var e=progress[ch][tno];
-        if(e&&e.total&&(typeof e.v==='number'||e.v==='AB'))keys[ch+'::'+tno]=true;
+        if(!e||!e.total||(typeof e.v!=='number'&&e.v!=='AB'))return;
+        var ym=String(e.recordedMonth||'').slice(0,7);
+        // A month-specific ranking includes only tests explicitly saved in
+        // that month. Undated legacy records remain available to Overall.
+        if(periods&&periods.indexOf(ym)<0)return;
+        keys[ch+'::'+tno+(periods?'::'+ym:'')]=true;
       });
     });
   });
   // Mock exams are stored as per-student arrays without a shared test ID;
   // the largest recorded list represents the class-wide available count.
-  var mockCount=0;
-  (students||[]).forEach(function(s){mockCount=Math.max(mockCount,((db.mockExams&&db.mockExams[s.id])||[]).filter(function(e){return e&&e.total;}).length);});
-  return Object.keys(keys).length+mockCount;
+  (students||[]).forEach(function(s){
+    ((db.mockExams&&db.mockExams[s.id])||[]).forEach(function(e,i){
+      if(!e||!e.total)return;
+      var ym=String(e.recordedMonth||e.dateGivenMonth||'').slice(0,7);
+      if(periods&&periods.indexOf(ym)<0)return;
+      mockKeys['mock::'+i+(periods?'::'+ym:'')]=true;
+    });
+  });
+  return Object.keys(keys).length+Object.keys(mockKeys).length;
 }
 var _SNAP_VERSION=2;
 function _checkMonthSnapshot(){
@@ -2359,40 +2375,14 @@ function _getMonthlyFigures(s,ym){
   }
   var curYm=new Date().toISOString().slice(0,7);
   var effYm=ym||curYm;
-  var hist=(db.settings&&db.settings.rankHistory)||{};
-  var _monthArchive=hist[effYm];
-  // Prefer explicit save-time month metadata before consulting snapshots.
-  // This is essential for students who joined after the month-start snapshot.
-  if(effYm===curYm){
-    var _dated=_computeDatedMonthlyTotals(s,curYm);
-    if(_dated.hasDated)return{score:_dated.score,max:_dated.max,given:_dated.given,pct:_dated.pct};
-  }
-  // A student added after the month's snapshot has no baseline. Do not use a
-  // zero baseline for that student, because that would reinterpret every old
-  // cumulative test as a test in the selected month.
-  if(effYm===curYm&&_monthArchive&&Object.prototype.hasOwnProperty.call(_monthArchive,s.id)===false){
-    return{score:0,max:0,given:0,pct:null};
-  }
-  var baseline=(_monthArchive&&_monthArchive[s.id])||{score:0,max:0,given:0};
-  var endData;
-  if(effYm===curYm){
-    // Undated legacy records cannot be assigned reliably to the current
-    // month. Do not infer them from cumulative totals: otherwise old marks
-    // can appear as fabricated current-month scores or denominators. They can
-    // be repaired by selecting TEST DATE and saving the test again.
-    return{score:0,max:0,given:0,pct:null};
-  } else {
-    var ny=_nextYmStr(effYm);
-    endData=(hist[ny]&&hist[ny][s.id])||baseline;
-  }
-  var mScore=Math.round(Math.max(0,endData.score-baseline.score)*100)/100;
-  var mMax=Math.round(Math.max(0,endData.max-baseline.max)*100)/100;
-  // Defensive data integrity: a student's marks can never exceed the
-  // maximum marks recorded for that month's tests.
-  if(mMax>0&&mScore>mMax)mScore=mMax;
-  var mGiven=Math.max(0,endData.given-baseline.given);
-  var mPct=mMax>0?Math.round(mScore/mMax*100):null;
-  return{score:mScore,max:mMax,given:mGiven,pct:mPct};
+  // When a test has an explicit saved date, use that date directly for every
+  // month, including historical months. This prevents archived cumulative
+  // totals from putting a test into the wrong month after its date is edited.
+  var _datedForMonth=_computeDatedMonthlyTotals(s,effYm);
+  if(_datedForMonth.hasDated)return{score:_datedForMonth.score,max:_datedForMonth.max,given:_datedForMonth.given,pct:_datedForMonth.pct};
+  // A selected month is date-driven. If no saved test date matches it, the
+  // month has no marks, regardless of any older snapshot or legacy totals.
+  return{score:0,max:0,given:0,pct:null};
 }
 
 
@@ -4285,7 +4275,7 @@ function _getRankPeriodMax(students,period){
   // assessment conducted in the selected period, not a student's personal
   // total and not the most common total among students.
   var periods=period==='ALL'?null:String(period||'').split(',').filter(function(v){return v;});
-  var tests={},mocks={},periodSeen={};
+  var tests={},mocks={};
   (students||[]).forEach(function(s){
     var progress=db.progress&&db.progress[s.id]?db.progress[s.id]:{};
     var ck=_chKeyCls(s.grade||'Other',s.school||'');
@@ -4297,7 +4287,6 @@ function _getRankPeriodMax(students,period){
         if(!e||!e.total||(typeof e.v!=='number'&&e.v!=='AB'))return;
         var ym=String(e.recordedMonth||'').slice(0,7);
         if(periods&&periods.indexOf(ym)<0)return;
-        if(periods&&ym)periodSeen[ym]=true;
         var key=ch+'::'+tno+(periods?'::'+(ym||'undated'):'');
         tests[key]=Math.max(Number(tests[key]||0),Number(e.total)||0);
       });
@@ -4307,35 +4296,15 @@ function _getRankPeriodMax(students,period){
       if(!e||!e.total)return;
       var ym=String(e.recordedMonth||e.dateGivenMonth||'').slice(0,7);
       if(periods&&periods.indexOf(ym)<0)return;
-      if(periods&&ym)periodSeen[ym]=true;
       var key=String(i)+(periods?'::'+(ym||'undated'):'');
       mocks[key]=Math.max(Number(mocks[key]||0),Number(e.total)||0);
     });
   });
   var total=Object.keys(tests).reduce(function(sum,k){return sum+tests[k];},0)
     +Object.keys(mocks).reduce(function(sum,k){return sum+mocks[k];},0);
-  // When a multi-month selection mixes dated records with older snapshot-only
-  // records, fill in each selected month that has no dated test metadata.
-  if(periods){
-    periods.forEach(function(ym){
-      if(periodSeen[ym])return;
-      var legacyMonthMax=0;
-      (students||[]).forEach(function(s){
-        var f=_getMonthlyFigures(s,ym);
-        legacyMonthMax=Math.max(legacyMonthMax,Number(f&&f.max)||0);
-      });
-      total+=legacyMonthMax;
-    });
-  }
-  // Legacy snapshots may predate recordedMonth metadata. Preserve their
-  // historical denominator using the largest reconstructed group total.
-  if(total<=0){
-    (students||[]).forEach(function(s){
-      var f=_getMonthlyFigures(s,period);
-      total=Math.max(total,Number(f&&f.max)||0);
-    });
-  }
-  return Math.round(total*100)/100||1;
+  // A date-selected period with no dated tests must remain zero; do not
+  // recreate a denominator from archived snapshots or legacy totals.
+  return periods?Math.round(total*100)/100:Math.round(total*100)/100||1;
 }
 function _getRankDisplayMax(items,getter,period){
   // The denominator must be large enough for every displayed student. Using
@@ -4374,12 +4343,14 @@ function renderRankings(){
     if(!byGrade[g])byGrade[g]=[];
     byGrade[g].push(s);
   });
-  // Compute avg % for each student across ALL tests in db.progress
+  // Use the selected period for the ranking score. Overall is the only view
+  // that intentionally uses cumulative marks.
   function getStudentAvg(s){
     var cur=_computeStudentTotals(s);
     var mf=_getMonthlyFigures(s,_selectedRankMonth);
-    if(cur.max===0)return{pct:null,tests:0,totalTests:cur.total,score:cur.score,max:cur.max,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
-    return{pct:Math.round(cur.score/cur.max*100),tests:cur.given,totalTests:cur.total,score:cur.score,max:cur.max,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
+    var isOverall=_selectedRankMonth==='ALL';
+    var selected=isOverall?{score:cur.score,max:cur.max,given:cur.given,pct:cur.max>0?Math.round(cur.score/cur.max*100):null}:mf;
+    return{pct:selected.pct,tests:selected.given,totalTests:0,score:selected.score,max:selected.max,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
   }
   var grades=Object.keys(byGrade).sort();
   var h='';
@@ -4429,7 +4400,7 @@ function renderRankings(){
     // Compute rank movement from the complete class/group first. The Top N
     // control is display-only and must never change a student's rank or delta.
     var _gradeStArr=students.map(function(it){return it.s;});
-    var _availableTests=_getRankAvailableTestCount(_gradeStArr);
+    var _availableTests=_getRankAvailableTestCount(_gradeStArr,_selectedRankMonth);
     students.forEach(function(it){it.data.totalTests=_availableTests;});
     var _prevRankMap=_rankMonthValues.length===1?_computeGradeRankMap(_gradeStArr,_prevYmStr(_selectedRankMonth)):{};
     var _groupMaxPossible=_getRankPeriodMax(_gradeStudentsRaw,_selectedRankMonth);
@@ -4458,7 +4429,7 @@ function renderRankings(){
       if(d.pct!==null){
         h+='<div style="margin-top:6px;height:5px;background:var(--ibdr);border-radius:3px;overflow:hidden">';
         h+='<div style="height:100%;width:'+barW+'%;background:'+overallColor+';border-radius:3px;transition:width 0.4s"></div></div>';
-        h+='<div style="font-size:11px;color:var(--sub);margin-top:2px">'+d.tests+'/'+d.totalTests+' test'+(d.totalTests===1?'':'s')+' &nbsp;&#183;&nbsp; '+d.monthTests+' this month</div>';
+        h+='<div style="font-size:11px;color:var(--sub);margin-top:2px">'+d.tests+'/'+d.totalTests+' test'+(d.totalTests===1?'':'s')+( _selectedRankMonth==='ALL'?'':' in selected month')+'</div>';
       } else {
         h+='<div style="font-size:12px;color:var(--sub);margin-top:2px">No tests recorded</div>';
       }
@@ -4630,7 +4601,9 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
   function getAvg(s){
     var cur=_computeStudentTotals(s);
     var mf=_getMonthlyFigures(s,monthYm);
-    return cur.max?{pct:Math.round(cur.score/cur.max*100),score:cur.score,max:cur.max,tests:cur.given,totalTests:cur.total,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max}:{pct:null,score:0,max:0,tests:0,totalTests:cur.total,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
+    var isOverall=monthYm==='ALL';
+    var selected=isOverall?{score:cur.score,max:cur.max,given:cur.given,pct:cur.max>0?Math.round(cur.score/cur.max*100):null}:mf;
+    return{pct:selected.pct,score:selected.score,max:selected.max,tests:selected.given,totalTests:0,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
   }
   var grades=Object.keys(byGrade).sort(function(a,b){var na=parseInt(a)||0,nb=parseInt(b)||0;return na!==nb?na-nb:a.localeCompare(b);});
   if(!grades.length){showToast('No students',true);return;}
@@ -4704,7 +4677,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
    _subKeys.forEach(function(_fp,_subIdx){
     var _gradeStudentsRaw=_subGroups[_fp];
     var students=_gradeStudentsRaw.map(function(s){return{s:s,d:getAvg(s)};});
-    var _nbAvailableTests=_getRankAvailableTestCount(_gradeStudentsRaw);
+    var _nbAvailableTests=_getRankAvailableTestCount(_gradeStudentsRaw,monthYm);
     students.forEach(function(it){it.d.totalTests=_nbAvailableTests;});
     students.sort(function(a,b){
       if(a.d.pct===null&&b.d.pct===null)return a.s.name.localeCompare(b.s.name);
@@ -4762,7 +4735,7 @@ function printNoticeBoard(filterGrade,filterLoc,monthYm){
       if(d.pct!==null)h+='<div style="font-size:36px;font-weight:800;color:'+overallCol+';margin-top:3px;letter-spacing:.3px;text-shadow:0 2px 2px rgba(0,0,0,.22)">'+d.pct+'%</div>';
       h+='</div></div>';
       h+='<div class="mid"><div class="bar-bg"><div class="bar-fill" style="width:'+bw+'%;background:'+overallCol+'"></div></div>';
-      h+='<div class="stats">'+(d.pct!==null?d.tests+'/'+d.totalTests+' tests \u00b7 '+d.monthTests+' this month':'No tests yet')+'</div></div>';
+      h+='<div class="stats">'+(d.pct!==null?d.tests+'/'+d.totalTests+' tests'+(monthYm==='ALL'?'':' in selected month'):'No tests yet')+'</div></div>';
       if(_nbChPills){
         h+='<div class="ach"><span class="ach-lbl">TESTS</span><div class="ach-grid">'+_nbChPills+'</div></div>';
       }
@@ -4806,8 +4779,9 @@ function printRankings(filterGrade,filterLoc,monthYm){
   function getAvg(s){
     var cur=_computeStudentTotals(s);
     var mf=_getMonthlyFigures(s,monthYm);
-    if(cur.max===0)return{pct:null,tests:0,totalTests:cur.total,score:0,max:0,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
-    return{pct:Math.round(cur.score/cur.max*100),tests:cur.given,totalTests:cur.total,score:cur.score,max:cur.max,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
+    var isOverall=monthYm==='ALL';
+    var selected=isOverall?{score:cur.score,max:cur.max,given:cur.given,pct:cur.max>0?Math.round(cur.score/cur.max*100):null}:mf;
+    return{pct:selected.pct,tests:selected.given,totalTests:0,score:selected.score,max:selected.max,monthScore:mf.score,monthTests:mf.given,monthPct:mf.pct,monthMax:mf.max};
   }
   var grades=Object.keys(byGrade).sort(function(a,b){var na=parseInt(a)||0,nb=parseInt(b)||0;return na!==nb?na-nb:a.localeCompare(b);});
   if(!grades.length){showToast('No students match this filter',true);return;}
@@ -4874,7 +4848,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
    _subKeys.forEach(function(_fp,_subIdx){
     var _gradeStudentsRaw=_subGroups[_fp];
     var students=_gradeStudentsRaw.map(function(s){return{s:s,data:getAvg(s)};});
-    var _pAvailableTests=_getRankAvailableTestCount(_gradeStudentsRaw);
+    var _pAvailableTests=_getRankAvailableTestCount(_gradeStudentsRaw,monthYm);
     students.forEach(function(it){it.data.totalTests=_pAvailableTests;});
     students.sort(function(a,b){
       if(a.data.pct===null&&b.data.pct===null)return a.s.name.localeCompare(b.s.name);
@@ -4949,7 +4923,7 @@ function printRankings(filterGrade,filterLoc,monthYm){
       // Mid: bar | tests | score
       h+='<div class="card-mid">';
       h+='<div class="bar-bg"><div class="bar-fill" style="width:'+barW+'%;background:'+overallColor+'"></div></div>';
-      h+='<div class="stats">'+(d.pct!==null?d.tests+'/'+d.totalTests+' tests &nbsp;&middot;&nbsp; '+d.monthTests+' this month':'No tests recorded')+'</div>';
+      h+='<div class="stats">'+(d.pct!==null?d.tests+'/'+d.totalTests+' tests'+(monthYm==='ALL'?'':' in selected month'):'No tests recorded')+'</div>';
       h+='</div>';
       // Achievement pills — tests and mocks shown separately
       if(_pChPills){
