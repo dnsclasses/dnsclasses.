@@ -643,7 +643,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   <!-- School row (optional filter for all classes) -->
   <div id="pr-school-row" style="display:none;margin-bottom:10px">
     <label class="flabel">SCHOOL</label>
-    <select id="pr-school" onchange="posterLoadStudents()" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
+    <select id="pr-school" onchange="prSchoolChanged()" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
       <option value="">Select school...</option>
     </select>
   </div>
@@ -10867,11 +10867,14 @@ function _populateSchoolSelect(grade){
     )].sort();
     var prevVal=sel.value;// save current selection before rebuild
     sel.innerHTML='<option value="">Select school...</option>';
+    if(num>=9&&num<=12)sel.innerHTML+='<option value="__ALL__">ALL</option>';
     schools.forEach(function(sc){
       sel.innerHTML+='<option value="'+esc(sc)+'">'+esc(sc)+'</option>';
     });
     if(prevVal)sel.value=prevVal;// restore selected school
-    if(forcedSchool){
+    // A user-selected ALL filter must not be overwritten by the school that
+    // was used to open this test from the Progress Chart.
+    if(forcedSchool&&prevVal!=='__ALL__'){
       var forcedOpt=Array.prototype.find.call(sel.options,function(opt){return String(opt.value||'').trim().toLowerCase()===forcedSchool.toLowerCase();});
       if(!forcedOpt){
         forcedOpt=document.createElement('option');
@@ -10909,7 +10912,9 @@ function posterLoadStudents(){
   // Read school BEFORE _populateSchoolSelect to avoid losing selection during rebuild
   var _schoolEl=document.getElementById('pr-school');
   var _forcedSchool=_schoolEl?String(_schoolEl.dataset.progressContextSchool||'').trim():'';
-  var school=((grade)||_forcedSchool)?(_schoolEl?_schoolEl.value.trim():''):'';
+  var selectedSchool=((grade)||_forcedSchool)?(_schoolEl?_schoolEl.value.trim():''):'';
+  // ALL is a UI-only filter value; an empty school filter means all schools.
+  var school=selectedSchool==='__ALL__'?'':selectedSchool;
   _populateSchoolSelect(grade);
   // Restore school value in case it got reset during populate
   if(school&&_schoolEl&&_schoolEl.value!==school){_schoolEl.value=school;}
@@ -12816,6 +12821,10 @@ function _autoSuggestTno(){
 }
 
 function prSchoolChanged(){
+  var sel=document.getElementById('pr-school');
+  // Once the user changes the filter, stop reapplying the chart-loaded
+  // student's school on every refresh.
+  if(sel&&sel.dataset)delete sel.dataset.progressContextSchool;
   posterLoadStudents();
 }
 
