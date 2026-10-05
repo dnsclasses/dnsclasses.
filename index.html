@@ -12950,6 +12950,22 @@ function _patchPosterLoad(){
 }
 
 // ── Record marks in progress when sending ──
+function _normalizeProgressRecordedDate(value){
+  var raw=String(value||'').trim();
+  if(!raw)return'';
+  // The themed picker writes YYYY-MM-DD. Keep this strict first so the
+  // recorded month always matches the user's selected calendar date.
+  var isoMatch=/^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if(isoMatch){
+    var strictDate=new Date(Number(isoMatch[1]),Number(isoMatch[2])-1,Number(isoMatch[3]));
+    if(!isNaN(strictDate.getTime())&&strictDate.getFullYear()===Number(isoMatch[1])&&strictDate.getMonth()===Number(isoMatch[2])-1&&strictDate.getDate()===Number(isoMatch[3]))return raw;
+    return'';
+  }
+  // Accept an equivalent browser date value as a compatibility fallback, but
+  // never call toISOString() on an invalid Date (that caused the save popup).
+  var parsed=new Date(raw);
+  return isNaN(parsed.getTime())?'':parsed.toISOString().slice(0,10);
+}
 function _recordProgressMarks(){
   try{
     _initChapters();
@@ -12962,35 +12978,55 @@ function _recordProgressMarks(){
     var studsRaw=document.getElementById('pr-students').dataset.studs;
     if(!cls||!chapter||!tno||!studsRaw)return;
     var studs=JSON.parse(studsRaw);
+    var _dateEl=document.getElementById('pr-recorded-date');
+    var _chosenDate=_normalizeProgressRecordedDate(_dateEl&&_dateEl.value?_dateEl.value:'');
+    var _normProgressKey=function(v){return String(v==null?'':v).replace(/\s+/g,' ').trim().toLowerCase();};
     studs.forEach(function(s){
       var fullStudent=(db.students||[]).find(function(x){return String(x.id)===String(s.id);})||s;
+      if(!db.progress[s.id])db.progress[s.id]={};
+      // Loaded tests can come from a display-normalized chapter/test key. Reuse
+      // the actual stored key when it differs only by case or whitespace.
+      var studentProgress=db.progress[s.id];
+      var chapterKey=Object.keys(studentProgress).find(function(k){return _normProgressKey(k)===_normProgressKey(chapter);})||chapter;
+      if(!studentProgress[chapterKey])studentProgress[chapterKey]={};
+      var chapterProgress=studentProgress[chapterKey];
+      var testKey=Object.keys(chapterProgress).find(function(k){return _normProgressKey(k)===_normProgressKey(tno);})||tno;
       var mkEl=document.getElementById('pm_'+s.id);
-      if(!mkEl)return;
+      // If a chart-loaded row is temporarily absent during a re-render, keep
+      // its existing record rather than treating it as a blank deletion.
+      if(!mkEl){
+        if(chapterProgress[testKey]&&_chosenDate){
+          chapterProgress[testKey].recordedAt=_chosenDate+'T12:00:00.000Z';
+          chapterProgress[testKey].recordedMonth=_chosenDate.slice(0,7);
+        }
+        return;
+      }
       var isAbs=document.getElementById('pa_'+s.id)&&document.getElementById('pa_'+s.id).checked;
       var isNP=document.getElementById('pnp_'+s.id)&&document.getElementById('pnp_'+s.id).checked;
       var isNG=document.getElementById('png_'+s.id)&&document.getElementById('png_'+s.id).checked;
-      var val=mkEl.value.trim();
-      if(!db.progress[s.id])db.progress[s.id]={};
-      if(!db.progress[s.id][chapter])db.progress[s.id][chapter]={};
       var isNA=document.getElementById('pna_'+s.id)&&document.getElementById('pna_'+s.id).checked;
-      // Do not assign today's date implicitly. A test date is metadata only when
-      // the user selected one; otherwise the date picker remains "Select date...".
-      var _dateEl=document.getElementById('pr-recorded-date');
-      var _chosenDate=_dateEl&&_dateEl.value?_dateEl.value:'';
+      var val=mkEl.value.trim();
       var progressContext={total:total,school:String(fullStudent.school||fullStudent.schoolName||fullStudent.school_name||'').trim(),grade:String(fullStudent.grade||'').trim(),location:String(fullStudent.location||'Home').trim()};
       if(_chosenDate){
-        progressContext.recordedAt=new Date(_chosenDate+'T12:00:00').toISOString();
+        progressContext.recordedAt=_chosenDate+'T12:00:00.000Z';
         progressContext.recordedMonth=_chosenDate.slice(0,7);
       }
-      if(isNA)db.progress[s.id][chapter][tno]=Object.assign({v:'NA'},progressContext);
-      else if(isAbs)db.progress[s.id][chapter][tno]=Object.assign({v:'AB'},progressContext);
-      else if(isNP)db.progress[s.id][chapter][tno]=Object.assign({v:'NP'},progressContext);
-      else if(isNG)db.progress[s.id][chapter][tno]=Object.assign({v:'NG'},progressContext);
-      else if(val!=='')db.progress[s.id][chapter][tno]=Object.assign({v:parseFloat(val)},progressContext);
-      else if(db.progress[s.id]&&db.progress[s.id][chapter])delete db.progress[s.id][chapter][tno];
+      if(isNA)chapterProgress[testKey]=Object.assign({v:'NA'},progressContext);
+      else if(isAbs)chapterProgress[testKey]=Object.assign({v:'AB'},progressContext);
+      else if(isNP)chapterProgress[testKey]=Object.assign({v:'NP'},progressContext);
+      else if(isNG)chapterProgress[testKey]=Object.assign({v:'NG'},progressContext);
+      else if(val!=='')chapterProgress[testKey]=Object.assign({v:parseFloat(val)},progressContext);
+      else delete chapterProgress[testKey];
     });
-    var hasPersisted=studs.some(function(s){return db.progress[s.id]&&db.progress[s.id][chapter]&&db.progress[s.id][chapter][tno];});
-    if(!hasPersisted)throw new Error('Progress entry was not created for '+chapter+' '+tno);
+    // A loaded test may already have persisted entries; saving its date or
+    // editing any visible row is valid even if a concurrent redraw hid a row.
+    var hasPersisted=studs.some(function(s){
+      var sp=db.progress[s.id]||{};
+      var ck=Object.keys(sp).find(function(k){return _normProgressKey(k)===_normProgressKey(chapter);});
+      var cp=ck?sp[ck]:null;
+      return !!(cp&&Object.keys(cp).some(function(k){return _normProgressKey(k)===_normProgressKey(tno)&&cp[k];}));
+    });
+    if(!hasPersisted)throw new Error('No progress entry available for '+chapter+' '+tno);
     if(!db.settings)db.settings={};
     if(!db.settings.rankTests)db.settings.rankTests={};
     // Register the month selected for the test, not the month in which the
@@ -12998,12 +13034,22 @@ function _recordProgressMarks(){
     var _rankYm=(_chosenDate?_chosenDate.slice(0,7):new Date().toISOString().slice(0,7));
     if(!db.settings.rankTests[_rankYm])db.settings.rankTests[_rankYm]={};
     db.settings.rankTests[_rankYm][String(cls||'').trim()]=true;
+    // The database write is the only operation that determines whether the
+    // progress save succeeded. Chart/report refreshes are deliberately kept
+    // outside this try block because a rendering error must not look like a
+    // failed save (especially after loading a test from the progress chart).
     saveDB();
-    showToast('Progress recorded!');
+  }catch(e){
+    console.error('Progress record error',e);
+    showToast('Could not save progress',true);
+    return false;
+  }
+  showToast('Progress recorded!');
+  try{
     _refreshAllProgressViews();
     if(_rptCurrentSid&&typeof generateReport==='function')generateReport(_rptCurrentSid);
-    return true;
-  }catch(e){console.error('Progress record error',e);showToast('Could not save progress',true);return false;}
+  }catch(e){console.warn('Progress view refresh error:',e);}
+  return true;
 }
 
 // ── Chapter management modal ──
