@@ -2360,41 +2360,33 @@ function _getMonthlyFigures(s,ym){
   var curYm=new Date().toISOString().slice(0,7);
   var effYm=ym||curYm;
   var hist=(db.settings&&db.settings.rankHistory)||{};
+
+  // Explicit dates always win. This supports both newly dated records and
+  // historical records that were repaired by selecting TEST DATE.
+  var _dated=_computeDatedMonthlyTotals(s,effYm);
+  if(_dated.hasDated)return{score:_dated.score,max:_dated.max,given:_dated.given,pct:_dated.pct};
+
+  // Never infer the current month's results from cumulative snapshots.
+  if(effYm===curYm)return{score:0,max:0,given:0,pct:null};
+
+  // If the month registry explicitly says this grade had no tests, do not use
+  // a stale snapshot for it. Otherwise retain the legacy snapshot path needed
+  // for older undated records and for multi-month selections.
+  var _rt=db.settings&&db.settings.rankTests&&db.settings.rankTests[effYm];
+  if(_rt&& !_rankTestRegistryHas(effYm,s.grade||'Other')){
+    return{score:0,max:0,given:0,pct:null};
+  }
   var _monthArchive=hist[effYm];
-  // Prefer explicit save-time month metadata before consulting snapshots.
-  // This is essential for students who joined after the month-start snapshot.
-  if(effYm===curYm){
-    var _dated=_computeDatedMonthlyTotals(s,curYm);
-    if(_dated.hasDated)return{score:_dated.score,max:_dated.max,given:_dated.given,pct:_dated.pct};
-  }
-  // A student added after the month's snapshot has no baseline. Do not use a
-  // zero baseline for that student, because that would reinterpret every old
-  // cumulative test as a test in the selected month.
-  if(effYm===curYm&&_monthArchive&&Object.prototype.hasOwnProperty.call(_monthArchive,s.id)===false){
-    return{score:0,max:0,given:0,pct:null};
-  }
-  var baseline=(_monthArchive&&_monthArchive[s.id])||{score:0,max:0,given:0};
-  var endData;
-  if(effYm===curYm){
-    // Undated legacy records cannot be assigned reliably to the current
-    // month. Do not infer them from cumulative totals: otherwise old marks
-    // can appear as fabricated current-month scores or denominators. They can
-    // be repaired by selecting TEST DATE and saving the test again.
-    return{score:0,max:0,given:0,pct:null};
-  } else {
-    var ny=_nextYmStr(effYm);
-    endData=(hist[ny]&&hist[ny][s.id])||baseline;
-  }
-  var mScore=Math.round(Math.max(0,endData.score-baseline.score)*100)/100;
-  var mMax=Math.round(Math.max(0,endData.max-baseline.max)*100)/100;
-  // Defensive data integrity: a student's marks can never exceed the
-  // maximum marks recorded for that month's tests.
+  var baseline=(_monthArchive&&_monthArchive[s.id])||{score:0,given:0,max:0};
+  var ny=_nextYmStr(effYm);
+  var endData=(hist[ny]&&hist[ny][s.id])||baseline;
+  var mScore=Math.round(Math.max(0,(endData.score||0)-(baseline.score||0))*100)/100;
+  var mMax=Math.round(Math.max(0,(endData.max||0)-(baseline.max||0))*100)/100;
   if(mMax>0&&mScore>mMax)mScore=mMax;
-  var mGiven=Math.max(0,endData.given-baseline.given);
+  var mGiven=Math.max(0,(endData.given||0)-(baseline.given||0));
   var mPct=mMax>0?Math.round(mScore/mMax*100):null;
   return{score:mScore,max:mMax,given:mGiven,pct:mPct};
 }
-
 
 
 function _compareTestRecordStudents(a,b){
@@ -3343,7 +3335,7 @@ function renderDashTests(){
         h+='<div style="flex:1">';
         var _displayFor=(r.isStudent&&r.cls)?('Class '+r.cls+' - '+r.forWho):r.forWho;
         h+='<div class="'+(flashing?'fl-heading':'')+'" style="font-weight:800;font-size:15px;color:'+(flashing?'#fbbf24':'var(--acc)')+'">'+esc(_displayFor)+'</div>';
-        h+='<div class="'+(flashing?'fl-body':'')+'" style="font-weight:bold;font-size:13px;color:'+(flashing?flashTextColor:'var(--txt)')+';margin-top:2px">'+esc(r.topics.join(' + '))+'</div>';
+        h+='<div class="'+(flashing?'fl-body':'')+'" style="font-weight:bold;font-size:13px;color:'+(flashing?flashTextColor:'var(--txt)')+';margin-top:2px">'+esc(_alertTopicsText(r.topics,r))+'</div>';
         var _dnames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         var _dow=_dnames[new Date(r.date+'T00:00:00').getDay()];
         h+='<div class="'+(flashing?'fl-body':'')+'" style="font-size:11px;color:'+(flashing?flashTextColor:'var(--sub)')+';margin-top:2px">'+esc(fmtD(r.date))+' ('+_dow+')'+(r.mode==='rev'?' \u2022 Revision':'')+'</div>';
@@ -3579,7 +3571,7 @@ function resendTestAlert(id){
   var msg='💥 *TEST ALERT* 🥇🥈🥉🏅🎖\n';
   msg+='For : '+forWho+' \n';
   msg+='🗓 : *'+_taFormatDate(r.date)+'* \n';
-  msg+='📚 *'+(r.topics&&r.topics.length?r.topics.join(' + '):'(topic)')+'*\n';
+  msg+='📚 *'+(r.topics&&r.topics.length?_alertTopicsText(r.topics,r):'(topic)')+'*\n';
   msg+='⏳ 45 min\n';
   msg+=' 🎗Start '+(r.mode==='rev'?'REVISION':'Preparing')+' 🎗';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
@@ -4281,9 +4273,8 @@ function _getCommonRankMonthMax(items,getter){
   return best||1;
 }
 function _getRankPeriodMax(students,period){
-  // The ranking denominator is the sum of the maximum marks for every
-  // assessment conducted in the selected period, not a student's personal
-  // total and not the most common total among students.
+  // Build one canonical assessment registry for the selected period. A dated
+  // test is counted once per chapter/test number, regardless of student count.
   var periods=period==='ALL'?null:String(period||'').split(',').filter(function(v){return v;});
   var tests={},mocks={},periodSeen={};
   (students||[]).forEach(function(s){
@@ -4296,9 +4287,8 @@ function _getRankPeriodMax(students,period){
         var e=progress[ch][tno];
         if(!e||!e.total||(typeof e.v!=='number'&&e.v!=='AB'))return;
         var ym=String(e.recordedMonth||'').slice(0,7);
-        if(periods&&periods.indexOf(ym)<0)return;
-        if(periods&&ym)periodSeen[ym]=true;
-        var key=ch+'::'+tno+(periods?'::'+(ym||'undated'):'');
+        if(periods){if(!ym||periods.indexOf(ym)<0)return;periodSeen[ym]=true;}
+        var key=ch+'::'+tno+(periods?'::'+ym:'');
         tests[key]=Math.max(Number(tests[key]||0),Number(e.total)||0);
       });
     });
@@ -4306,19 +4296,23 @@ function _getRankPeriodMax(students,period){
     mockL.forEach(function(e,i){
       if(!e||!e.total)return;
       var ym=String(e.recordedMonth||e.dateGivenMonth||'').slice(0,7);
-      if(periods&&periods.indexOf(ym)<0)return;
-      if(periods&&ym)periodSeen[ym]=true;
-      var key=String(i)+(periods?'::'+(ym||'undated'):'');
+      if(periods){if(!ym||periods.indexOf(ym)<0)return;periodSeen[ym]=true;}
+      var key=String(i)+(periods?'::'+ym:'');
       mocks[key]=Math.max(Number(mocks[key]||0),Number(e.total)||0);
     });
   });
   var total=Object.keys(tests).reduce(function(sum,k){return sum+tests[k];},0)
     +Object.keys(mocks).reduce(function(sum,k){return sum+mocks[k];},0);
-  // When a multi-month selection mixes dated records with older snapshot-only
-  // records, fill in each selected month that has no dated test metadata.
+
+  // Older records may have no recordedMonth. For those historical months,
+  // preserve the previous snapshot reconstruction, but never do so when the
+  // month registry explicitly says this class had no tests.
   if(periods){
+    var _grade=(students&&students[0]&&students[0].grade)||'Other';
     periods.forEach(function(ym){
       if(periodSeen[ym])return;
+      var _rt=db.settings&&db.settings.rankTests&&db.settings.rankTests[ym];
+      if(_rt&&!_rankTestRegistryHas(ym,_grade))return;
       var legacyMonthMax=0;
       (students||[]).forEach(function(s){
         var f=_getMonthlyFigures(s,ym);
@@ -4327,15 +4321,13 @@ function _getRankPeriodMax(students,period){
       total+=legacyMonthMax;
     });
   }
-  // Legacy snapshots may predate recordedMonth metadata. Preserve their
-  // historical denominator using the largest reconstructed group total.
-  if(total<=0){
+  if(total<=0&&period==='ALL'){
     (students||[]).forEach(function(s){
       var f=_getMonthlyFigures(s,period);
       total=Math.max(total,Number(f&&f.max)||0);
     });
   }
-  return Math.round(total*100)/100||1;
+  return Math.round(total*100)/100;
 }
 function _getRankDisplayMax(items,getter,period){
   // The denominator must be large enough for every displayed student. Using
@@ -6648,6 +6640,32 @@ function _taGetForLabel(){
   if(!names.length)return 'Class '+cls;
   return names.join(', ');
 }
+function _alertChapterLabel(chapter,grade,school){
+  var original=String(chapter||'').replace(/\s+/g,' ').trim();
+  if(!original)return original;
+  var raw=original.replace(/^Ch(?:apter)?\.?\s*\d+\s*[-–—:]?\s*/i,'').trim();
+  var suffixMatch=raw.match(/\s+((?:TEST\s*)?T?\d+)\s*$/i);
+  var suffix=suffixMatch?' '+suffixMatch[1].toUpperCase():'';
+  if(suffixMatch)raw=raw.slice(0,suffixMatch.index).trim();
+  var norm=function(v){return String(v||'').replace(/\s+/g,' ').trim().toLowerCase();};
+  var wanted=norm(raw),found=null;
+  var keys=[];
+  if(grade)keys.push(_chKeyCls(grade,school||''));
+  if(grade&&school)keys.push(String(grade));
+  Object.keys(db.chapters||{}).forEach(function(k){if(keys.indexOf(k)<0)keys.push(k);});
+  keys.some(function(key){
+    return (db.chapters[key]||[]).some(function(item,idx){
+      var name=typeof item==='string'?item:(item&&item.name)||'';
+      if(norm(name)===wanted){found={name:name,num:(item&&item.num)||idx+1};return true;}
+      return false;
+    });
+  });
+  return found?'Ch. '+found.num+' - '+found.name+suffix:original;
+}
+function _alertTopicsText(topics,reminder){
+  return (topics||[]).map(function(topic){return _alertChapterLabel(topic,reminder&&reminder.cls,reminder&&reminder.school);}).join(' + ');
+}
+
 function buildTestAlertMessage(){
   var forWho=_taGetForLabel();
   var duration=((document.getElementById('ta-duration')||{}).value||'45').trim()||'45';
@@ -6728,8 +6746,8 @@ function _saveTestReminders(){
       db.settings.testReminders.push({
         id:'tr'+Date.now()+Math.floor(Math.random()*1000),
         date:e.date,
-        topics:_taGetDisplayTopics(idx),
-        chapter:e.topics[0]||'',
+        topics:_taGetDisplayTopics(idx).map(function(t){return _alertChapterLabel(t,cls,'');}),
+        chapter:_alertChapterLabel(e.topics[0]||'',cls,''),
         testNo:(e.topicTnos&&e.topicTnos[e.topics[0]])||'',
         forWho:forWho,
         cls:cls,
@@ -6745,8 +6763,8 @@ function _saveTestReminders(){
       db.settings.testReminders.push({
         id:'tr'+Date.now()+Math.floor(Math.random()*1000),
         date:e.date,
-        topics:_taGetDisplayTopics(idx),
-        chapter:e.topics[0]||'',
+        topics:_taGetDisplayTopics(idx).map(function(t){return _alertChapterLabel(t,cls,'');}),
+        chapter:_alertChapterLabel(e.topics[0]||'',cls,''),
         testNo:(e.topicTnos&&e.topicTnos[e.topics[0]])||'',
         forWho:forWho,
         cls:cls,
@@ -12975,7 +12993,9 @@ function _recordProgressMarks(){
     if(!hasPersisted)throw new Error('Progress entry was not created for '+chapter+' '+tno);
     if(!db.settings)db.settings={};
     if(!db.settings.rankTests)db.settings.rankTests={};
-    var _rankYm=new Date().toISOString().slice(0,7);
+    // Register the month selected for the test, not the month in which the
+    // record happened to be saved. This keeps month availability universal.
+    var _rankYm=(_chosenDate?_chosenDate.slice(0,7):new Date().toISOString().slice(0,7));
     if(!db.settings.rankTests[_rankYm])db.settings.rankTests[_rankYm]={};
     db.settings.rankTests[_rankYm][String(cls||'').trim()]=true;
     saveDB();
@@ -13507,6 +13527,13 @@ function pgOpenTestAlertForCell(sid,chapter,tno){
   if(studentCb)studentCb.checked=true;
   taStudentCheckChanged();
   var topic=String(chapter||'').trim();
+  // The progress chart supplies the raw chapter name; resolve it through the
+  // selected class syllabus so the alert uses the same numbered label as the
+  // normal chapter picker (for example: "Ch. 1 - Real Numbers").
+  var _cellChapters=_taGetChapterList();
+  var _cellNorm=function(v){return String(v||'').replace(/^Ch(?:apter)?\.?\s*\d+\s*[-–—:]?\s*/i,'').replace(/\s+/g,' ').trim().toLowerCase();};
+  var _cellChapter=_cellChapters.find(function(c){return _cellNorm(c.name)===_cellNorm(topic)||_cellNorm(c.label)===_cellNorm(topic);});
+  topic=_cellChapter?_cellChapter.label:_alertChapterLabel(topic,desiredCls,stu.school||'');
   var code=String(tno||'').trim().toUpperCase();
   _taEntries=[{id:_taNextId++,date:_todayStr(),topics:topic?[topic]:[],topicTnos:{}}];
   if(topic&&code)_taEntries[0].topicTnos[topic]=code;
