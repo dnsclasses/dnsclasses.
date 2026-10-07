@@ -8596,14 +8596,13 @@ function renderMarkToday() {
     }
     return false;
   });
+  // The marking list must remain stationary while attendance is entered.
+  // History sorting is intentionally not reused here: marking a student changes
+  // their present/absent/% totals and would otherwise move that row immediately
+  // after every click. Use one deterministic alphabetical order for marking.
   active=active.slice().sort(function(a,b){
-    if(_histSort==='az')return (a.name||'').localeCompare(b.name||'');
-    var sa=histViewMode==='monthly'?getAttendStats(a,histYear,histMonth,null):getTotalAttendStats(a);
-    var sb=histViewMode==='monthly'?getAttendStats(b,histYear,histMonth,null):getTotalAttendStats(b);
-    if(_histSort==='present')return (sb.present||0)-(sa.present||0);
-    if(_histSort==='absent')return (sb.absent||0)-(sa.absent||0);
-    if(_histSort==='pct')return (sb.pct||0)-(sa.pct||0);
-    return (a.name||'').localeCompare(b.name||'');
+    var byName=String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base',numeric:true});
+    return byName||String(a.id||'').localeCompare(String(b.id||''),undefined,{numeric:true});
   });
   if (!active.length) { document.getElementById('att-content').innerHTML='<div style="text-align:center;color:var(--sub);padding:40px">No active students.</div>'; return; }
   updateAttDateDisplay(dateStr);
