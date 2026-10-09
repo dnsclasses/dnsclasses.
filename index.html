@@ -9295,11 +9295,7 @@ function openContAbsentWA(sid,streak){
   var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);
   var msg='Dear Parent,'+
     '\n\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') has been continuously absent from past *'+streak+' day'+(streak!==1?'s':'')+'*.'+
-    '\n\nThis month so far:'+
-    '\n\u2705 Present: '+st.present+
-    '\n\u274c Absent: '+st.absent+
-    '\n\ud83d\udfe1 Late: '+st.late+
-    '\n\ud83d\udcca Attendance: '+st.pct+'%'+
+    '\n\n*Classes are held daily. Any loss of studies due to continued absence will be the student\'s responsibility.*'+
     '\n\nPlease ensure regular attendance.'+
     '\n\nRegards,\nDNS Classes';
   if(ph.length===1)openWAUrl(ph[0].number,msg);
