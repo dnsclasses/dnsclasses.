@@ -667,6 +667,12 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
     <div style="min-width:0"><label class="flabel">TEST DATE</label><div id="pr-recorded-date-btn" onclick="_openThemedDatePicker('pr-recorded-date')" style="width:100%;padding:10px 6px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center">Select date...</div><input id="pr-recorded-date" type="text" style="display:none"></div>
   </div>
 
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px">
+    <div style="font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.6px">STUDENT MARKS</div>
+    <button type="button" onclick="clearAllProgressEntries()" style="padding:7px 12px;border-radius:12px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.1);color:#ef4444;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">
+      <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-3px;margin-right:3px">delete_sweep</span>Clear All
+    </button>
+  </div>
   <div id="pr-students" style="margin-bottom:14px"></div>
 
   </div>
@@ -2524,6 +2530,45 @@ function _saveDraft(){
   }catch(e){}
 }
 
+function clearAllProgressEntries(){
+  var cont=document.getElementById('pr-students');
+  var raw=cont&&cont.dataset?cont.dataset.studs:'';
+  if(!raw){showToast('Load students first',true);return;}
+  var studs;
+  try{studs=JSON.parse(raw||'[]');}catch(e){showToast('Could not clear entries',true);return;}
+  studs.forEach(function(s){
+    var mk=document.getElementById('pm_'+s.id);
+    var ids=['pa_','pnp_','png_','pna_'];
+    if(mk){
+      mk.value='';
+      mk.disabled=false;
+      mk.readOnly=false;
+      mk.style.opacity='1';
+      mk.style.background='var(--ibg)';
+      mk.style.pointerEvents='auto';
+    }
+    ids.forEach(function(prefix){
+      var el=document.getElementById(prefix+s.id);
+      if(el){
+        el.checked=false;
+        el.disabled=false;
+        el.style.opacity='1';
+        el.style.pointerEvents='auto';
+        if(el.parentElement){
+          el.parentElement.style.opacity='1';
+          el.parentElement.style.pointerEvents='auto';
+        }
+      }
+    });
+  });
+  // This flag distinguishes an intentional blank-and-save from an accidental
+  // attempt to save without entering any marks.
+  cont.dataset.progressClearAll='1';
+  if(typeof _posterCache!=='undefined')_posterCache.entries={};
+  _updateMarksCounter();
+  showToast('All entries cleared. Tap Save to confirm.');
+}
+
 function saveScoreMarks(){
   var cls=document.getElementById('pr-class').value;
   var chapter=document.getElementById('pr-topic').value;
@@ -2542,16 +2587,33 @@ function saveScoreMarks(){
   });
   var ch2=document.getElementById('pr-topic').value;
   var tno2=(document.getElementById('pr-tno').value||'').trim();
-  var hasPrev=studs.some(function(s){return db.progress&&db.progress[s.id]&&db.progress[s.id][ch2]&&db.progress[s.id][ch2][tno2];});
-  if(!hasEntry&&!hasPrev){showToast('No marks entered yet',true);return;}
+  tno2=tno2.toUpperCase();if(/^\d+$/.test(tno2))tno2='T'+tno2;
+  var clearAll=String(document.getElementById('pr-students').dataset.progressClearAll||'')==='1';
+  var normSaveKey=function(v){return String(v==null?'':v).replace(/\s+/g,' ').trim().toLowerCase();};
+  var hasPrev=studs.some(function(s){
+    var sp=db.progress&&db.progress[s.id]||{};
+    var ck=Object.keys(sp).find(function(k){return normSaveKey(k)===normSaveKey(ch2);});
+    var cp=ck?sp[ck]:null;
+    return !!(cp&&Object.keys(cp).some(function(k){return normSaveKey(k)===normSaveKey(tno2)&&cp[k];}));
+  });
+  if(!hasEntry&&!hasPrev&&!clearAll){showToast('No marks entered yet',true);return;}
   pushUndo();
   if(!_recordProgressMarks())return;
-  db.scoreChartDraft=null;saveDB();
+  db.scoreChartDraft=null;
+  var _clearCont=document.getElementById('pr-students');
+  if(_clearCont&&_clearCont.dataset)delete _clearCont.dataset.progressClearAll;
+  saveDB();
   try{
     localStorage.setItem(SK,JSON.stringify(db));
     var _savedDB=JSON.parse(localStorage.getItem(SK)||'{}');
-    var _savedAny=studs.some(function(s){return _savedDB.progress&&_savedDB.progress[s.id]&&_savedDB.progress[s.id][ch2]&&_savedDB.progress[s.id][ch2][tno2.toUpperCase()];});
-    if(!_savedAny)throw new Error('Saved marks could not be verified');
+    var _savedAny=studs.some(function(s){
+      var sp=_savedDB.progress&&_savedDB.progress[s.id]||{};
+      var ck=Object.keys(sp).find(function(k){return normSaveKey(k)===normSaveKey(ch2);});
+      var cp=ck?sp[ck]:null;
+      return !!(cp&&Object.keys(cp).some(function(k){return normSaveKey(k)===normSaveKey(tno2)&&cp[k];}));
+    });
+    if(!_savedAny&&!clearAll)throw new Error('Saved marks could not be verified');
+    if(clearAll&&_savedAny)throw new Error('Cleared marks could not be verified');
     loadDB();
   }catch(e){showToast('Marks could not be persisted',true);return;}
   showToast('Marks saved!');
@@ -3264,17 +3326,12 @@ function dashOpenTestRecord(reminderId){
   var match=raw.match(/^(.*?)\s*(?:--?|\(|\s)\s*(?:TEST\s*)?(T?\d+)\)?\s*$/i);
   if(!chapter||!tno){if(!match){showToast('This test does not have chapter and test number details',true);return;}chapter=match[1].trim();tno=match[2].toUpperCase();}
   if(/^\d+$/.test(tno))tno='T'+tno;
-  chapter=chapter.replace(/^Ch\.?\s*\d+\s*/i,'').trim();
-  var _chapterNorm=function(v){return String(v||'').replace(/\s+/g,' ').trim().toLowerCase();};
-  var _chapterMatch=null;
-  Object.keys(db.chapters||{}).some(function(key){
-    return (db.chapters[key]||[]).some(function(item){
-      var name=typeof item==='string'?item:(item&&item.name)||'';
-      if(_chapterNorm(name)===_chapterNorm(chapter)){_chapterMatch=name;return true;}
-      return false;
-    });
-  });
-  if(_chapterMatch)chapter=_chapterMatch;
+  var _canonical=_canonicalAlertChapter(r.chapterName||chapter,r.cls,r.school||'');
+  if(_canonical)chapter=_canonical.name;
+  else {
+    showToast('The predefined chapter for this alert was not found',true);
+    return;
+  }
   if(!r.cls){showToast('This test does not have class details',true);return;}
   var norm=function(v){return String(v||'').replace(/\s+/g,' ').trim().toLowerCase();};
   var alertNames=String(r.forWho||'').split(/\s*,\s*/).map(norm).filter(Boolean);
@@ -6640,14 +6697,14 @@ function _taGetForLabel(){
   if(!names.length)return 'Class '+cls;
   return names.join(', ');
 }
-function _alertChapterLabel(chapter,grade,school){
+function _canonicalAlertChapter(chapter,grade,school){
   var original=String(chapter||'').replace(/\s+/g,' ').trim();
-  if(!original)return original;
+  if(!original)return null;
+  // Accept both display labels and legacy reminder strings:
+  // "Ch. 1 - Real Numbers", "Chapter 1 Real Numbers", "Real Numbers --T1".
   var raw=original.replace(/^Ch(?:apter)?\.?\s*\d+\s*[-–—:]?\s*/i,'').trim();
-  var suffixMatch=raw.match(/\s+((?:TEST\s*)?T?\d+)\s*$/i);
-  var suffix=suffixMatch?' '+suffixMatch[1].toUpperCase():'';
-  if(suffixMatch)raw=raw.slice(0,suffixMatch.index).trim();
-  var norm=function(v){return String(v||'').replace(/\s+/g,' ').trim().toLowerCase();};
+  raw=raw.replace(/\s*(?:--?\s*|\(\s*)((?:TEST\s*)?T?\d+)\)?\s*$/i,'').trim();
+  var norm=function(v){return String(v||'').replace(/^[\s–—:.-]+|[\s–—:.-]+$/g,'').replace(/\s+/g,' ').trim().toLowerCase();};
   var wanted=norm(raw),found=null;
   var keys=[];
   if(grade)keys.push(_chKeyCls(grade,school||''));
@@ -6656,11 +6713,24 @@ function _alertChapterLabel(chapter,grade,school){
   keys.some(function(key){
     return (db.chapters[key]||[]).some(function(item,idx){
       var name=typeof item==='string'?item:(item&&item.name)||'';
-      if(norm(name)===wanted){found={name:name,num:(item&&item.num)||idx+1};return true;}
+      if(norm(name)===wanted){found={name:String(name),num:(item&&item.num)||idx+1,key:key};return true;}
       return false;
     });
   });
-  return found?'Ch. '+found.num+' - '+found.name+suffix:original;
+  return found;
+}
+function _alertCanonicalChapterName(chapter,grade,school){
+  var found=_canonicalAlertChapter(chapter,grade,school);
+  return found?found.name:String(chapter||'').replace(/^Ch(?:apter)?\.?\s*\d+\s*[-–—:]?\s*/i,'').trim();
+}
+function _alertChapterLabel(chapter,grade,school){
+  var original=String(chapter||'').replace(/\s+/g,' ').trim();
+  if(!original)return original;
+  var suffixMatch=original.match(/\s+((?:TEST\s*)?T?\d+)\s*$/i);
+  var suffix=suffixMatch?' '+suffixMatch[1].toUpperCase():'';
+  var found=_canonicalAlertChapter(original,grade,school);
+  if(found)return 'Ch. '+found.num+' - '+found.name+suffix;
+  return original;
 }
 function _alertTopicsText(topics,reminder){
   return (topics||[]).map(function(topic){return _alertChapterLabel(topic,reminder&&reminder.cls,reminder&&reminder.school);}).join(' + ');
@@ -6748,6 +6818,7 @@ function _saveTestReminders(){
         date:e.date,
         topics:_taGetDisplayTopics(idx).map(function(t){return _alertChapterLabel(t,cls,'');}),
         chapter:_alertChapterLabel(e.topics[0]||'',cls,''),
+        chapterName:_alertCanonicalChapterName(e.topics[0]||'',cls,''),
         testNo:(e.topicTnos&&e.topicTnos[e.topics[0]])||'',
         forWho:forWho,
         cls:cls,
@@ -6765,6 +6836,7 @@ function _saveTestReminders(){
         date:e.date,
         topics:_taGetDisplayTopics(idx).map(function(t){return _alertChapterLabel(t,cls,'');}),
         chapter:_alertChapterLabel(e.topics[0]||'',cls,''),
+        chapterName:_alertCanonicalChapterName(e.topics[0]||'',cls,''),
         testNo:(e.topicTnos&&e.topicTnos[e.topics[0]])||'',
         forWho:forWho,
         cls:cls,
@@ -13021,14 +13093,18 @@ function _recordProgressMarks(){
       var cp=ck?sp[ck]:null;
       return !!(cp&&Object.keys(cp).some(function(k){return _normProgressKey(k)===_normProgressKey(tno)&&cp[k];}));
     });
-    if(!hasPersisted)throw new Error('No progress entry available for '+chapter+' '+tno);
+    var _clearRequested=String((document.getElementById('pr-students')||{}).dataset&&document.getElementById('pr-students').dataset.progressClearAll||'')==='1';
+    if(!hasPersisted&&!_clearRequested)throw new Error('No progress entry available for '+chapter+' '+tno);
     if(!db.settings)db.settings={};
     if(!db.settings.rankTests)db.settings.rankTests={};
     // Register the month selected for the test, not the month in which the
-    // record happened to be saved. This keeps month availability universal.
+    // record happened to be saved. Do not register an intentionally cleared
+    // test that has no remaining progress entries.
     var _rankYm=(_chosenDate?_chosenDate.slice(0,7):new Date().toISOString().slice(0,7));
-    if(!db.settings.rankTests[_rankYm])db.settings.rankTests[_rankYm]={};
-    db.settings.rankTests[_rankYm][String(cls||'').trim()]=true;
+    if(hasPersisted){
+      if(!db.settings.rankTests[_rankYm])db.settings.rankTests[_rankYm]={};
+      db.settings.rankTests[_rankYm][String(cls||'').trim()]=true;
+    }
     // The database write is the only operation that determines whether the
     // progress save succeeded. Chart/report refreshes are deliberately kept
     // outside this try block because a rendering error must not look like a
