@@ -10767,8 +10767,36 @@ function sendResultCardToWA(){
   var tnoMatch=tnoRaw.match(/\d+/);
   var tno=tnoMatch?tnoMatch[0]:tnoRaw.replace(/^T(?:EST)?\s*/i,'').trim();
   var total=parseFloat(document.getElementById('pr-total').value)||20;
+  var testDateRaw=((document.getElementById('pr-recorded-date')||{}).value||'').trim();
   var studsRaw=document.getElementById('pr-students').dataset.studs;
   if(!studsRaw){showToast('Select a class first',true);return;}
+  // The date field can be blank after a reload or chart-to-record navigation
+  // even though the selected test already has a saved date in db.progress.
+  // Recover the date from the actual chapter/test record before rendering.
+  if(!testDateRaw){
+    var _dateNorm=function(v){return String(v==null?'':v).replace(/\s+/g,' ').trim().toLowerCase();};
+    var _dateChapter=_dateNorm(topicValue).replace(/^ch(?:apter)?\.?\s*\d+\s*[-–—:]?\s*/i,'').trim();
+    var _dateTest='T'+String(tno||'').replace(/^T/i,'');
+    var _savedDateRaw='';
+    (db.students||[]).some(function(_st){
+      var _sp=db.progress&&db.progress[_st.id]||{};
+      var _ck=Object.keys(_sp).find(function(k){return _dateNorm(k)===_dateNorm(topicValue)||_dateNorm(k)===_dateChapter;});
+      var _cp=_ck?_sp[_ck]:null;
+      if(!_cp)return false;
+      var _tk=Object.keys(_cp).find(function(k){return _dateNorm(k)===_dateNorm(_dateTest)||_dateNorm(k)===_dateNorm(tno);});
+      var _entry=_tk?_cp[_tk]:null;
+      if(_entry&&(_entry.recordedAt||_entry.recordedMonth)){
+        if(_entry.recordedAt)_savedDateRaw=String(_entry.recordedAt).slice(0,10);
+        else _savedDateRaw=String(_entry.recordedMonth).slice(0,7)+'-01';
+        return true;
+      }
+      return false;
+    });
+    if(_savedDateRaw)testDateRaw=_savedDateRaw;
+  }
+  var testDateLabel=testDateRaw?fmtD(testDateRaw):'Not recorded';
+  var cardDateLabel=testDateRaw?testDateLabel:fmtD(_todayStr());
+  var cardDateCaption=testDateRaw?'TEST DATE':'DATE GENERATED';
   var studs=JSON.parse(studsRaw).filter(function(s){var full=(db.students||[]).find(function(x){return x.id===s.id;});return full&&full.status!=='inactive'&&full.status!=='discontinued';}),scored=[],absent=[],np=[],ng=[],na=[];
   studs.forEach(function(s){
     var mk=document.getElementById('pm_'+s.id),raw=mk?(mk.value||'').trim():'';
@@ -10872,7 +10900,7 @@ function sendResultCardToWA(){
   card.style.cssText='position:absolute;left:-100000px;top:0;width:'+reportWidth+'px;box-sizing:border-box;padding:24px;background:#eef2f5;color:#1d2b3a;font-family:Google Sans,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;word-spacing:normal;letter-spacing:0;';
   var stat=function(label,value,detail){return '<div style="flex:1;min-width:0;text-align:center;padding:0 12px"><div style="font-size:18px;line-height:1.2;font-weight:700;letter-spacing:1.3px;color:#70808f">'+label+'</div><div style="font-size:40px;line-height:1.2;font-weight:700;color:#1d2b3a;margin-top:6px">'+value+'</div><div style="font-size:17px;line-height:1.25;color:#718192;margin-top:5px">'+detail+'</div></div>';};
   card.innerHTML='<div style="background:#fff;border:1px solid #dbe3ea;border-radius:18px;padding:'+(largeClass?'25px 30px':'32px 38px')+';box-shadow:0 9px 24px rgba(28,43,61,.08)">'+
-    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:2px solid #1e3b57"><div style="display:flex;align-items:center;gap:13px;min-width:0"><img src="'+logo+'" style="width:52px;height:52px;object-fit:contain;border-radius:10px"><div style="min-width:0"><div style="font-size:'+(largeClass?'28px':'31px')+';line-height:1.15;font-weight:700;letter-spacing:1.4px;color:#17334e">DNS CLASSES</div><div style="font-size:11px;line-height:1.3;font-weight:700;letter-spacing:2px;color:#8291a0;margin-top:5px">ACADEMIC PERFORMANCE REPORT</div>'+school+'</div></div><div style="text-align:right;flex:0 0 auto"><div style="font-size:10px;line-height:1.2;font-weight:700;letter-spacing:1.5px;color:#8b98a5">CLASS</div><div style="font-size:'+(largeClass?'30px':'34px')+';line-height:1.15;font-weight:700;color:#17334e;margin-top:4px;white-space:nowrap">'+esc(classLabel)+'</div></div></div>'+ 
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:2px solid #1e3b57"><div style="display:flex;align-items:center;gap:13px;min-width:0"><img src="'+logo+'" style="width:52px;height:52px;object-fit:contain;border-radius:10px"><div style="min-width:0"><div style="font-size:'+(largeClass?'28px':'31px')+';line-height:1.15;font-weight:700;letter-spacing:1.4px;color:#17334e">DNS CLASSES</div><div style="font-size:11px;line-height:1.3;font-weight:700;letter-spacing:2px;color:#8291a0;margin-top:5px">ACADEMIC PERFORMANCE REPORT</div>'+school+'</div></div><div style="text-align:right;flex:0 0 auto"><div style="font-size:10px;line-height:1.2;font-weight:700;letter-spacing:1.5px;color:#8b98a5">CLASS</div><div style="font-size:'+(largeClass?'30px':'34px')+';line-height:1.15;font-weight:700;color:#17334e;margin-top:4px;white-space:nowrap">'+esc(classLabel)+'</div><div style="display:inline-block;margin-top:8px;padding:5px 9px;border:1px solid #dbe3ea;border-radius:999px;background:#f7fafc;font-size:10px;line-height:1.2;font-weight:800;letter-spacing:.5px;color:#657789;white-space:nowrap">'+esc(cardDateCaption)+' • '+esc(cardDateLabel)+'</div></div></div>'+ 
     '<div style="padding:'+(largeClass?'22px 0 17px':'28px 0 20px')+'"><div style="font-size:12px;line-height:1.2;font-weight:700;letter-spacing:2px;color:#c58a16">TEST RESULTS</div><div style="font-size:'+chapterTitleSize+'px;line-height:1.3;font-weight:600;letter-spacing:normal;color:#17334e;margin-top:10px;max-width:100%;overflow-wrap:anywhere;word-break:normal">'+chapterLineMarkup+'</div></div>'+ 
     '<div style="display:flex;align-items:stretch;padding:15px 0 13px;border-top:1px solid #e3e9ee;border-bottom:1px solid #e3e9ee">'+
       stat('HIGHEST',top.length?markText(top[0].marks):'—',top.length?percentText(pct(top[0].marks)):'No score')+
