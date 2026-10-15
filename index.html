@@ -3436,6 +3436,24 @@ function _textColorFor(rgbStr,isLight){
 }
 var DASH_CARD_COLORS={collect:'180,83,9',daily:'67,56,202',admissions:'29,78,216',tests:'126,34,206',hw:'220,38,38'};
 var DASH_CARD_COLORS_DARK={collect:'251,191,36',daily:'129,140,248',admissions:'96,165,250',tests:'192,132,252',hw:'248,113,113'};
+function _dashExpectedFeesForMonth(students,year,month){
+  var prefix=year+'-'+('0'+(month+1)).slice(-2);
+  var monthStart=new Date(year,month,1),monthEnd=new Date(year,month+1,0,23,59,59,999);
+  return (students||[]).reduce(function(total,s){
+    var fee=Number(s&&s.fees),joinParts=String(s&&s.joiningDate||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!s||(s.status||'active')!=='active'||!isFinite(fee)||fee<=0||!joinParts)return total;
+    var joinDate=new Date(Number(joinParts[1]),Number(joinParts[2])-1,Number(joinParts[3]));
+    if(joinDate.getFullYear()!==Number(joinParts[1])||joinDate.getMonth()!==Number(joinParts[2])-1||joinDate.getDate()!==Number(joinParts[3]))return total;
+    var excluded=(s.excludedMonths||[]).some(function(k){return String(k).slice(0,7)===prefix;});
+    if(excluded)return total;
+    var overlaps=getRuns(s).some(function(run){
+      var from=run&&run.from?new Date(run.from):joinDate;
+      var to=run&&run.to?new Date(run.to):null;
+      return !isNaN(from.getTime())&&from<=monthEnd&&(!to||(!isNaN(to.getTime())&&to>=monthStart));
+    });
+    return overlaps?total+fee:total;
+  },0);
+}
 function _updateDashSmallCards(){
   var now=new Date();
   var prefix=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
@@ -3451,21 +3469,8 @@ function _updateDashSmallCards(){
       if(key.indexOf(prefix)===0)collectThisMonth+=amt;
       if(rec.paidOn&&rec.paidOn.slice(0,10)===todayStr)collectToday+=amt;
     });
-    // Expected fees are based on every non-free student whose fee-paying
-    // run overlaps the selected month, not only on the exact due-day key.
-    // This ensures all students chargeable in the month are included.
-    if(Number(s.fees)>0&&s.joiningDate){
-      var _mp=prefix.split('-'),_my=Number(_mp[0]),_mm=Number(_mp[1])-1;
-      var _monthStart=new Date(_my,_mm,1),_monthEnd=new Date(_my,_mm+1,0,23,59,59,999);
-      var _excluded=(s.excludedMonths||[]).indexOf(prefix)>=0;
-      var _feeRunOverlaps=!_excluded&&getRuns(s).some(function(run){
-        var _from=run&&run.from?new Date(run.from):new Date(s.joiningDate);
-        var _to=run&&run.to?new Date(run.to):null;
-        return _from<=_monthEnd&&(!_to||_to>=_monthStart);
-      });
-      if(_feeRunOverlaps)expectedThisMonth+=Number(s.fees)||0;
-    }
   });
+  expectedThisMonth=_dashExpectedFeesForMonth(db.students,now.getFullYear(),now.getMonth());
   var manualInc=0;
   ((db.manager&&db.manager.income)||[]).forEach(function(e){
     if(e.date&&e.date.indexOf(prefix)===0)manualInc+=Number(e.amount||0);
@@ -6907,6 +6912,7 @@ function _lcConfirm(){
     return Object.assign({},x,{status:_lcType==='discontinued'?'discontinued':'active',history:h});
   });
   saveDB();closeM('lc-modal');
+  if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();
   showToast(_lcType==='discontinued'?'Marked as Left':'Rejoined successfully');
   renderProfile();
 }
@@ -7279,7 +7285,7 @@ function saveForm(){
         if(_clash){showToast('Admission #'+admNoVal+' is already used by '+_clash.name,true);return;}
         payload.admissionNo=admNoVal;
       }
-      db.students=db.students.map(function(x){return x.id===_eid?Object.assign({},x,payload):x;});editId=null;_addFormDirty=false;saveDB();showToast('Student updated!');_refreshAllStudentDropdowns();openProf(_eid);
+      db.students=db.students.map(function(x){return x.id===_eid?Object.assign({},x,payload):x;});editId=null;_addFormDirty=false;saveDB();if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();showToast('Student updated!');_refreshAllStudentDropdowns();openProf(_eid);
     }
     else{
       var _dup=db.students.find(function(x){
@@ -7299,7 +7305,7 @@ function saveForm(){
       } else {
         _finalAdmNo=_getNextAdmissionNo();
       }
-      var _nid=Date.now();var _newSessId=(_sessMode&&curSession)?curSession:undefined;db.students.push(Object.assign({},payload,{id:_nid,admissionNo:_finalAdmNo,payments:{},attendance:{},status:'active',history:[],excludedMonths:[]},_newSessId?{sessionId:_newSessId}:{}));editId=null;_addFormDirty=false;saveDB();showToast('Student added!');_refreshAllStudentDropdowns();openProf(_nid);
+      var _nid=Date.now();var _newSessId=(_sessMode&&curSession)?curSession:undefined;db.students.push(Object.assign({},payload,{id:_nid,admissionNo:_finalAdmNo,payments:{},attendance:{},status:'active',history:[],excludedMonths:[]},_newSessId?{sessionId:_newSessId}:{}));editId=null;_addFormDirty=false;saveDB();if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();showToast('Student added!');_refreshAllStudentDropdowns();openProf(_nid);
     }
   }catch(e){showToast('Save error: '+e.message,true);console.error(e);}
 }
