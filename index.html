@@ -4076,19 +4076,32 @@ function renderDash(){
     else if(dashFilter&&dashFilter.indexOf('cls_')===0){
       var _clsG=dashFilter.slice(4);
       var _clsStu=_st.filter(function(s){return (s.grade||'Other')===_clsG;});
+      _clsStu.sort(function(a,b){
+        function order(s){
+          if(s.status==='discontinued')return 2;
+          var cycle=getCurrentCycle(s);
+          return Number(s.fees)>0&&!cycle.isPaid?0:1;
+        }
+        var ao=order(a),bo=order(b);
+        if(ao!==bo)return ao-bo;
+        return _studentDisplayName(a).localeCompare(_studentDisplayName(b));
+      });
       var _clsActive=_clsStu.filter(function(s){return (s.status||'active')==='active';}).length;
       var _clsDisc=_clsStu.filter(function(s){return s.status==='discontinued';}).length;
       html='<div style="font-weight:bold;font-size:13px;color:var(--acc);margin-bottom:4px">'
         +'<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:3px">school</span>Class '+_clsG+' — <span style="color:#22c55e">'+_clsActive+' Active</span>'
-        +(_clsDisc?' <span style="color:'+(isDark?'#f87171':'#ef4444')+'">'+_clsDisc+' Left</span>':'')+'</div>'
-        +'<div style="font-size:11px;color:var(--sub);margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:-1px;margin-right:3px">circle</span>highlighted = discontinued</div>';
+        +(_clsDisc?' <span style="color:'+(isDark?'#fca5a5':'#b91c1c')+'">'+_clsDisc+' Left</span>':'')+'</div>'
+        +'<div style="font-size:11px;color:var(--sub);margin-bottom:8px">Order: unpaid fees, paid, then left</div>';
       html+=_clsStu.map(function(s){
         var ci=getCurrentCycle(s);
         var _disc=s.status==='discontinued';
-        return '<div onclick="openProf('+s.id+')" style="background:'+(_disc?'rgba(239,68,68,.08)':'var(--card)')+';border:1px solid '+(_disc?'rgba(239,68,68,.35)':'var(--bdr)')+';border-radius:14px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer">'
+        var _discColor=isDark?'#fca5a5':'#b91c1c';
+        var _discBg=isDark?'rgba(127,29,29,.34)':'#fff1f2';
+        var _discBorder=isDark?'rgba(248,113,113,.9)':'rgba(185,28,28,.72)';
+        return '<div onclick="openProf('+s.id+')" style="background:'+(_disc?_discBg:'var(--card)')+';border:'+( _disc?'1.5px solid '+_discBorder:'1px solid var(--bdr)')+';border-radius:14px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer">'
           +'<div style="width:36px;height:36px;border-radius:50%;background:'+ci.color+'20;border:1.5px solid '+ci.color+';display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;color:'+ci.color+';flex-shrink:0">'+(ci.isPaid?'\u2713':'\u20b9')+'</div>'
           +'<div style="flex:1;min-width:0">'
-          +'<div style="font-weight:bold;font-size:15px;color:'+cTxt()+'">'+esc(_studentDisplayName(s))+'</div>'
+          +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:bold;font-size:15px;color:'+(_disc?_discColor:cTxt())+'">'+esc(_studentDisplayName(s))+'</span>'+(_disc?'<span style="font-size:9px;font-weight:900;letter-spacing:.5px;padding:2px 6px;border-radius:10px;background:'+(isDark?'#7f1d1d':'#fee2e2')+';color:'+_discColor+';border:1px solid '+_discBorder+'">LEFT</span>':'')+'</div>'
           +'<div style="font-size:12px;color:var(--sub)">'+esc(getSubjects(s))+'</div>'
           +'</div>'
           +'<div style="text-align:right;flex-shrink:0">'
