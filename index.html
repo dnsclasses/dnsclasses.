@@ -1957,6 +1957,17 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
     <button onclick="closeM('inv-adddetail-modal')" style="padding:11px 18px;border-radius:8px;background:var(--m3nav-chip);color:var(--m3nav-chiptxt);border:1px solid var(--navbdr)">Cancel</button>
   </div>
 </div></div>
+<div id="pr-result-share-modal" class="modal hidden" onclick="closeM('pr-result-share-modal')">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:360px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+      <div style="font-size:17px;font-weight:800;color:var(--txt)"><span class="material-symbols-outlined" style="font-size:19px;vertical-align:-4px;margin-right:5px;color:#f97316">share</span>Share Result Card</div>
+      <button type="button" onclick="closeM('pr-result-share-modal')" style="background:none;color:var(--sub);font-size:22px;padding:0 4px">&times;</button>
+    </div>
+    <div style="font-size:13px;line-height:1.5;color:var(--sub);margin-bottom:14px">Your result card is ready. Choose Share image to select WhatsApp or another available app.</div>
+    <button type="button" onclick="prShareResultCard()" style="width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:14px;font-weight:800;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-4px;margin-right:5px">share</span>Share image</button>
+    <button type="button" onclick="prDownloadResultCard()" style="width:100%;padding:12px;border-radius:12px;background:var(--ibg);color:var(--txt);border:1px solid var(--ibdr);font-size:14px;font-weight:800"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-4px;margin-right:5px">download</span>Save image</button>
+  </div>
+</div>
 <script>
 /* DNS_CLASSES_APP_JS_V1 */
 
@@ -10777,6 +10788,34 @@ function sendDecoratedToWA(){
 /* ═══ ADDITIVE TEST RESULT CARD SHARING ═══
    This fourth option is intentionally isolated from the existing Plain Text,
    Save, and WhatsApp actions above. */
+var _prResultCardPending=null;
+function _prShowResultCardShareMenu(blob,canvas,filename){
+  _prResultCardPending={blob:blob,canvas:canvas,filename:filename||'dns_test_result_card.png'};
+  openM('pr-result-share-modal');
+}
+function prShareResultCard(){
+  var pending=_prResultCardPending;
+  if(!pending){showToast('Create a result card first',true);return;}
+  if(typeof File==='undefined'||!navigator.share||!navigator.canShare){showToast('Image sharing is not supported here. Choose Save image instead.',true);return;}
+  var file;
+  try{
+    file=new File([pending.blob],pending.filename,{type:'image/png'});
+    if(!navigator.canShare({files:[file]})){showToast('This browser cannot share image files. Choose Save image instead.',true);return;}
+    var sharePromise=navigator.share({files:[file],title:pending.filename,text:pending.filename});
+    closeM('pr-result-share-modal');
+    Promise.resolve(sharePromise).catch(function(err){
+      if(err&&err.name==='AbortError'){openM('pr-result-share-modal');return;}
+      showToast('Could not open the share menu. You can save the image instead.',true);
+      openM('pr-result-share-modal');
+    });
+  }catch(err){showToast('Could not open the share menu. You can save the image instead.',true);}
+}
+function prDownloadResultCard(){
+  var pending=_prResultCardPending;
+  if(!pending){showToast('Create a result card first',true);return;}
+  closeM('pr-result-share-modal');
+  _prResultCardDownload(pending.canvas,pending.filename);
+}
 function sendResultCardToWA(){
   var topicEl=document.getElementById('pr-topic');
   var topicValue=(topicEl&&topicEl.value||'').trim();
@@ -10950,10 +10989,7 @@ function sendResultCardToWA(){
     if(card.parentNode)card.parentNode.removeChild(card);
     canvas.toBlob(function(blob){
       if(!blob){showToast('Could not create result card',true);return;}
-      var file=new File([blob],resultFileName,{type:'image/png'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        navigator.share({files:[file],title:resultFileName,text:resultFileName}).catch(function(){_prResultCardDownload(canvas,resultFileName);});
-      }else{_prResultCardDownload(canvas,resultFileName);}
+      _prShowResultCardShareMenu(blob,canvas,resultFileName);
     },'image/png',1.0);
   }).catch(function(){
     if(card.parentNode)card.parentNode.removeChild(card);
@@ -10962,10 +10998,7 @@ function sendResultCardToWA(){
       if(card.parentNode)card.parentNode.removeChild(card);
       canvas.toBlob(function(blob){
         if(!blob){showToast('Could not create result card',true);return;}
-        var file=new File([blob],resultFileName,{type:'image/png'});
-        if(navigator.canShare&&navigator.canShare({files:[file]})){
-          navigator.share({files:[file],title:resultFileName,text:resultFileName}).catch(function(){_prResultCardDownload(canvas,resultFileName);});
-        }else{_prResultCardDownload(canvas,resultFileName);}
+        _prShowResultCardShareMenu(blob,canvas,resultFileName);
       },'image/png',1.0);
     }).catch(function(){if(card.parentNode)card.parentNode.removeChild(card);showToast('Could not create result card',true);});
   });
