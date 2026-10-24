@@ -131,6 +131,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 /* Buttons inside flash area get white background except WhatsApp button */
 .dash-test-flash button:not(.wa-btn){background:#fff !important;color:#1e293b !important;text-shadow:none !important}
 input,select,textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;outline:none;font-family:'Inter',sans-serif}
+/* Keep every student add/edit field value and selector at one consistent size. */
+#v-add .fg2 input,#v-add .fg2 select,#v-add .fg2 textarea,#v-add #f-date-btn,#v-add #f-dob-btn,#v-add #f-grade-btn,#v-add #f-loc-btn,#v-add #f-subject-boxes span,#v-add .ph-type-btn,#v-add .ph-num,#v-add #f-notes{font-size:16px!important}
 button{cursor:pointer;border:none;font-family:inherit}
 button:active{opacity:.75;transform:scale(.97)}
 .hdr{background:linear-gradient(135deg,#0d1f3c,#060d1a);border-bottom:2px solid #d97706;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.25)}
