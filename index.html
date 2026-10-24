@@ -7087,9 +7087,9 @@ function addPhRow(num,tag,isWhatsApp){
   row.style = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
   var currentType = tag || 'Personal';
   row.innerHTML = `
-    <button type="button" class="ph-type-btn" style="width:95px;padding:12px 8px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:12px;cursor:pointer;text-align:center">${currentType}</button>
+    <button type="button" class="ph-type-btn" style="width:95px;padding:12px 8px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px;cursor:pointer;text-align:center">${currentType}</button>
     <input type="hidden" class="ph-type-val" value="${currentType}">
-    <input type="tel" class="ph-num" value="${num || ''}" placeholder="9876543210" style="flex:1;padding:12px 14px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:13px">
+    <input type="tel" class="ph-num" value="${num || ''}" placeholder="9876543210" style="flex:1;padding:12px 14px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:16px">
     <button type="button" class="ph-wa" data-active="${isWhatsApp ? '1' : '0'}" title="Mark as WhatsApp number" style="padding:7px;border-radius:8px;border:1px solid ${isWhatsApp ? '#25d366' : 'var(--ibdr)'};background:${isWhatsApp ? 'rgba(37,211,102,.16)' : 'var(--ibg)'};color:${isWhatsApp ? '#16a34a' : 'var(--sub)'};cursor:pointer;line-height:0"><span class="material-symbols-outlined" style="font-size:18px">chat</span></button>
     <button type="button" onclick="this.parentElement.remove()" style="padding:6px;border-radius:8px;border:none;background:rgba(239,68,68,0.1);color:#ef4444;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>
   `;
