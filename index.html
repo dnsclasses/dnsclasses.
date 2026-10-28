@@ -2921,6 +2921,7 @@ function getCurrentCycle(s){
     if(full>0&&paid>0&&paid<full)return{key:c.key,label:c.label,isPaid:false,isPartial:true,color:'#f97316',text:'Partial ₹'+(full-paid)+' due'};
     return{key:c.key,label:c.label,isPaid:true,color:'#22c55e',text:'Paid'};
   }
+  if(isFeeBalanceWaived(s,c.key))return{key:c.key,label:c.label,isPaid:true,color:'#22c55e',text:'Fee waived'};
   var d=calcDiff(c.key);
   if(d>0)return{key:c.key,label:c.label,isPaid:false,color:'#ef4444',text:d+'d Overdue'};
   if(d===0)return{key:c.key,label:c.label,isPaid:false,color:'#f59e0b',text:'Due Today'};
@@ -3896,7 +3897,7 @@ function renderDash(){
         else paidList.push({s:s,c:cy,rec:rec});
       }
       else if(balanceWaived){return;}
-      else if((s.status||'active')==='active'){
+      else{
         var diff=calcDiff(cy.key);
         totalPending+=fullFee;
         var text=diff>0?diff+'d Overdue':(diff===0?'Due Today':'Due in '+Math.abs(diff)+'d');
@@ -4146,7 +4147,7 @@ function dashSec(title,list,color){
 
 function alertCard(s,c,color,text,overrideAmt){
   var ph=phones(s);
-  var canWaive=overrideAmt!==undefined&&text.indexOf('paid')>=0&&text.indexOf('due')>=0&&!isFeeBalanceWaived(s,c.key);
+  var canWaive=overrideAmt!==undefined&&!isFeeBalanceWaived(s,c.key);
   var _initial=(s.name||'?').trim().charAt(0).toUpperCase();
   var displayAmt=(overrideAmt!==undefined)?overrideAmt:Number(s.fees);
   return '<div style="background:'+color+'15;border:1px solid '+color+'40;border-radius:12px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px '+color+'12">'+
@@ -4161,7 +4162,7 @@ function alertCard(s,c,color,text,overrideAmt){
     '<div style="font-weight:bold;color:var(--acc);font-size:15px">₹'+displayAmt.toLocaleString()+'</div>'+
     '<div style="display:flex;gap:4px;margin-top:5px">'+
     (ph.length?'<button onclick="openWA('+s.id+')" style="padding:6px;border-radius:6px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);cursor:pointer;line-height:0;display:inline-flex;align-items:center;justify-content:center">'+_waIcon(18,'transparent')+'</button>':'')+
-    (canWaive?'<button onclick="event.stopPropagation();waiveFeeBalance('+s.id+',\''+c.key+'\')" style="padding:5px 9px;border-radius:14px;border:1px solid #f97316;background:rgba(249,115,22,.1);color:#f97316;font-size:11px;font-weight:bold">Dismiss</button>':'')+
+    (canWaive?'<button onclick="event.stopPropagation();waiveFeeBalance('+s.id+',\''+c.key+'\')" style="padding:5px 9px;border-radius:14px;border:1px solid #f97316;background:rgba(249,115,22,.1);color:#f97316;font-size:11px;font-weight:bold">Waive</button>':'')+
     '<button onclick="logPay('+s.id+',\''+c.key+'\',false)" style="padding:5px 10px;border-radius:14px;border:1px solid #22c55e;background:rgba(34,197,94,.1);color:#22c55e;font-size:12px;font-weight:bold">✓ Paid</button>'+
     '</div></div></div>';
 }
@@ -5862,6 +5863,7 @@ function renderProfile(){
         rowStatus='\u2713 Paid \u20b9'+amt.toLocaleString()+(rec.paidOn?' on '+fmtD(rec.paidOn):'');
       }
     }
+    else if(balanceWaived){rowColor='#22c55e';rowStatus='✓ Fee waived';}
     else if(diff>0){rowColor='#ef4444';rowStatus=diff+'d Overdue';}
     else if(diff===0){rowColor='#f59e0b';rowStatus='Due Today';}
 
@@ -5957,19 +5959,21 @@ function logPay(sid,key,isEdit){
 
 function waiveFeeBalance(sid,key){
   var s=db.students.find(function(x){return x.id===sid;}),rec=s&&(s.payments||{})[key];
-  if(!s||!rec||Number(s.fees)<=getAmt(s,rec))return;
+  var paidAmount=rec?getAmt(s,rec):0;
+  var balance=s?Number(s.fees||0)-paidAmount:0;
+  if(!s||balance<=0||isFeeBalanceWaived(s,key))return;
   var cy=getCycles(s).find(function(c){return c.key===key;});
   var rmDesc=document.getElementById('rm-desc'),rmOk=document.getElementById('rm-ok');
-  if(rmDesc)rmDesc.innerHTML='<b>'+(cy?cy.label:key)+'</b><br>Remove only the remaining balance reminder. The payment record will stay unchanged.';
-  if(rmOk){rmOk.textContent='Dismiss Due';rmOk.onclick=function(){
+  if(rmDesc)rmDesc.innerHTML='<b>'+(cy?cy.label:key)+'</b><br>Waive the outstanding fee balance of ₹'+balance.toLocaleString()+'.'+(rec?' The payment record will stay unchanged.':'');
+  if(rmOk){rmOk.textContent='Waive Due';rmOk.onclick=function(){
     pushUndo();
     db.students=db.students.map(function(st){
       if(st.id!==sid)return st;
       var waivers=Object.assign({},st.feeWaivers||{});
-      waivers[key]={amount:Number(st.fees)-getAmt(s,rec),at:new Date().toISOString()};
+      waivers[key]={amount:balance,at:new Date().toISOString()};
       return Object.assign({},st,{feeWaivers:waivers});
     });
-    saveDB();closeM('rm-modal');showToast('Remaining balance reminder removed.');refresh();if(profId===sid)renderProfile();
+    saveDB();closeM('rm-modal');showToast('Outstanding fee waived.');refresh();if(profId===sid)renderProfile();
   };}
   openM('rm-modal');
 }
