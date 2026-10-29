@@ -708,9 +708,10 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
         </select>
       </div>
       <div><label class="flabel">STUDENT</label>
-        <select id="pg-student" onchange="pgShowChart()" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px">
+        <select id="pg-student" onchange="pgShowChart();_gpSync('pg-student','pg-student-btn')" disabled style="display:none">
           <option value="">Select student</option>
         </select>
+        <button type="button" id="pg-student-btn" onclick="openGenericPicker('pg-student')" disabled style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:14px;text-align:left;cursor:not-allowed;opacity:0.6">Select class first...</button>
       </div>
     </div>
     <div id="pg-chart-wrap"></div>
@@ -743,11 +744,11 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="flabel">DATE GIVEN <span style="font-weight:400;opacity:0.7">(today by default)</span></label>
+          <div id="mock-date-btn" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center;">Select date...</div><input id="mock-date" type="text" style="display:none">
+        </div>
         <div><label class="flabel">DATE CHECKED</label>
           <div id="mock-date-checked-btn" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center;">Select date...</div><input id="mock-date-checked" type="text" style="display:none">
-        </div>
-        <div><label class="flabel">DATE GIVEN <span style="font-weight:400;opacity:0.7">(auto)</span></label>
-          <div id="mock-date-btn" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center;">Select date...</div><input id="mock-date" type="text" style="display:none">
         </div>
       </div>
       <button id="mock-submit-btn" onclick="mockAddExam()" style="width:100%;padding:12px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;touch-action:manipulation"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">add_circle</span>Add Mock Exam</button>
@@ -6407,7 +6408,9 @@ function openGenericPicker(selectId){
     listEl.innerHTML='<div style="text-align:center;color:var(--sub);padding:20px;font-size:13px">No options available.</div>';
   } else {
     listEl.innerHTML=opts.map(function(o){
-      return '<div data-gpval="'+esc(o.value)+'" style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;margin-bottom:6px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);cursor:pointer;color:var(--txt);font-size:14px;font-weight:600">'+esc(o.textContent)+'<span style="color:var(--sub);font-size:16px">\u203a</span></div>';
+      var _gpStatus=o.getAttribute('data-status');
+      var isLeftStudent=(selectId==='mock-student'&&_gpStatus==='discontinued')||(selectId==='pg-student'&&(_gpStatus==='discontinued'||_gpStatus==='inactive'));
+      return '<div data-gpval="'+esc(o.value)+'" style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;margin-bottom:6px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);cursor:pointer;color:'+(isLeftStudent?'#ef4444':'var(--txt)')+';font-size:14px;font-weight:'+(isLeftStudent?'800':'600')+'">'+esc(o.textContent)+'<span style="color:var(--sub);font-size:16px">\u203a</span></div>';
     }).join('');
     listEl.querySelectorAll('[data-gpval]').forEach(function(it){
       it.addEventListener('click',function(){
@@ -13468,11 +13471,11 @@ function _mockSyncMarksMax(){
 }
 var _mockEditId=null;
 function _mockSyncGivenDate(){
-  var ckEl=document.getElementById('mock-date-checked');
   var gvEl=document.getElementById('mock-date');
-  if(!ckEl||!gvEl||!ckEl.value)return;
-  var d=new Date(ckEl.value);d.setDate(d.getDate()-3);
-  gvEl.value=d.toISOString().split('T')[0];
+  if(!gvEl)return;
+  gvEl.value=_todayStr();
+  gvEl.dispatchEvent(new Event('input',{bubbles:true}));
+  gvEl.dispatchEvent(new Event('change',{bubbles:true}));
 }
 function pgSwitchView(v){
   var ch=document.getElementById('pg-view-chapters'),mk=document.getElementById('pg-view-mock');
@@ -13506,9 +13509,13 @@ function mockLoadStudents(){
     return;
   }
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
-  _sortTestRecordStudents(studs);
+  studs.sort(function(a,b){
+    var aLeft=a.status==='discontinued',bLeft=b.status==='discontinued';
+    if(aLeft!==bLeft)return aLeft?1:-1;
+    return _compareTestRecordStudents(a,b);
+  });
   el.innerHTML='<option value="">Select student...</option>';
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(_studentDisplayName(s))+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
+  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'"'+(s.status==='discontinued'?' data-status="discontinued"':'')+'>'+esc(_studentDisplayName(s))+(s.school?' ('+esc(s.school)+')':'')+'</option>';});
   el.disabled=!studs.length;
   if(!studs.length)el.innerHTML='<option value="">No students found...</option>';
   _gpSync('mock-class','mock-class-btn');
@@ -13526,10 +13533,12 @@ function mockShowList(){
   renderMockList(sid);
 }
 function _refreshAllMockViews(sid){
-  // Refreshes Mock Exam data everywhere it's currently shown — Test Records
-  // and Printables — so adding/editing/deleting a mock exam is reflected
-  // immediately in both places without navigating away and back.
+  // Refresh Mock Exam data everywhere it's currently shown — Test Records,
+  // the selected student's progress chart, and Printables — so changes appear
+  // immediately without navigating away and back.
   if(typeof renderMockList==='function')renderMockList(sid);
+  var _pgMS=document.getElementById('pg-student');
+  if(_pgMS&&parseInt(_pgMS.value||'0')===sid&&typeof pgShowChart==='function')pgShowChart();
   var _prnMS=document.getElementById('prn-mock-student');
   if(_prnMS&&parseInt(_prnMS.value||'0')===sid&&typeof renderPrnMock==='function')renderPrnMock();
 }
@@ -13547,7 +13556,7 @@ function mockAddExam(){
   if(isNaN(marks)||marks<0||marks>mm){showToast('Enter valid marks (0-'+mm+')',true);return;}
   var mockName=(nameEl&&nameEl.value.trim())||'';
   var dateChecked=dateCheckedEl.value||_todayStr();
-  var dateGiven=dateGivenEl.value||(function(){var d=new Date(dateChecked);d.setDate(d.getDate()-3);return d.toISOString().split('T')[0];})();
+  var dateGiven=dateGivenEl.value||_todayStr();
   pushUndo();
   if(!db.mockExams[sid])db.mockExams[sid]=[];
   if(_mockEditId){
@@ -13588,6 +13597,8 @@ function mockEditExam(sid,id){
   _mockSyncMarksMax();
   document.getElementById('mock-date-checked').value=e.dateChecked;
   document.getElementById('mock-date').value=e.dateGiven;
+  document.getElementById('mock-date').dispatchEvent(new Event('input',{bubbles:true}));
+  document.getElementById('mock-date').dispatchEvent(new Event('change',{bubbles:true}));
   var btn=document.getElementById('mock-submit-btn');
   var cancelBtn=document.getElementById('mock-cancel-btn');
   if(btn){btn.textContent='\ud83d\udcbe Update Mock Exam';btn.style.background='linear-gradient(135deg,#f59e0b,#d97706)';}
@@ -13600,6 +13611,7 @@ function mockCancelEdit(){
   document.getElementById('mock-marks').value='';
   var mmEl=document.getElementById('mock-mm');
   if(mmEl)mmEl.value='80';
+  _mockSyncGivenDate();
   _mockResetButton();
 }
 function mockDeleteExam(sid,id){
@@ -13630,10 +13642,15 @@ function renderMockList(sid){
   var wrap=document.getElementById('mock-list-wrap');
   if(!wrap)return;
   var list=(db.mockExams&&db.mockExams[sid])||[];
+  var orderedList=list.slice().sort(function(a,b){
+    var dateA=String(a.dateGiven||''),dateB=String(b.dateGiven||'');
+    var byDate=dateB.localeCompare(dateA);
+    return byDate||Number(b.id||0)-Number(a.id||0);
+  });
   var dk=!document.body.classList.contains('light');
   var ac=getMockAchievements(sid);
   var h='';
-  if(list.length){
+  if(orderedList.length){
     h+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
     h+='<div style="background:var(--card);border:1px solid var(--ibdr);border-radius:14px;padding:8px 14px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--acc)">'+ac.count+'</div><div style="font-size:10px;color:var(--sub);font-weight:700">MOCKS</div></div>';
     h+='<div style="background:var(--card);border:1px solid var(--ibdr);border-radius:14px;padding:8px 14px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--acc)">'+(ac.avg!==null?ac.avg+'%':'--')+'</div><div style="font-size:10px;color:var(--sub);font-weight:700">AVERAGE</div></div>';
@@ -13658,8 +13675,8 @@ function renderMockList(sid){
     });
     h+='</div>';
     h+='<div style="display:flex;flex-direction:column;gap:6px">';
-    list.slice().reverse().forEach(function(e,ri){
-      var idx=list.length-ri;
+    orderedList.forEach(function(e,ri){
+      var idx=orderedList.length-ri;
       var pct=e.total?Math.round(e.marks/e.total*100):0;
       var isFull=e.marks>=e.total;
       var medal=isFull?'\ud83c\udfc6':pct>=90?'\ud83e\udd47':pct>=75?'\ud83e\udd48':pct>=60?'\ud83e\udd49':'';
@@ -13687,10 +13704,20 @@ function pgLoadStudents(){
   if(wrap)wrap.innerHTML='';
   if(!el)return;
   el.innerHTML='<option value="">Select student</option>';
-  if(!cls)return;
+  if(!cls){el.disabled=true;_gpSync('pg-student','pg-student-btn');return;}
   var studs=db.students.filter(function(s){return (s.grade||'')===cls;});
-  _sortTestRecordStudents(studs);
-  studs.forEach(function(s){el.innerHTML+='<option value="'+s.id+'">'+esc(_studentDisplayName(s))+'</option>';});
+  studs.sort(function(a,b){
+    var aLeft=a.status==='discontinued'||a.status==='inactive';
+    var bLeft=b.status==='discontinued'||b.status==='inactive';
+    if(aLeft!==bLeft)return aLeft?1:-1;
+    return _compareTestRecordStudents(a,b);
+  });
+  studs.forEach(function(s){
+    var isFormer=s.status==='discontinued'||s.status==='inactive';
+    el.innerHTML+='<option value="'+s.id+'"'+(isFormer?' data-status="'+s.status+'"':'')+'>'+esc(_studentDisplayName(s))+'</option>';
+  });
+  el.disabled=!studs.length;
+  _gpSync('pg-student','pg-student-btn');
 }
 
 function _pgInferTotal(chapter,tno,fallback){
@@ -14505,7 +14532,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
     h+='<div data-no-swipe="1" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
     h+='<table style="width:100%;min-width:280px;border-collapse:separate;border-spacing:0 4px">';
     h+='<tr>';
-    ['#','MOCK','MARKS','%'].forEach(function(lbl,li){h+='<th style="font-size:13px;font-weight:800;color:'+sb+';text-align:'+(li===0?'left':li===2?'right':'center')+';padding:2px 4px">'+lbl+'</th>';});
+    ['#','MOCK','MARKS','%'].forEach(function(lbl,li){h+='<th style="font-size:13px;font-weight:800;color:'+sb+';text-align:'+(li===0||li===1?'left':li===2?'right':'center')+';padding:2px 4px">'+lbl+'</th>';});
     h+='</tr>';
     _mkList.forEach(function(e,i){
       var pct=e.total?Math.round(e.marks/e.total*100):0;
@@ -14513,7 +14540,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
       var medal=e.marks>=e.total?'\ud83c\udfc6':pct>=90?'\ud83e\udd47':pct>=75?'\ud83e\udd48':pct>=60?'\ud83e\udd49':'';
       h+='<tr style="background:'+cd+'">';
       h+='<td style="font-size:14px;color:'+sb+';padding:5px 4px;border-radius:6px 0 0 6px">'+(i+1)+'</td>';
-      h+='<td style="padding:5px 4px;text-align:center">'
+      h+='<td style="padding:5px 4px;text-align:left">'
         +'<div style="font-size:15px;font-weight:700;color:'+tx+'">'+(e.name?esc(e.name):'#'+(i+1))+'</div>'
         +'<div style="font-size:11px;color:'+sb+'">'+fmtD(e.dateGiven)+'</div></td>';
       h+='<td style="font-size:17px;font-weight:800;color:'+tx+';padding:5px 4px;text-align:right">'+e.marks+'/'+e.total+(medal?'<span style="font-size:21px;vertical-align:middle"> '+medal+'</span>':'')+'</td>';
