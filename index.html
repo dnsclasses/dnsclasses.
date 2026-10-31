@@ -11837,7 +11837,10 @@ function openMgrEditIncome(id){
   var inc=(db.manager.income||[]).find(function(e){return e.id===id;});
   if(!inc)return;
   window._editIncId=id;
-  document.getElementById('mgr-edit-inc-date').value=inc.date||'';
+  var editIncDateEl=document.getElementById('mgr-edit-inc-date');
+  editIncDateEl.value=inc.date||'';
+  editIncDateEl.dispatchEvent(new Event('input',{bubbles:true}));
+  editIncDateEl.dispatchEvent(new Event('change',{bubbles:true}));
   document.getElementById('mgr-edit-inc-amt').value=inc.amount||'';
   document.getElementById('mgr-edit-inc-src').value=inc.source||'';
   document.getElementById('mgr-edit-inc-note').value=inc.note||'';
