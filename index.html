@@ -40,6 +40,7 @@ body.pitch-black .m3-dash,body:not(.light) .m3-dash{
 .m3-card:active{transform:scale(.97);box-shadow:var(--m3-shadow-hover)}
 @keyframes m3FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-red{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+@keyframes mockExpiredBlink{0%,100%{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.25),0 0 12px rgba(239,68,68,.18)}50%{border-color:#fff;box-shadow:0 0 0 5px rgba(239,68,68,.55),0 0 22px rgba(239,68,68,.42)}}
 @keyframes attend-pure-red-flash {
   0%, 100% { background-color: #ff0000; color: #fff; border-color: #ff0000; }
   50% { background-color: transparent; color: #ff0000; border-color: #ff0000; }
@@ -328,6 +329,7 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
 <div class="wrap">
   <div id="v-dash" class="m3-dash">
   <div id="dash-session-banner"></div>
+  <div id="dash-mock-timer-alerts" style="margin:8px 0"></div>
     <div id="stats-grid">
       <div id="fc-stu" class="m3-card m3-fade" style="padding:16px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
@@ -736,24 +738,29 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
         <input id="mock-name" type="text" placeholder="e.g. Set A, Sample Paper 3" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div><label class="flabel">MARKS</label>
-          <input id="mock-marks" type="number" min="0" max="80" placeholder="e.g. 62" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <div><label class="flabel">MARKS <span style="font-weight:400;opacity:0.7">(optional while ongoing)</span></label>
+          <input id="mock-marks" type="number" min="0" max="80" placeholder="Enter after finishing" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
         </div>
         <div><label class="flabel">MM (Max Marks)</label>
           <input id="mock-mm" type="number" min="1" value="80" placeholder="e.g. 80" oninput="_mockSyncMarksMax()" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
         </div>
       </div>
+      <div style="margin-bottom:10px"><label class="flabel">TIMER DURATION (MINUTES) <span style="font-weight:400;opacity:0.7">(for ongoing mock)</span></label>
+        <input id="mock-duration" type="number" min="1" step="1" value="60" placeholder="e.g. 60" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div><label class="flabel">DATE GIVEN <span style="font-weight:400;opacity:0.7">(today by default)</span></label>
           <div id="mock-date-btn" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center;">Select date...</div><input id="mock-date" type="text" style="display:none">
         </div>
-        <div><label class="flabel">DATE CHECKED</label>
-          <div id="mock-date-checked-btn" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center;">Select date...</div><input id="mock-date-checked" type="text" style="display:none">
+        <div><label class="flabel">DATE CHECKED <span style="font-weight:400;opacity:0.7">(optional while ongoing)</span></label>
+          <div style="display:flex;gap:6px;align-items:stretch"><div id="mock-date-checked-btn" style="flex:1;width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box;cursor:pointer;min-height:42px;display:flex;align-items:center;">Select date...</div><button type="button" onclick="mockClearCheckedDate()" title="Clear checked date" style="flex:0 0 auto;padding:0 10px;border-radius:12px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.10);color:#ef4444;font-size:17px;cursor:pointer;min-height:42px">×</button></div><input id="mock-date-checked" type="text" style="display:none">
         </div>
       </div>
-      <button id="mock-submit-btn" onclick="mockAddExam()" style="width:100%;padding:12px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;touch-action:manipulation"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">add_circle</span>Add Mock Exam</button>
+      <div style="font-size:11px;color:var(--sub);line-height:1.4;margin:-2px 0 10px">Enter the student, mock name, start date and duration to save it under <b style="color:#f59e0b">Ongoing Mocks</b>. The countdown starts automatically. Add marks and the checked date later to complete it.</div>
+      <button id="mock-submit-btn" onclick="mockAddExam()" style="width:100%;padding:12px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;touch-action:manipulation"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px;margin-right:4px">add_circle</span>Save Mock</button>
       <button id="mock-cancel-btn" onclick="mockCancelEdit()" style="display:none;width:100%;padding:10px;margin-top:8px;border-radius:14px;background:var(--ibg);color:var(--sub);font-weight:600;font-size:13px;border:1px solid var(--ibdr);cursor:pointer;touch-action:manipulation">Cancel Edit</button>
     </div>
+    <div id="mock-ongoing-wrap"></div>
     <div id="mock-list-wrap"></div>
     </div>
   </div>
@@ -2060,7 +2067,7 @@ function _computeStudentTotals(s,countAbsences){
     });
   });
   var mockL=(db.mockExams&&db.mockExams[s.id])||[];
-  mockL.forEach(function(e){if(e.total){totalScore+=e.marks;totalMax+=e.total;given++;total++;}});
+  mockL.forEach(function(e){if(_mockIsCompleted(e)){totalScore+=Number(e.marks);totalMax+=Number(e.total);given++;total++;}});
   return{score:Math.round(totalScore*100)/100,max:Math.round(totalMax*100)/100,given:given,total:total};
 }
 // Count assessments available to the class/group. A test is available when at
@@ -2084,7 +2091,7 @@ function _getRankAvailableTestCount(students){
   // Mock exams are stored as per-student arrays without a shared test ID;
   // the largest recorded list represents the class-wide available count.
   var mockCount=0;
-  (students||[]).forEach(function(s){mockCount=Math.max(mockCount,((db.mockExams&&db.mockExams[s.id])||[]).filter(function(e){return e&&e.total;}).length);});
+  (students||[]).forEach(function(s){mockCount=Math.max(mockCount,((db.mockExams&&db.mockExams[s.id])||[]).filter(_mockIsCompleted).length);});
   return Object.keys(keys).length+mockCount;
 }
 var _SNAP_VERSION=2;
@@ -2350,7 +2357,7 @@ function _computeDatedMonthlyTotals(s,ym){
     var d=String(e&& (e.recordedMonth||e.dateGivenMonth||'')||'');
     if(d!==ym)return;
     out.hasDated=true;
-    if(e.total){out.score+=Number(e.marks)||0;out.max+=Number(e.total)||0;out.given++;}
+    if(_mockIsCompleted(e)){out.score+=Number(e.marks)||0;out.max+=Number(e.total)||0;out.given++;}
   });
   out.score=Math.round(out.score*100)/100;
   out.max=Math.round(out.max*100)/100;
@@ -3153,6 +3160,7 @@ function togglePitchBlack(){
     if(dot)dot.style.left=pitchBlack?'23px':'3px';
   }
   _applySelectTheme();
+  if(typeof renderAllOngoingMocks==='function')renderAllOngoingMocks();
   if(!isDark)showToast('Will apply next time you switch to dark mode');
   if(curView==='dash'&&typeof _updateDashSmallCards==='function')_updateDashSmallCards();
 }
@@ -3166,6 +3174,7 @@ function toggleTheme(){
   var ti=document.getElementById('theme-icon');
   if(ti)ti.textContent=isDark?'light_mode':'dark_mode';
   refresh();
+  if(typeof renderAllOngoingMocks==='function')renderAllOngoingMocks();
   if(curView==='dash'&&typeof _updateDashSmallCards==='function')_updateDashSmallCards();
   if(curView==='dash'&&typeof renderDashTests==='function')renderDashTests();
   var _collectBlock=document.getElementById('dash-collect-block');
@@ -3841,6 +3850,7 @@ function renderBirthdayAndClassCount(){
 }
 function renderDash(){
   var _st=_getSessionStudents();
+  renderMockTimerAlerts();
   _updateDashSmallCards();
   _updateDashTestsBadge();
   _updateDashModeLabel();
@@ -4268,7 +4278,7 @@ function _getRankAchievements(s,gradeStudents){
   var mTroph=0,mGold=0,mSilv=0,mBrnz=0;
   var _mockList=(db.mockExams&&db.mockExams[s.id])||[];
   _mockList.forEach(function(e){
-    if(!e.total)return;
+    if(!_mockIsCompleted(e))return;
     var pct=e.marks/e.total*100;
     if(e.marks>=e.total)mTroph++;
     else if(pct>=90)mGold++;
@@ -4384,7 +4394,7 @@ function _getRankPeriodMax(students,period){
     });
     var mockL=(db.mockExams&&db.mockExams[s.id])||[];
     mockL.forEach(function(e,i){
-      if(!e||!e.total)return;
+      if(!_mockIsCompleted(e))return;
       var ym=String(e.recordedMonth||e.dateGivenMonth||'').slice(0,7);
       if(periods){if(!ym||periods.indexOf(ym)<0)return;periodSeen[ym]=true;}
       var key=String(i)+(periods?'::'+ym:'');
@@ -7758,7 +7768,7 @@ function runGlobalSearch(){
       if(fields.some(function(f){return String(f).toLowerCase().indexOf(q)>=0;})){
         mockCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+stu.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:14px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
           '<div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(e.name||'Mock Exam')+'</div>'+
-          '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(_studentDisplayName(stu))+' \u2022 '+e.marks+'/'+e.total+(e.dateGiven?' \u2022 '+esc(fmtD(e.dateGiven)):'')+'</div>'+
+          '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(_studentDisplayName(stu))+' \u2022 '+(_mockIsCompleted(e)?e.marks+'/'+e.total:'ONGOING')+(e.dateGiven?' \u2022 '+esc(fmtD(e.dateGiven)):'')+'</div>'+ 
           '</div>');
       }
     });
@@ -13472,6 +13482,80 @@ function _mockSyncMarksMax(){
   var mm=parseFloat(mmEl.value);
   if(!isNaN(mm)&&mm>0)marksEl.max=mm;
 }
+function _mockIsCompleted(e){
+  return !!(e&&e.total&&e.marks!==''&&e.marks!==null&&e.marks!==undefined&&!isNaN(Number(e.marks))&&e.dateChecked);
+}
+var _mockTimerInterval=null;
+var _mockAlarmPlayed={};
+function _mockFormatTime(sec){sec=Math.max(0,Math.floor(Number(sec)||0));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return(h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function _mockRemainingSeconds(e){if(!e||!e.durationMinutes)return null;if(e.timerState==='paused')return Math.max(0,Number(e.remainingSeconds)||0);if(!e.startedAt)return null;return Math.max(0,Number(e.durationMinutes)*60-Math.floor((Date.now()-Number(e.startedAt))/1000));}
+function renderMockTimerAlerts(){
+  var wrap=document.getElementById('dash-mock-timer-alerts');
+  if(!wrap)return;
+  var expired=[],running=[];
+  (db.students||[]).forEach(function(stu){((db.mockExams&&db.mockExams[stu.id])||[]).forEach(function(e){
+    if(_mockIsCompleted(e)||!e.startedAt)return;
+    var left=_mockRemainingSeconds(e);
+    if(left===0)expired.push({stu:stu,e:e});
+    else if(e.timerState!=='paused')running.push({stu:stu,e:e});
+  });});
+  if(!expired.length&&!running.length){wrap.innerHTML='';return;}
+  var h='';
+  if(running.length){
+    h+='<div style="padding:12px;border-radius:16px;background:rgba(34,197,94,.12);border:2px solid #22c55e">';
+    h+='<div style="display:flex;align-items:center;gap:7px;color:#15803d;font-size:14px;font-weight:900;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:20px">timer</span>ONGOING MOCK TIMERS ('+running.length+')</div>';
+    running.forEach(function(row){
+      var left=_mockRemainingSeconds(row.e);
+      h+='<div data-dash-mock-row="'+row.stu.id+'-'+row.e.id+'" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid rgba(34,197,94,.25)"><div style="min-width:0"><div style="font-weight:800;color:var(--txt);overflow-wrap:anywhere">'+esc(_studentDisplayName(row.stu))+'</div><div style="font-size:11px;color:var(--sub)">'+(row.e.name?esc(row.e.name):'Mock')+'</div></div><strong data-dash-mock-time="'+row.stu.id+'-'+row.e.id+'" style="font-size:17px;color:#15803d;white-space:nowrap">'+_mockFormatTime(left)+'</strong><button onclick="mockPauseTimer('+row.stu.id+','+row.e.id+')" style="padding:7px 10px;border-radius:9px;border:1px solid #16a34a;background:rgba(34,197,94,.14);color:#15803d;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer">Ⅱ PAUSE</button></div>';
+    });
+    h+='</div>';
+  }
+  if(expired.length){
+    h+='<div style="margin-top:'+(running.length?'8px':'0')+';padding:12px;border-radius:16px;background:rgba(239,68,68,.12);border:2px solid #ef4444;animation:mockExpiredBlink 1s infinite">';
+    h+='<div style="display:flex;align-items:center;gap:7px;color:#ef4444;font-size:14px;font-weight:900;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:20px">alarm</span>MOCK TIMER FINISHED ('+expired.length+')</div>';
+    expired.forEach(function(row){h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid rgba(239,68,68,.25)"><div style="min-width:0"><div style="font-weight:800;color:var(--txt);overflow-wrap:anywhere">'+esc(_studentDisplayName(row.stu))+'</div><div style="font-size:11px;color:var(--sub)">'+(row.e.name?esc(row.e.name):'Mock')+' · Time is up</div></div><button onclick="openExpiredMock('+row.stu.id+','+row.e.id+')" style="padding:7px 10px;border-radius:9px;border:none;background:#ef4444;color:#fff;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer">VIEW MOCK</button></div>';});
+    h+='</div>';
+  }
+  wrap.innerHTML=h;
+}
+function openExpiredMock(sid,id){go('poster');setTimeout(function(){pgSwitchView('mock');var stu=document.getElementById('mock-student');if(stu){var s=(db.students||[]).find(function(x){return Number(x.id)===Number(sid);});var cls=document.getElementById('mock-class');if(s&&cls){cls.value=s.grade||'';mockLoadStudents();stu.value=String(sid);_gpSync('mock-class','mock-class-btn');_gpSync('mock-student','mock-student-btn');mockShowList();}}},80);}
+function _mockPlayAlarm(key){
+  if(_mockAlarmPlayed[key])return;
+  _mockAlarmPlayed[key]=true;
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext,ctx=new AC(),now=ctx.currentTime;
+    [0,0.28,0.56,0.84].forEach(function(offset){var osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=offset%0.56===0?880:660;gain.gain.setValueAtTime(0.0001,now+offset);gain.gain.exponentialRampToValueAtTime(0.22,now+offset+0.02);gain.gain.exponentialRampToValueAtTime(0.0001,now+offset+0.22);osc.connect(gain);gain.connect(ctx.destination);osc.start(now+offset);osc.stop(now+offset+0.24);});
+    setTimeout(function(){try{ctx.close();}catch(e){}},1400);
+  }catch(err){console.warn('Mock timer alarm unavailable:',err);}
+}
+function _mockTimerMarkup(sid,e){
+  var left=_mockRemainingSeconds(e),mins=Math.max(1,Number(e.durationMinutes)||60),total=mins*60;
+  if(left===null)return '<button onclick="mockStartTimer('+sid+','+e.id+')" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 8px rgba(245,158,11,.3)">▶ START TIMER</button>';
+  var darkTimer=typeof isDark!=='undefined'&&isDark;
+  var expired=left===0,paused=e.timerState==='paused',pct=Math.max(0,Math.min(100,Math.round(left/total*100))),color=expired?(darkTimer?'#f87171':'#b91c1c'):paused?(darkTimer?'#c4b5fd':'#6d28d9'):(darkTimer?'#60a5fa':'#1d4ed8'),border=expired?(darkTimer?'rgba(248,113,113,.55)':'rgba(185,28,28,.45)'):paused?(darkTimer?'rgba(196,181,253,.55)':'rgba(109,40,217,.45)'):(darkTimer?'rgba(96,165,250,.55)':'rgba(29,78,216,.45)'),bg=expired?'rgba(248,113,113,.16)':paused?'rgba(196,181,253,.14)':'rgba(96,165,250,.14)';
+  var controls=expired?'<button onclick="mockResetTimer('+sid+','+e.id+')" style="'+_mockTimerBtnStyle(darkTimer?'#c4b5fd':'#6d28d9')+'">↻ Reset</button>':'<button onclick="'+(paused?'mockResumeTimer':'mockPauseTimer')+'('+sid+','+e.id+')" style="'+_mockTimerBtnStyle(paused?(darkTimer?'#86efac':'#15803d'):(darkTimer?'#60a5fa':'#1d4ed8'))+'">'+(paused?'▶ Resume':'Ⅱ Pause')+'</button>';
+  return '<div data-mock-timer="'+sid+'-'+e.id+'" style="width:100%;max-width:none;box-sizing:border-box;padding:9px 10px;border-radius:13px;background:'+bg+';border:1px solid '+border+'">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px"><span style="font-size:10px;font-weight:900;letter-spacing:.6px;color:'+color+'">'+(expired?'TIME UP':paused?'PAUSED':'MOCK TIMER')+'</span><strong data-mock-time="'+sid+'-'+e.id+'" style="font-size:18px;line-height:1;color:'+color+'">'+_mockFormatTime(left)+'</strong></div>'+ 
+    '<div style="height:6px;border-radius:8px;background:rgba(148,163,184,.28);overflow:hidden;margin-bottom:8px"><div data-mock-progress="'+sid+'-'+e.id+'" style="height:100%;width:'+pct+'%;border-radius:8px;background:'+(expired?(darkTimer?'#f87171':'#dc2626'):paused?(darkTimer?'#c4b5fd':'#7c3aed'):(darkTimer?'#60a5fa':'#2563eb'))+';transition:width .8s linear"></div></div>'+ 
+    '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'+controls+'<button onclick="mockAdjustTimer('+sid+','+e.id+',-5)" style="'+_mockTimerBtnStyle('#64748b')+'">−5m</button><button onclick="mockAdjustTimer('+sid+','+e.id+',5)" style="'+_mockTimerBtnStyle('#64748b')+'">+5m</button><button onclick="mockResetTimer('+sid+','+e.id+')" style="'+_mockTimerBtnStyle('#64748b')+'">↻</button></div></div>';
+}
+function _mockTimerBtnStyle(c){return 'padding:5px 8px;border-radius:7px;border:1px solid '+c+'55;background:'+c+'18;color:'+c+';font-size:10px;font-weight:800;cursor:pointer';}
+function _mockGet(sid,id){return ((db.mockExams&&db.mockExams[sid])||[]).find(function(x){return Number(x.id)===Number(id);});}
+function mockStartTimer(sid,id){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var mins=parseInt(e.durationMinutes,10);if(isNaN(mins)||mins<1)mins=60;e.durationMinutes=mins;e.startedAt=Date.now();e.timerState='running';delete e.remainingSeconds;delete _mockAlarmPlayed[sid+'-'+id];saveDB();renderAllOngoingMocks();renderMockTimerAlerts();showToast('Timer started for '+mins+' minutes');}
+function mockPauseTimer(sid,id){var e=_mockGet(sid,id);if(!e||!e.startedAt)return;e.remainingSeconds=_mockRemainingSeconds(e);e.timerState='paused';delete e.startedAt;saveDB();renderAllOngoingMocks();renderMockTimerAlerts();}
+function mockResumeTimer(sid,id){var e=_mockGet(sid,id);if(!e||e.timerState!=='paused')return;e.startedAt=Date.now();e.durationMinutes=Math.max(1,(Number(e.remainingSeconds)||0)/60);e.timerState='running';delete e.remainingSeconds;saveDB();renderAllOngoingMocks();renderMockTimerAlerts();}
+function mockResetTimer(sid,id){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;e.startedAt=Date.now();e.timerState='running';delete e.remainingSeconds;delete _mockAlarmPlayed[sid+'-'+id];saveDB();renderAllOngoingMocks();renderMockTimerAlerts();showToast('Timer reset');}
+function mockAdjustTimer(sid,id,delta){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var left=_mockRemainingSeconds(e);if(left===null){e.durationMinutes=Math.max(1,(Number(e.durationMinutes)||60)+delta);saveDB();renderAllOngoingMocks();renderMockTimerAlerts();return;}var next=Math.max(60,left+delta*60);if(e.timerState==='paused'){e.remainingSeconds=next;}else{e.durationMinutes=next/60;e.startedAt=Date.now();}saveDB();renderAllOngoingMocks();renderMockTimerAlerts();}
+function _mockRefreshTimers(){document.querySelectorAll('[data-mock-timer]').forEach(function(el){var parts=el.getAttribute('data-mock-timer').split('-'),sid=Number(parts[0]),id=Number(parts[1]),e=_mockGet(sid,id);if(!e)return;var left=_mockRemainingSeconds(e);if(left===null)return;var total=Math.max(60,(Number(e.durationMinutes)||60)*60),expired=left===0,paused=e.timerState==='paused',time=el.querySelector('[data-mock-time]'),progress=el.querySelector('[data-mock-progress]'),ribbon=el.closest('[data-mock-ribbon]');if(time)time.textContent=_mockFormatTime(left);if(progress){progress.style.width=Math.max(0,Math.min(100,left/total*100))+'%';if(expired)progress.style.background='#f87171';}if(ribbon)ribbon.style.animation=expired?'mockExpiredBlink 1s infinite':'';if(expired){el.querySelectorAll('button')[0].textContent='↻ Reset';if(!paused)_mockPlayAlarm(sid+'-'+id);}});renderMockTimerAlerts();}
+function _mockEnsureTimerInterval(){if(_mockTimerInterval)return;_mockTimerInterval=setInterval(_mockRefreshTimers,1000);}
+_mockEnsureTimerInterval();
+function mockClearCheckedDate(){
+  var el=document.getElementById('mock-date-checked');
+  if(!el)return;
+  el.value='';
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.dispatchEvent(new Event('change',{bubbles:true}));
+}
 var _mockEditId=null;
 function _mockSyncGivenDate(){
   var gvEl=document.getElementById('mock-date');
@@ -13486,6 +13570,7 @@ function pgSwitchView(v){
   if(v==='mock'){
     if(ch)ch.classList.add('hidden');
     if(mk)mk.classList.remove('hidden');
+    if(typeof renderAllOngoingMocks==='function')renderAllOngoingMocks();
     if(tCh){tCh.style.background='var(--ibg)';tCh.style.color='var(--sub)';tCh.style.border='1px solid var(--ibdr)';}
     if(tMk){tMk.style.background='var(--btn)';tMk.style.color='var(--btntxt)';tMk.style.border='none';}
   } else {
@@ -13503,6 +13588,7 @@ function mockLoadStudents(){
   var wrap=document.getElementById('mock-list-wrap');
   if(form)form.style.display='none';
   if(wrap)wrap.innerHTML='';
+  renderAllOngoingMocks();
   if(!el)return;
   el.value='';
   if(!cls){
@@ -13528,11 +13614,12 @@ function mockShowList(){
   _mockEditId=null;
   var sid=parseInt(document.getElementById('mock-student').value||'0');
   var form=document.getElementById('mock-add-form');
-  if(!sid){if(form)form.style.display='none';document.getElementById('mock-list-wrap').innerHTML='';return;}
+  if(!sid){if(form)form.style.display='none';document.getElementById('mock-list-wrap').innerHTML='';renderAllOngoingMocks();return;}
   if(form)form.style.display='';
   var ckEl=document.getElementById('mock-date-checked');
-  if(ckEl&&!ckEl.value)ckEl.value=_todayStr();
+  if(ckEl&&!_mockEditId){ckEl.value='';ckEl.dispatchEvent(new Event('input',{bubbles:true}));}
   _mockSyncGivenDate();
+  renderAllOngoingMocks();
   renderMockList(sid);
 }
 function _refreshAllMockViews(sid){
@@ -13540,6 +13627,7 @@ function _refreshAllMockViews(sid){
   // the selected student's progress chart, and Printables — so changes appear
   // immediately without navigating away and back.
   if(typeof renderMockList==='function')renderMockList(sid);
+  if(typeof renderAllOngoingMocks==='function')renderAllOngoingMocks();
   var _pgMS=document.getElementById('pg-student');
   if(_pgMS&&parseInt(_pgMS.value||'0')===sid&&typeof pgShowChart==='function')pgShowChart();
   var _prnMS=document.getElementById('prn-mock-student');
@@ -13553,32 +13641,40 @@ function mockAddExam(){
   var mmEl=document.getElementById('mock-mm');
   var dateGivenEl=document.getElementById('mock-date');
   var dateCheckedEl=document.getElementById('mock-date-checked');
+  var durationEl=document.getElementById('mock-duration');
   var mm=parseFloat(mmEl.value);
   if(isNaN(mm)||mm<=0){showToast('Enter a valid max marks (MM)',true);return;}
-  var marks=parseFloat(marksEl.value);
-  if(isNaN(marks)||marks<0||marks>mm){showToast('Enter valid marks (0-'+mm+')',true);return;}
+  var marksRaw=marksEl.value.trim();
+  var marks=marksRaw===''?null:parseFloat(marksRaw);
+  if(marksRaw!==''&&(isNaN(marks)||marks<0||marks>mm)){showToast('Enter valid marks (0-'+mm+')',true);return;}
   var mockName=(nameEl&&nameEl.value.trim())||'';
-  var dateChecked=dateCheckedEl.value||_todayStr();
+  var dateChecked=dateCheckedEl.value||'';
   var dateGiven=dateGivenEl.value||_todayStr();
+  var duration=parseInt(durationEl&&durationEl.value,10);
+  if(isNaN(duration)||duration<1){showToast('Enter a valid timer duration in minutes',true);return;}
+  if((marks===null)!==(!dateChecked)){showToast('Add both marks and the checked date to complete the mock, or leave both blank to save it as ongoing',true);return;}
   pushUndo();
   if(!db.mockExams[sid])db.mockExams[sid]=[];
   if(_mockEditId){
     var _ex=db.mockExams[sid].find(function(e){return e.id===_mockEditId;});
     if(_ex){
-      _ex.name=mockName;_ex.marks=marks;_ex.total=mm;_ex.dateGiven=dateGiven;_ex.dateChecked=dateChecked;
+      _ex.name=mockName;_ex.marks=marks;_ex.total=mm;_ex.dateGiven=dateGiven;_ex.dateChecked=dateChecked;_ex.durationMinutes=duration;
+      if(_mockIsCompleted(_ex))delete _ex.startedAt;
     }
     _mockEditId=null;
     showToast('Mock exam updated!');
   } else {
-    db.mockExams[sid].push({id:Date.now(),name:mockName,marks:marks,total:mm,dateGiven:dateGiven,dateChecked:dateChecked});
-    showToast('Mock exam added!');
+    db.mockExams[sid].push({id:Date.now(),name:mockName,marks:marks,total:mm,dateGiven:dateGiven,dateChecked:dateChecked,durationMinutes:duration,startedAt:marks===null?Date.now():null});
+    showToast(_mockIsCompleted({marks:marks,total:mm,dateChecked:dateChecked})?'Mock exam added!':'Ongoing mock saved!');
   }
   db.mockExams[sid].sort(function(a,b){return a.dateGiven.localeCompare(b.dateGiven);});
   saveDB();
   marksEl.value='';
   if(mmEl)mmEl.value='80';
+  if(durationEl)durationEl.value='60';
   if(nameEl)nameEl.value='';
-  dateCheckedEl.value=_todayStr();
+  dateCheckedEl.value='';
+  dateCheckedEl.dispatchEvent(new Event('input',{bubbles:true}));
   _mockSyncGivenDate();
   _mockSyncMarksMax();
   _mockResetButton();
@@ -13587,18 +13683,32 @@ function mockAddExam(){
 function _mockResetButton(){
   var btn=document.getElementById('mock-submit-btn');
   var cancelBtn=document.getElementById('mock-cancel-btn');
-  if(btn){btn.textContent='\u2795 Add Mock Exam';btn.style.background='linear-gradient(135deg,#6366f1,#4f46e5)';}
+  if(btn){btn.textContent='\u2795 Save Mock';btn.style.background='linear-gradient(135deg,#6366f1,#4f46e5)';}
   if(cancelBtn)cancelBtn.style.display='none';
 }
 function mockEditExam(sid,id){
   var e=(db.mockExams[sid]||[]).find(function(x){return x.id===id;});
   if(!e)return;
+  var stu=(db.students||[]).find(function(s){return Number(s.id)===Number(sid);});
+  var clsEl=document.getElementById('mock-class');
+  var stuEl=document.getElementById('mock-student');
+  if(stu&&clsEl&&stuEl){
+    clsEl.value=stu.grade||'';
+    mockLoadStudents();
+    stuEl.value=String(sid);
+    _gpSync('mock-class','mock-class-btn');
+    _gpSync('mock-student','mock-student-btn');
+  }
   _mockEditId=id;
+  var form=document.getElementById('mock-add-form');
+  if(form)form.style.display='';
   document.getElementById('mock-name').value=e.name||'';
-  document.getElementById('mock-marks').value=e.marks;
+  document.getElementById('mock-marks').value=_mockIsCompleted(e)?e.marks:'';
   document.getElementById('mock-mm').value=e.total||80;
+  document.getElementById('mock-duration').value=e.durationMinutes||60;
   _mockSyncMarksMax();
-  document.getElementById('mock-date-checked').value=e.dateChecked;
+  document.getElementById('mock-date-checked').value=e.dateChecked||'';
+  document.getElementById('mock-date-checked').dispatchEvent(new Event('input',{bubbles:true}));
   document.getElementById('mock-date').value=e.dateGiven;
   document.getElementById('mock-date').dispatchEvent(new Event('input',{bubbles:true}));
   document.getElementById('mock-date').dispatchEvent(new Event('change',{bubbles:true}));
@@ -13612,8 +13722,12 @@ function mockCancelEdit(){
   _mockEditId=null;
   document.getElementById('mock-name').value='';
   document.getElementById('mock-marks').value='';
+  document.getElementById('mock-date-checked').value='';
+  document.getElementById('mock-date-checked').dispatchEvent(new Event('input',{bubbles:true}));
   var mmEl=document.getElementById('mock-mm');
   if(mmEl)mmEl.value='80';
+  var durationEl=document.getElementById('mock-duration');
+  if(durationEl)durationEl.value='60';
   _mockSyncGivenDate();
   _mockResetButton();
 }
@@ -13626,6 +13740,7 @@ function mockDeleteExam(sid,id){
 }
 function getMockAchievements(sid){
   var list=(db.mockExams&&db.mockExams[sid])||[];
+  list=list.filter(_mockIsCompleted);
   var troph=0,gold=0,silv=0,brnz=0;
   list.forEach(function(e){
     var pct=e.total?e.marks/e.total*100:0;
@@ -13641,6 +13756,40 @@ function getMockAchievements(sid){
   var avg=list.length?Math.round(list.reduce(function(s,e){return s+(e.total?e.marks/e.total*100:0);},0)/list.length):null;
   return{troph:troph,gold:gold,silv:silv,brnz:brnz,count:list.length,avg:avg,dedication:ded};
 }
+function renderAllOngoingMocks(){
+  var wrap=document.getElementById('mock-ongoing-wrap');
+  if(!wrap)return;
+  var rows=[];
+  (db.students||[]).forEach(function(stu){
+    ((db.mockExams&&db.mockExams[stu.id])||[]).forEach(function(e){
+      if(!_mockIsCompleted(e))rows.push({stu:stu,e:e});
+    });
+  });
+  rows.sort(function(a,b){
+    var ad=String(a.e.dateGiven||''),bd=String(b.e.dateGiven||'');
+    return bd.localeCompare(ad)||String(_studentDisplayName(a.stu)).localeCompare(String(_studentDisplayName(b.stu)));
+  });
+  if(!rows.length){wrap.innerHTML='';return;}
+  var h='<div style="margin:0 0 14px;padding:12px;border-radius:14px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.45)">';
+  h+='<div style="font-size:13px;font-weight:800;color:#f59e0b;margin-bottom:8px">ONGOING MOCKS ('+rows.length+')</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px">';
+  rows.forEach(function(row){
+    var stu=row.stu,e=row.e;
+    var isExpired=e.startedAt&&_mockRemainingSeconds(e)===0;
+    h+='<div data-mock-ribbon="'+stu.id+'-'+e.id+'" style="display:flex;flex-direction:column;gap:9px;padding:12px;background:var(--card);border-radius:12px;border:1px solid '+(isExpired?'#ef4444':'rgba(245,158,11,.35)')+';min-width:0;'+(isExpired?'animation:mockExpiredBlink 1s infinite;':'')+'">';
+    h+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0"><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--txt);overflow-wrap:anywhere">'+esc(_studentDisplayName(stu))+'</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:#f59e0b">'+(e.name?esc(e.name):'Mock')+'</div>';
+    h+='<div style="font-size:11px;color:var(--sub)">Started: '+fmtD(e.dateGiven)+' &middot; Marks and check date pending</div></div>';
+    h+='<span style="font-size:10px;font-weight:900;color:#f59e0b;white-space:nowrap;padding:5px 8px;border-radius:8px;background:rgba(245,158,11,.12)">ONGOING</span></div>';
+    h+='<div style="width:100%">'+_mockTimerMarkup(stu.id,e)+'</div>';
+    h+='<div style="display:flex;justify-content:flex-end;gap:7px;border-top:1px solid rgba(148,163,184,.18);padding-top:8px">';
+    h+='<button onclick="mockEditExam('+stu.id+','+e.id+')" style="background:rgba(245,158,11,.15);color:#f59e0b;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer">✏️ Edit</button>';
+    h+='<button onclick="mockDeleteExam('+stu.id+','+e.id+')" style="background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer">✕ Delete</button></div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  wrap.innerHTML=h;
+}
 function renderMockList(sid){
   var wrap=document.getElementById('mock-list-wrap');
   if(!wrap)return;
@@ -13652,6 +13801,7 @@ function renderMockList(sid){
   });
   var dk=!document.body.classList.contains('light');
   var ac=getMockAchievements(sid);
+  var completed=orderedList.filter(_mockIsCompleted);
   var h='';
   if(orderedList.length){
     h+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
@@ -13678,8 +13828,8 @@ function renderMockList(sid){
     });
     h+='</div>';
     h+='<div style="display:flex;flex-direction:column;gap:6px">';
-    orderedList.forEach(function(e,ri){
-      var idx=orderedList.length-ri;
+    completed.forEach(function(e,ri){
+      var idx=completed.length-ri;
       var pct=e.total?Math.round(e.marks/e.total*100):0;
       var isFull=e.marks>=e.total;
       var medal=isFull?'\ud83c\udfc6':pct>=90?'\ud83e\udd47':pct>=75?'\ud83e\udd48':pct>=60?'\ud83e\udd49':'';
@@ -13695,7 +13845,8 @@ function renderMockList(sid){
       h+='</div>';
     });
     h+='</div>';
-  } else {
+  }
+  if(!orderedList.length) {
     h='<div style="text-align:center;color:var(--sub);padding:30px 0;font-size:13px">No mock exams recorded yet</div>';
   }
   wrap.innerHTML=h;
@@ -14507,7 +14658,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
     });
     h+='</div></div>';
   }
-  var _mkList=(db.mockExams&&db.mockExams[sid])||[];
+  var _mkList=((db.mockExams&&db.mockExams[sid])||[]).filter(_mockIsCompleted);
   if(_mkList.length){
     var _mkAch=getMockAchievements(sid);
     h+='<div style="margin-top:14px;padding-top:14px;border-top:2px dashed '+bd+'">';
@@ -15508,7 +15659,7 @@ function printPrnChart(sid){
 }
 
 function _buildPrnMockData(stu){
-  var list=(db.mockExams&&db.mockExams[stu.id])||[];
+  var list=((db.mockExams&&db.mockExams[stu.id])||[]).filter(_mockIsCompleted);
   var rows=list.map(function(e,i){
     var medal=null;
     if(e.total){
