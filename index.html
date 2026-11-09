@@ -613,7 +613,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
 <div id="v-poster" class="hidden" style="min-height:200px;padding:10px 14px 100px">
   <div class="m3seg" style="margin-bottom:12px">
     <button id="pg-tab-ch" class="m3seg-btn on" onclick="pgSwitchView('chapters')"><span class="material-symbols-outlined" style="font-size:16px">menu_book</span>Chapters</button>
-    <button id="pg-tab-mock" class="m3seg-btn" onclick="pgSwitchView('mock')"><span class="material-symbols-outlined" style="font-size:16px">quiz</span>Mock Exams</button>
+    <button id="pg-tab-mock" class="m3seg-btn" onclick="pgSwitchView('mock')"><span class="material-symbols-outlined" style="font-size:16px">bar_chart</span>Mock Exams</button>
   </div>
   <button onclick="openTestAlertModal()" style="width:100%;padding:11px;border-radius:14px;border:1.5px solid rgba(37,211,102,.5);cursor:pointer;font-weight:800;font-size:13px;touch-action:manipulation;background:rgba(37,211,102,.1);color:var(--wa-green);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:7px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px">campaign</span>Send Test Alert on WhatsApp</button>
   <div id="pg-view-chapters" class="tr-card" style="background:transparent;border:none;padding:0;box-shadow:none">
@@ -721,7 +721,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   </div>
   <div id="pg-view-mock" class="hidden">
     <div class="tr-card">
-    <div class="tr-sec"><span class="material-symbols-outlined" style="font-size:15px">quiz</span>Mock Exams</div>
+    <div class="tr-sec"><span class="material-symbols-outlined" style="font-size:15px">bar_chart</span>Mock Exams</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div><label class="flabel">CLASS</label>
         <select id="mock-class" onchange="mockLoadStudents();_gpSync('mock-class','mock-class-btn')" style="display:none"><option value="">Select class...</option></select>
@@ -7818,7 +7818,7 @@ function runGlobalSearch(){
       managerHtml+='</div>';
     });
   }
-  res.innerHTML=_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">groups</span>STUDENTS',studentCards)+_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">receipt_long</span>PAYMENTS',payCards)+managerHtml+_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">menu_book</span>CHAPTERS',chapCards)+_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">quiz</span>MOCK EXAMS',mockCards);
+  res.innerHTML=_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">groups</span>STUDENTS',studentCards)+_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">receipt_long</span>PAYMENTS',payCards)+managerHtml+_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">menu_book</span>CHAPTERS',chapCards)+_gsSection('<span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">bar_chart</span>MOCK EXAMS',mockCards);
 
 }
 function _gsGoToManager(dateStr,txnId){
@@ -14699,7 +14699,7 @@ function buildChapterProgressChart(sid,cls,includeHeader){
   if(_mkList.length){
     var _mkAch=getMockAchievements(sid);
     h+='<div style="margin-top:14px;padding-top:14px;border-top:2px dashed '+bd+'">';
-    h+='<div style="font-size:15px;font-weight:800;color:'+ac+';letter-spacing:0.02em;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:15px">quiz</span><span>MOCK EXAMS</span></div>';
+    h+='<div style="font-size:15px;font-weight:800;color:'+ac+';letter-spacing:0.02em;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:14px">bar_chart</span><span>MOCK EXAMS</span></div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">';
     h+='<div style="background:'+cd+';border:1px solid '+bd+';border-radius:14px;padding:7px 13px;text-align:center"><div style="font-size:20px;font-weight:800;color:'+ac+'">'+_mkAch.count+'</div><div style="font-size:9px;color:'+sb+';font-weight:700">MOCKS</div></div>';
     h+='<div style="background:'+cd+';border:1px solid '+bd+';border-radius:14px;padding:7px 13px;text-align:center"><div style="font-size:20px;font-weight:800;color:'+ac+'">'+(_mkAch.avg!==null?_mkAch.avg+'%':'--')+'</div><div style="font-size:9px;color:'+sb+';font-weight:700">AVERAGE</div></div>';
@@ -17658,6 +17658,14 @@ function _invSyncBtn(){
   var o=sel.options[sel.selectedIndex];
   btn.textContent=(o&&sel.value)?o.textContent:'Select type...';
 }
+function _invSyncDateButtons(){
+  [['inv-start','inv-start-btn'],['inv-maturity','inv-maturity-btn']].forEach(function(pair){
+    var inp=document.getElementById(pair[0]),btn=document.getElementById(pair[1]);
+    if(!inp||!btn)return;
+    var d=inp.value?_dnsCalParse(inp.value):null;
+    btn.textContent=d?_dnsCalLabel(d):'Select date...';
+  });
+}
 (function(){
   var _it=document.getElementById('inv-type');
   if(_it)_it.addEventListener('change',_invSyncBtn);
@@ -17673,6 +17681,7 @@ function openAddInvestment(){
   document.getElementById('inv-rate').value='';
   document.getElementById('inv-start').value=new Date().toISOString().split('T')[0];
   document.getElementById('inv-maturity').value='';
+  _invSyncDateButtons();
   document.getElementById('inv-curval').value='';
   document.getElementById('inv-matamt').value='';
   document.getElementById('inv-drive').value='';
@@ -17701,6 +17710,7 @@ function openEditInvestment(id){
   document.getElementById('inv-rate').value=inv.rate||'';
   document.getElementById('inv-start').value=inv.startDate||'';
   document.getElementById('inv-maturity').value=inv.maturityDate||'';
+  _invSyncDateButtons();
   document.getElementById('inv-curval').value=inv.currentValue||'';
   document.getElementById('inv-matamt').value=inv.maturityAmount||'';
   document.getElementById('inv-drive').value=inv.driveLink||'';
