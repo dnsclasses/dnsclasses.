@@ -11287,12 +11287,29 @@ function mgrFmtDate(d){
   var dt=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
   return p[2]+' '+_MGR_MOS[dt.getMonth()]+' '+String(p[0]).slice(2)+', '+_MGR_DAYS[dt.getDay()];
 }
+function _mgrOtherCategoryId(){
+  var cats=(db.manager&&db.manager.categories)||[];
+  var other=cats.find(function(c){return String(c.name||'').trim().toLowerCase()==='other';});
+  return other?other.id:'';
+}
 function mgrInit(){
   if(!db.manager)db.manager={categories:[],expenses:[],income:[]};
   if(!db.manager.categories||!db.manager.categories.length){
     db.manager.categories=MGR_DEFAULT_CATS.map(function(c){return Object.assign({},c);});
     saveDB();
   }
+  var otherId=_mgrOtherCategoryId(),changed=false;
+  if(!otherId){
+    var fallback=MGR_DEFAULT_CATS.find(function(c){return c.name==='Other';});
+    if(fallback){db.manager.categories.push(Object.assign({},fallback));otherId=fallback.id;changed=true;}
+  }
+  if(otherId){
+    (db.manager.expenses||[]).forEach(function(e){
+      var hasCategory=(db.manager.categories||[]).some(function(c){return c.id===e.categoryId;});
+      if(!e.categoryId||!hasCategory){e.categoryId=otherId;changed=true;}
+    });
+  }
+  if(changed)saveDB();
 }
 
 function setMgrTab(tab){
@@ -11737,9 +11754,11 @@ function openMgrAddExpense(){
   mgrInit();
   // Reset category picker
   var ci=document.getElementById('mgr-exp-cat');
-  if(ci)ci.value='';
+  var otherId=_mgrOtherCategoryId();
+  if(ci)ci.value=otherId;
   var cl=document.getElementById('mgr-exp-cat-lbl');
-  if(cl){cl.textContent='Select category...';cl.style.color='var(--sub)';}
+  var otherCat=(db.manager.categories||[]).find(function(c){return c.id===otherId;});
+  if(cl){cl.textContent=otherCat?(otherCat.icon+' '+otherCat.name):'Select category...';cl.style.color=otherCat?'var(--txt)':'var(--sub)';}
   
   var today = _todayStr();
   var dateInp = document.getElementById('mgr-exp-date');
@@ -11758,7 +11777,7 @@ function openMgrAddExpense(){
 function saveMgrExpense(){
   var date=document.getElementById('mgr-exp-date').value;
   var amt=parseFloat(document.getElementById('mgr-exp-amt').value);
-  var catId=document.getElementById('mgr-exp-cat').value;
+  var catId=document.getElementById('mgr-exp-cat').value||_mgrOtherCategoryId();
   var note=document.getElementById('mgr-exp-note').value.trim();
   if(!date||!amt||amt<=0){showToast('Enter date and amount',true);return;}
   if(!db.manager.expenses)db.manager.expenses=[];
@@ -11826,7 +11845,7 @@ function updateMgrExpense(){
   var id=window._editExpId;if(!id)return;
   var date=document.getElementById('mgr-edit-exp-date').value;
   var amt=parseFloat(document.getElementById('mgr-edit-exp-amt').value);
-  var catId=document.getElementById('mgr-edit-exp-cat').value;
+  var catId=document.getElementById('mgr-edit-exp-cat').value||_mgrOtherCategoryId();
   var note=document.getElementById('mgr-edit-exp-note').value.trim();
   if(!date||!amt||amt<=0){showToast('Enter date and amount',true);return;}
   pushUndo();
