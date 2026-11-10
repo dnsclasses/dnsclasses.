@@ -11762,8 +11762,10 @@ function openMgrAddExpense(){
   
   var today = _todayStr();
   var dateInp = document.getElementById('mgr-exp-date');
+  var dateBtn = document.getElementById('mgr-exp-date-btn');
   if(dateInp) {
     dateInp.value = today;
+    if(dateBtn)dateBtn.textContent=_dnsCalLabel(_dnsCalParse(today));
     // Dispatch events to trigger the button label update via _dnsCalBindBtn
     dateInp.dispatchEvent(new Event('input', { bubbles: true }));
     dateInp.dispatchEvent(new Event('change', { bubbles: true }));
