@@ -11839,6 +11839,13 @@ function openMgrEditExpense(id){
     else{cl.textContent='Select category...';cl.style.color='var(--sub)';}
   }
   document.getElementById('mgr-edit-exp-date').value=exp.date||'';
+  var editDateInp=document.getElementById('mgr-edit-exp-date');
+  var editDateBtn=document.getElementById('mgr-edit-exp-date-btn');
+  if(editDateBtn)editDateBtn.textContent=editDateInp.value?_dnsCalLabel(_dnsCalParse(editDateInp.value)):'Select date...';
+  if(editDateInp){
+    editDateInp.dispatchEvent(new Event('input',{bubbles:true}));
+    editDateInp.dispatchEvent(new Event('change',{bubbles:true}));
+  }
   document.getElementById('mgr-edit-exp-amt').value=exp.amount||'';
   document.getElementById('mgr-edit-exp-note').value=exp.note||'';
   openM('mgr-edit-exp-modal');
