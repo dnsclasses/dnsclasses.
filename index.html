@@ -615,7 +615,8 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
     <button id="pg-tab-ch" class="m3seg-btn on" onclick="pgSwitchView('chapters')"><span class="material-symbols-outlined" style="font-size:16px">menu_book</span>Chapters</button>
     <button id="pg-tab-mock" class="m3seg-btn" onclick="pgSwitchView('mock')"><span class="material-symbols-outlined" style="font-size:16px">bar_chart</span>Mock Exams</button>
   </div>
-  <button onclick="openTestAlertModal()" style="width:100%;padding:11px;border-radius:14px;border:1.5px solid rgba(37,211,102,.5);cursor:pointer;font-weight:800;font-size:13px;touch-action:manipulation;background:rgba(37,211,102,.1);color:var(--wa-green);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:7px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px">campaign</span>Send Test Alert on WhatsApp</button>
+  <button id="pg-test-alert-btn" onclick="openTestAlertModal()" style="width:100%;padding:11px;border-radius:14px;border:1.5px solid rgba(37,211,102,.5);cursor:pointer;font-weight:800;font-size:13px;touch-action:manipulation;background:rgba(37,211,102,.1);color:var(--wa-green);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:7px"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px">campaign</span>Send Test Alert on WhatsApp</button>
+  <button id="pg-mock-rank-btn" onclick="openMockRankings()" style="width:100%;padding:11px;border-radius:14px;border:1.5px solid rgba(245,158,11,.55);cursor:pointer;font-weight:800;font-size:13px;touch-action:manipulation;background:rgba(245,158,11,.12);color:#d97706;margin-bottom:14px;display:none;align-items:center;justify-content:center;gap:7px"><span class="material-symbols-outlined" style="font-size:17px;vertical-align:-3px">emoji_events</span>Mock Rankings</button>
   <div id="pg-view-chapters" class="tr-card" style="background:transparent;border:none;padding:0;box-shadow:none">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div class="tr-sec" style="margin:0"><span class="material-symbols-outlined" style="font-size:15px">bar_chart</span>Score Chart</div>
@@ -762,6 +763,21 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
     </div>
     <div id="mock-ongoing-wrap"></div>
     <div id="mock-list-wrap"></div>
+    </div>
+  </div>
+  <div id="mock-rankings-modal" class="modal hidden" onclick="closeM('mock-rankings-modal')" style="z-index:20000">
+    <div class="mbox" onclick="event.stopPropagation()" style="max-width:560px;max-height:88vh;overflow-y:auto;padding:16px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px">
+        <div style="font-weight:900;font-size:18px;color:var(--txt);display:flex;align-items:center;gap:7px"><span class="material-symbols-outlined" style="font-size:22px;color:#f59e0b">emoji_events</span>Mock Rankings</div>
+        <button onclick="closeM('mock-rankings-modal')" aria-label="Close mock rankings" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:22px;cursor:pointer">×</button>
+      </div>
+      <div style="font-size:12px;color:var(--sub);line-height:1.45;margin-bottom:14px">Compare completed scores for the same mock and see where each student stands in the class.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px">
+        <div><label class="flabel" for="mock-rank-class">CLASS</label><select id="mock-rank-class" onchange="mockRankingsClassChanged();_gpSync('mock-rank-class','mock-rank-class-btn')" style="display:none"><option value="">Select class...</option></select><button type="button" id="mock-rank-class-btn" onclick="openGenericPicker('mock-rank-class')" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:13px;text-align:left;cursor:pointer">Select class...</button></div>
+        <div><label class="flabel" for="mock-rank-name">MOCK NAME</label><select id="mock-rank-name" onchange="renderMockRankings();_gpSync('mock-rank-name','mock-rank-name-btn')" style="display:none"><option value="">Select mock...</option></select><button type="button" id="mock-rank-name-btn" onclick="openGenericPicker('mock-rank-name')" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--sub);font-size:13px;text-align:left;cursor:pointer">Select mock...</button></div>
+      </div>
+      <button onclick="shareMockRankingsImage()" style="width:100%;padding:11px 14px;border-radius:13px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:12px;box-shadow:0 3px 8px rgba(18,140,126,.22)"><span class="material-symbols-outlined" style="font-size:17px">share</span>Share Ranking Image</button>
+      <div id="mock-rankings-content"></div>
     </div>
   </div>
   <!-- Chapter Management Modal -->
@@ -13630,6 +13646,9 @@ function _mockSyncGivenDate(){
 function pgSwitchView(v){
   var ch=document.getElementById('pg-view-chapters'),mk=document.getElementById('pg-view-mock');
   var tCh=document.getElementById('pg-tab-ch'),tMk=document.getElementById('pg-tab-mock');
+  var alertBtn=document.getElementById('pg-test-alert-btn'),rankBtn=document.getElementById('pg-mock-rank-btn');
+  if(alertBtn)alertBtn.style.display=v==='mock'?'none':'flex';
+  if(rankBtn)rankBtn.style.display=v==='mock'?'flex':'none';
   if(v==='mock'){
     if(ch)ch.classList.add('hidden');
     if(mk)mk.classList.remove('hidden');
@@ -13818,6 +13837,111 @@ function getMockAchievements(sid){
   else if(list.length>=10)ded.push({e:'track_changes',l:'10 Mocks'});
   var avg=list.length?Math.round(list.reduce(function(s,e){return s+(e.total?e.marks/e.total*100:0);},0)/list.length):null;
   return{troph:troph,gold:gold,silv:silv,brnz:brnz,count:list.length,avg:avg,dedication:ded};
+}
+function _mockRankClassList(){
+  var grades={};
+  (db.students||[]).forEach(function(s){if(s.grade)grades[String(s.grade)]=true;});
+  return Object.keys(grades).sort(function(a,b){return String(a).localeCompare(String(b),undefined,{numeric:true});});
+}
+function openMockRankings(){
+  var cls=document.getElementById('mock-rank-class'),name=document.getElementById('mock-rank-name');
+  if(!cls||!name)return;
+  var oldClass=cls.value;
+  cls.innerHTML='<option value="">Select class...</option>'+_mockRankClassList().map(function(g){return '<option value="'+esc(g)+'">'+esc(g)+'</option>';}).join('');
+  if(oldClass&&_mockRankClassList().indexOf(oldClass)>=0)cls.value=oldClass;
+  _gpSync('mock-rank-class','mock-rank-class-btn');
+  mockRankingsClassChanged();
+  openM('mock-rankings-modal');
+}
+function mockRankingsClassChanged(){
+  var cls=document.getElementById('mock-rank-class'),name=document.getElementById('mock-rank-name');
+  if(!cls||!name)return;
+  var grade=cls.value,groups={};
+  (db.students||[]).filter(function(s){return !grade||String(s.grade||'')===String(grade);}).forEach(function(stu){
+    ((db.mockExams&&db.mockExams[stu.id])||[]).filter(_mockIsCompleted).forEach(function(e){
+      var label=String(e.name||'Mock Exam').trim()||'Mock Exam',key=label.toLowerCase();
+      if(!groups[key])groups[key]=label;
+    });
+  });
+  var old=name.value;
+  name.innerHTML='<option value="">Select mock...</option>'+Object.keys(groups).sort(function(a,b){return groups[a].localeCompare(groups[b]);}).map(function(k){return '<option value="'+esc(groups[k])+'">'+esc(groups[k])+'</option>';}).join('');
+  if(old&&groups[old.toLowerCase()])name.value=groups[old.toLowerCase()];
+  _gpSync('mock-rank-name','mock-rank-name-btn');
+  renderMockRankings();
+}
+function shareMockRankingsImage(){
+  var cls=document.getElementById('mock-rank-class'),name=document.getElementById('mock-rank-name'),content=document.getElementById('mock-rankings-content');
+  if(!cls||!name||!cls.value||!name.value||!content||!content.innerText.trim()){showToast('Select a class and mock first',true);return;}
+  if(typeof html2canvas==='undefined'){
+    showToast('Loading image tool...');
+    var sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    sc.onload=function(){shareMockRankingsImage();};sc.onerror=function(){showToast('Image tool could not load',true);};document.head.appendChild(sc);return;
+  }
+  showToast('Preparing ranking image...');
+  var dark=typeof isDark!=='undefined'&&isDark,bg=dark?'#0f172a':'#f8fafc';
+  var source=content.cloneNode(true),surface=document.createElement('div');
+  surface.style.cssText='position:fixed;left:-99999px;top:0;width:560px;box-sizing:border-box;padding:18px;background:'+bg+';font-family:Arial,sans-serif;color:'+(dark?'#f8fafc':'#0f172a');
+  var title=document.createElement('div');
+  title.style.cssText='font-size:20px;font-weight:900;text-align:center;color:'+(dark?'#fbbf24':'#b45309')+';margin-bottom:3px';
+  title.textContent='MOCK RANKING';
+  var sub=document.createElement('div');
+  sub.style.cssText='font-size:13px;font-weight:800;text-align:center;color:'+(dark?'#cbd5e1':'#475569')+';margin-bottom:14px';
+  sub.textContent=cls.value+'  •  '+name.value;
+  source.style.width='100%';source.style.maxWidth='none';source.style.margin='0';
+  surface.appendChild(title);surface.appendChild(sub);surface.appendChild(source);document.body.appendChild(surface);
+  setTimeout(function(){
+    var rect=surface.getBoundingClientRect(),scale=Math.max(3,(window.devicePixelRatio||1)*2);
+    scale=Math.min(scale,8192/Math.max(rect.width,rect.height),Math.sqrt(26000000/(rect.width*rect.height)));
+    html2canvas(surface,{scale:Math.max(1,scale),backgroundColor:bg,useCORS:true,allowTaint:true,logging:false,imageTimeout:0,letterRendering:false}).then(function(canvas){
+      if(surface.parentNode)surface.parentNode.removeChild(surface);
+      canvas.toBlob(function(blob){
+        if(!blob){showToast('Could not create ranking image',true);return;}
+        var filename='DNS Mock Ranking - '+String(name.value).replace(/[^a-z0-9]+/gi,'-')+'.png';
+        var file;
+        try{file=new File([blob],filename,{type:'image/png'});}catch(err){file=null;}
+        if(file&&navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+          Promise.resolve(navigator.share({files:[file],title:'DNS Classes Mock Ranking',text:cls.value+' - '+name.value})).then(function(){showToast('Ranking image ready to share!');}).catch(function(err){if(!err||err.name!=='AbortError')showToast('Share was not opened',true);});
+        }else{
+          var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1500);showToast('Ranking image saved!');
+        }
+      },'image/png',1.0);
+    }).catch(function(){if(surface.parentNode)surface.parentNode.removeChild(surface);showToast('Could not create ranking image',true);});
+  },120);
+}
+function renderMockRankings(){
+  var cls=document.getElementById('mock-rank-class'),name=document.getElementById('mock-rank-name'),wrap=document.getElementById('mock-rankings-content');
+  if(!cls||!name||!wrap)return;
+  var grade=cls.value,mockName=name.value;
+  if(!grade||!mockName){wrap.innerHTML='<div style="text-align:center;color:var(--sub);padding:28px 12px;border:1px dashed var(--ibdr);border-radius:14px">Choose a class and mock name to view the ranking.</div>';return;}
+  var rows=[];
+  (db.students||[]).filter(function(s){return String(s.grade||'')===String(grade);}).forEach(function(stu){
+    var matches=((db.mockExams&&db.mockExams[stu.id])||[]).filter(function(e){return _mockIsCompleted(e)&&String(e.name||'Mock Exam').trim().toLowerCase()===mockName.trim().toLowerCase();});
+    if(!matches.length)return;
+    matches.sort(function(a,b){return String(b.dateChecked||b.dateGiven||'').localeCompare(String(a.dateChecked||a.dateGiven||''))||Number(b.id||0)-Number(a.id||0);});
+    var e=matches[0],pct=e.total?Number(e.marks)/Number(e.total)*100:0;
+    rows.push({stu:stu,e:e,pct:pct});
+  });
+  rows.sort(function(a,b){return b.pct-a.pct||Number(b.e.marks)-Number(a.e.marks)||String(_studentDisplayName(a.stu)).localeCompare(String(_studentDisplayName(b.stu)));});
+  if(!rows.length){wrap.innerHTML='<div style="text-align:center;color:var(--sub);padding:28px 12px;border:1px dashed var(--ibdr);border-radius:14px">No completed results found for this mock in '+esc(grade)+'.</div>';return;}
+  var top=rows[0],avg=Math.round(rows.reduce(function(sum,r){return sum+r.pct;},0)/rows.length);
+  var dark=typeof isDark!=='undefined'&&isDark;
+  var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px">';
+  h+='<div style="padding:10px 6px;text-align:center;border-radius:13px;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.45)"><div style="font-size:19px;font-weight:900;color:'+(dark?'#fbbf24':'#b45309')+'">'+rows.length+'</div><div style="font-size:10px;color:var(--sub);font-weight:800">STUDENTS</div></div>';
+  h+='<div style="padding:10px 6px;text-align:center;border-radius:13px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4)"><div style="font-size:19px;font-weight:900;color:'+(dark?'#4ade80':'#15803d')+'">'+Math.round(top.pct)+'%</div><div style="font-size:10px;color:var(--sub);font-weight:800">TOP SCORE</div></div>';
+  h+='<div style="padding:10px 6px;text-align:center;border-radius:13px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.4)"><div style="font-size:19px;font-weight:900;color:'+(dark?'#7dd3fc':'#1d4ed8')+'">'+avg+'%</div><div style="font-size:10px;color:var(--sub);font-weight:800">CLASS AVG</div></div></div>';
+  h+='<div style="padding:12px;border-radius:14px;margin-bottom:10px;background:linear-gradient(135deg,rgba(245,158,11,.20),rgba(234,179,8,.08));border:1px solid rgba(245,158,11,.55);display:flex;align-items:center;gap:10px">';
+  h+='<span class="material-symbols-outlined" style="font-size:30px;color:#f59e0b">emoji_events</span><div style="min-width:0;flex:1"><div style="font-size:10px;font-weight:900;color:'+(dark?'#fbbf24':'#b45309')+';letter-spacing:.7px">CLASS TOPPER</div><div style="font-size:17px;font-weight:900;color:var(--txt);overflow-wrap:anywhere">'+esc(_studentDisplayName(top.stu))+'</div></div><strong style="font-size:20px;color:'+(dark?'#fbbf24':'#b45309')+'">'+top.pct.toFixed(1)+'%</strong></div>';
+  h+='<div style="display:flex;flex-direction:column;gap:7px">';
+  rows.forEach(function(row,i){
+    var rank=i+1,medal=rank===1?'workspace_premium':rank===2?'military_tech':rank===3?'award':'',rankColor=rank===1?'#b45309':rank===2?'#64748b':rank===3?'#c2410c':(dark?'#cbd5e1':'#64748b'),pctColor=row.pct>=90?(dark?'#4ade80':'#15803d'):row.pct>=75?(dark?'#fbbf24':'#b45309'):row.pct>=60?(dark?'#7dd3fc':'#1d4ed8'):(dark?'#f87171':'#dc2626');
+    h+='<div style="display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:13px;background:var(--card);border:1px solid '+(rank<=3?(rank===1?'rgba(245,158,11,.55)':rank===2?'rgba(148,163,184,.55)':'rgba(194,65,12,.45)'):'var(--ibdr)')+'">';
+    h+='<div style="width:29px;text-align:center;font-size:14px;font-weight:900;color:'+rankColor+'">#'+rank+'</div>';
+    h+=medal?'<span class="material-symbols-outlined" style="font-size:23px;color:'+rankColor+'">'+medal+'</span>':'<span style="width:23px"></span>';
+    h+='<div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:800;color:var(--txt);overflow-wrap:anywhere">'+esc(_studentDisplayName(row.stu))+'</div><div style="font-size:11px;color:var(--sub)">'+esc(String(row.e.marks))+' / '+esc(String(row.e.total))+' marks'+(row.e.dateChecked?' · Checked '+esc(fmtD(row.e.dateChecked)):'')+'</div></div>';
+    h+='<strong style="font-size:17px;color:'+pctColor+';white-space:nowrap">'+row.pct.toFixed(1)+'%</strong></div>';
+  });
+  h+='</div><div style="font-size:10px;color:var(--sub);text-align:center;margin-top:10px">Ranking is based on percentage, so mocks with different maximum marks can still be compared fairly.</div>';
+  wrap.innerHTML=h;
 }
 function renderAllOngoingMocks(){
   var wrap=document.getElementById('mock-ongoing-wrap');
