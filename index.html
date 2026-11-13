@@ -7205,7 +7205,12 @@ function startEdit(sid){
   document.getElementById('save-btn').textContent='Update';
   document.getElementById('f-name').value=s.name||'';
   var _fsur2=document.getElementById('f-surname');if(_fsur2)_fsur2.value=s.surname||'';
-  document.getElementById('f-date').value=s.joiningDate||'';
+  var _fdateEdit=document.getElementById('f-date');
+  if(_fdateEdit){
+    _fdateEdit.value=s.joiningDate||'';
+    _fdateEdit.dispatchEvent(new Event('input',{bubbles:true}));
+    _fdateEdit.dispatchEvent(new Event('change',{bubbles:true}));
+  }
   document.getElementById('f-fees').value=s.fees||'';
   var _gv=s.grade||'Other';
   document.getElementById('f-grade').value=_gv;
@@ -13880,14 +13885,17 @@ function shareMockRankingsImage(){
   showToast('Preparing ranking image...');
   var dark=typeof isDark!=='undefined'&&isDark,bg=dark?'#0f172a':'#f8fafc';
   var source=content.cloneNode(true),surface=document.createElement('div');
-  surface.style.cssText='position:fixed;left:-99999px;top:0;width:560px;box-sizing:border-box;padding:18px;background:'+bg+';font-family:Arial,sans-serif;color:'+(dark?'#f8fafc':'#0f172a');
+  surface.style.cssText='position:fixed;left:-99999px;top:0;width:440px;box-sizing:border-box;padding:15px;background:'+bg+';font-family:Arial,sans-serif;color:'+(dark?'#f8fafc':'#0f172a');
   var title=document.createElement('div');
-  title.style.cssText='font-size:20px;font-weight:900;text-align:center;color:'+(dark?'#fbbf24':'#b45309')+';margin-bottom:3px';
+  title.style.cssText='font-size:23px;font-weight:900;text-align:center;color:'+(dark?'#fbbf24':'#b45309')+';margin-bottom:4px';
   title.textContent='MOCK RANKING';
   var sub=document.createElement('div');
-  sub.style.cssText='font-size:13px;font-weight:800;text-align:center;color:'+(dark?'#cbd5e1':'#475569')+';margin-bottom:14px';
+  sub.style.cssText='font-size:16px;font-weight:800;text-align:center;color:'+(dark?'#cbd5e1':'#475569')+';margin-bottom:15px';
   sub.textContent=cls.value+'  •  '+name.value;
   source.style.width='100%';source.style.maxWidth='none';source.style.margin='0';
+  source.querySelectorAll('[style*="font-size:10px"]').forEach(function(el){el.style.fontSize='12px';});
+  source.querySelectorAll('[style*="font-size:11px"]').forEach(function(el){el.style.fontSize='13px';});
+  source.querySelectorAll('[style*="font-size:14px"]').forEach(function(el){el.style.fontSize='15px';});
   surface.appendChild(title);surface.appendChild(sub);surface.appendChild(source);document.body.appendChild(surface);
   setTimeout(function(){
     var rect=surface.getBoundingClientRect(),scale=Math.max(3,(window.devicePixelRatio||1)*2);
@@ -13900,7 +13908,7 @@ function shareMockRankingsImage(){
         var file;
         try{file=new File([blob],filename,{type:'image/png'});}catch(err){file=null;}
         if(file&&navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-          Promise.resolve(navigator.share({files:[file],title:'DNS Classes Mock Ranking',text:cls.value+' - '+name.value})).then(function(){showToast('Ranking image ready to share!');}).catch(function(err){if(!err||err.name!=='AbortError')showToast('Share was not opened',true);});
+          Promise.resolve(navigator.share({files:[file],title:'DNS Classes MOCK RESULTS',text:'MOCK RESULTS - '+cls.value+' - '+name.value})).then(function(){showToast('Ranking image ready to share!');}).catch(function(err){if(!err||err.name!=='AbortError')showToast('Share was not opened',true);});
         }else{
           var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1500);showToast('Ranking image saved!');
         }
