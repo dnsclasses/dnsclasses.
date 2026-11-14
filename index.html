@@ -2856,7 +2856,18 @@ function today0(){var now=new Date();return mkD(now.getFullYear(),now.getMonth()
 function dkey(y,m,d){return y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d).slice(-2);}
 function allPhones(s){return s.phones&&s.phones.length?s.phones:(s.phone?s.phone.split(',').map(function(n){return{number:n.trim(),tag:'Personal'};}).filter(function(p){return p.number;}):[]);}
 function phones(s){var list=allPhones(s),marked=list.filter(function(p){return p&&p.whatsapp;});return marked.length?marked:list;}
-function getAmt(s,rec){return(rec&&rec.customAmount)?Number(rec.customAmount):Number(s.fees||0);}
+function _feeMonth(key){return String(key||'').slice(0,7);}
+function _feeHistoryFor(s,overrideFee){
+  var history=Array.isArray(s&&s.feeHistory)?s.feeHistory.filter(function(x){return x&&typeof x==='object';}).map(function(x){return{from:String(x.from||'').slice(0,7),amount:Number(x.amount)||0};}).filter(function(x){return /^\d{4}-\d{2}$/.test(x.from);}).sort(function(a,b){return a.from.localeCompare(b.from);}):[];
+  if(!history.length&&s&&s.joiningDate)history.push({from:String(s.joiningDate).slice(0,7),amount:Number(s.fees||overrideFee||0)});
+  return history;
+}
+function _feeForCycle(s,key){
+  var month=_feeMonth(key),amount=Number(s&&s.fees||0),history=_feeHistoryFor(s);
+  history.forEach(function(x){if(!month||x.from<=month)amount=x.amount;});
+  return amount;
+}
+function getAmt(s,rec,key){return(rec&&rec.customAmount!==undefined&&rec.customAmount!==null&&rec.customAmount!=='')?Number(rec.customAmount):_feeForCycle(s,key);}
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _studentDisplayName(s,forceSurname){
   var base=String(s&&s.name||'').trim(),surname=String(s&&s.surname||'').trim();
@@ -2965,7 +2976,7 @@ function getCurrentCycle(s){
   if(!cycles.length)return{key:'',label:'',isPaid:false,color:'#64748b',text:'No cycle'};
   var c=cycles[cycles.length-1],rec=(s.payments||{})[c.key];
   if(rec){
-    var paid=getAmt(s,rec),full=Number(s.fees)||0;
+    var paid=getAmt(s,rec,c.key),full=_feeForCycle(s,c.key);
     if(isFeeBalanceWaived(s,c.key))return{key:c.key,label:c.label,isPaid:true,color:'#22c55e',text:'Paid ₹'+paid+' (balance waived)'};
     if(full>0&&paid>0&&paid<full)return{key:c.key,label:c.label,isPaid:false,isPartial:true,color:'#f97316',text:'Partial ₹'+(full-paid)+' due'};
     return{key:c.key,label:c.label,isPaid:true,color:'#22c55e',text:'Paid'};
@@ -3530,7 +3541,7 @@ function _updateDashSmallCards(){
     Object.keys(s.payments||{}).forEach(function(key){
       var rec=s.payments[key];
       if(!rec)return;
-      var amt=getAmt(s,rec);
+      var amt=getAmt(s,rec,key)
       if(key.indexOf(prefix)===0)collectThisMonth+=amt;
       if(rec.paidOn&&rec.paidOn.slice(0,10)===todayStr)collectToday+=amt;
     });
@@ -3926,10 +3937,10 @@ function renderDash(){
     var loc=s.location||'Home';
     getCycles(s).forEach(function(cy){
       var rec=(s.payments||{})[cy.key];
-      var fullFee=Number(s.fees)||0;
+      var fullFee=_feeForCycle(s,cy.key);
       var balanceWaived=isFeeBalanceWaived(s,cy.key);
       if(rec){
-        var amt=getAmt(s,rec);
+        var amt=getAmt(s,rec,cy.key)
         if(loc==='Home')paidHome+=amt;else paidCity+=amt;
         if(balanceWaived){paidList.push({s:s,c:cy,rec:rec});return;}
         if(fullFee>0&&amt>0&&amt<fullFee){
@@ -3978,7 +3989,7 @@ function renderDash(){
   document.getElementById('s-total-stu').textContent=_st.length;
   document.getElementById('s-due').textContent=dueToday.length;
   document.getElementById('s-pending').textContent='\u20b9'+totalPending.toLocaleString();
-  var totalExpectedThisCycle=active.reduce(function(sum,s){return sum+(Number(s.fees)||0);},0);
+  var totalExpectedThisCycle=active.reduce(function(sum,s){var _cc=getCycles(s),_last=_cc.length?_cc[_cc.length-1]:null;return sum+(_last?_feeForCycle(s,_last.key):0);},0);
   var pendingRatio=totalExpectedThisCycle>0?Math.min(1,totalPending/totalExpectedThisCycle):0;
   var pendCard=document.getElementById('fc-pending');
   var numEl=document.getElementById('s-pending');
@@ -5293,8 +5304,8 @@ function generateReport(sid){
     var _msCycles=getCycles(s);
     var _msPaid=_msCycles.filter(function(c){return !!(s.payments||{})[c.key];});
     var _msUnpaid=_msCycles.filter(function(c){return !(s.payments||{})[c.key];});
-    var _msTPaid=_msPaid.reduce(function(sum,c){return sum+getAmt(s,(s.payments||{})[c.key]);},0);
-    var _msTPend=_msUnpaid.reduce(function(sum,c){return sum+Number(s.fees||0);},0);
+    var _msTPaid=_msPaid.reduce(function(sum,c){return sum+getAmt(s,(s.payments||{})[c.key],c.key);},0);
+    var _msTPend=_msUnpaid.reduce(function(sum,c){return sum+_feeForCycle(s,c.key);},0);
     // Keep the complete day-month-year range in the report. The responsive
     // fee-table CSS wraps the two date columns when necessary so the full
     // dates remain visible without colliding with adjacent columns.
@@ -5318,7 +5329,7 @@ function generateReport(sid){
         });
         _msPaid.forEach(function(c,i){
           var rec=s.payments[c.key]||{};
-          var amt=getAmt(s,rec);
+          var amt=getAmt(s,rec,c.key)
           var mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';
           h+='<div class="rpt-fc rpt-fc-body t-left">'+(i+1)+'</div>';
           h+='<div class="rpt-fc rpt-fc-body t-left">'+esc(_rptPeriod(c))+'</div>';
@@ -5339,7 +5350,7 @@ function generateReport(sid){
           h+='<div class="rpt-fc rpt-fc-body t-left" style="color:'+(isDark?'#f87171':'#ef4444')+'">'+(i+1)+'</div>';
           h+='<div class="rpt-fc rpt-fc-body t-left" style="color:'+(isDark?'#f87171':'#ef4444')+'">'+esc(_rptPeriod(c))+'</div>';
           h+='<div class="rpt-fc rpt-fc-body t-left" style="color:'+(isDark?'#f87171':'#ef4444')+'">Unpaid</div>';
-          h+='<div class="rpt-fc rpt-fc-body t-right" style="color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold">\u20b9'+Number(s.fees||0).toLocaleString('en-IN')+'</div>';
+          h+='<div class="rpt-fc rpt-fc-body t-right" style="color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold">\u20b9'+_feeForCycle(s,c.key).toLocaleString('en-IN')+'</div>';
           h+='<div class="rpt-fc" style="visibility:hidden"></div>';
           h+='<div class="rpt-fc" style="visibility:hidden"></div>';
         });
@@ -5805,8 +5816,8 @@ function renderProfile(){
   var s=db.students.find(function(x){return x.id===profId;});
   if(!s){document.getElementById('prof-head').innerHTML='<div style="color:var(--sub);text-align:center;padding:30px">Student not found.</div>';return;}
   var cycles=getCycles(s),ph=allPhones(s);
-  var totalPaid=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r?sum+getAmt(s,r):sum;},0);
-  var totalPend=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r||isFeeBalanceWaived(s,cy.key)?sum:sum+Number(s.fees||0);},0);
+  var totalPaid=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r?sum+getAmt(s,r,cy.key):sum;},0);
+  var totalPend=cycles.reduce(function(sum,cy){var r=(s.payments||{})[cy.key];return r||isFeeBalanceWaived(s,cy.key)?sum:sum+_feeForCycle(s,cy.key);},0);
   var _admLight=document.body.classList.contains('light');
   var _admBg=_admLight?'rgba(29,78,216,.12)':'rgba(96,165,250,.22)';
   var _admClr=_admLight?'#1d4ed8':'#93c5fd';
@@ -5897,13 +5908,13 @@ function renderProfile(){
     var cy=revCycles[mi];
     var rec=(s.payments||{})[cy.key];
     var paid=!!rec;
-    var amt=paid?getAmt(s,rec):Number(s.fees||0);
-    var isCustom=paid&&rec.customAmount&&Number(rec.customAmount)!==Number(s.fees);
+    var amt=paid?getAmt(s,rec,cy.key):_feeForCycle(s,cy.key);
+    var isCustom=paid&&rec.customAmount&&Number(rec.customAmount)!==_feeForCycle(s,cy.key);
     var balanceWaived=isFeeBalanceWaived(s,cy.key);
     var diff=calcDiff(cy.key);
     var rowColor='#3b82f6',rowStatus='Due in '+Math.abs(diff)+'d';
     if(paid){
-      var _ff=Number(s.fees)||0;
+      var _ff=_feeForCycle(s,cy.key);
       if(balanceWaived){
         rowColor='#22c55e';
         rowStatus='✓ Paid ₹'+amt.toLocaleString()+' · Balance waived';
@@ -5999,7 +6010,7 @@ function logPay(sid,key,isEdit){
     var amtVal=document.getElementById('pay-amt').value.trim();
     pushUndo();
     var trackNum=(rec&&rec.receiptId)?rec.receiptId:'DNS-'+Math.floor(100000+Math.random()*900000);
-    var newRec={paidOn:new Date(dt).toISOString(),receiptId:trackNum,mode:_payMode};
+    var newRec={paidOn:new Date(dt).toISOString(),receiptId:trackNum,mode:_payMode,customAmount:_feeForCycle(s,key)};
     if(amtVal&&!isNaN(amtVal))newRec.customAmount=Number(amtVal);
     db.students=db.students.map(function(x){if(x.id!==sid)return x;var p=Object.assign({},x.payments||{});p[key]=newRec;var waivers=Object.assign({},x.feeWaivers||{});delete waivers[key];return Object.assign({},x,{payments:p,feeWaivers:waivers});});
     saveDB();closeM('pay-modal');showToast(isEdit?'Updated!':'Paid! '+trackNum);
@@ -6011,8 +6022,8 @@ function logPay(sid,key,isEdit){
 
 function waiveFeeBalance(sid,key){
   var s=db.students.find(function(x){return x.id===sid;}),rec=s&&(s.payments||{})[key];
-  var paidAmount=rec?getAmt(s,rec):0;
-  var balance=s?Number(s.fees||0)-paidAmount:0;
+  var paidAmount=rec?getAmt(s,rec,key):0;
+  var balance=s?_feeForCycle(s,key)-paidAmount:0;
   if(!s||balance<=0||isFeeBalanceWaived(s,key))return;
   var cy=getCycles(s).find(function(c){return c.key===key;});
   var rmDesc=document.getElementById('rm-desc'),rmOk=document.getElementById('rm-ok');
@@ -6155,8 +6166,8 @@ function showRec(sid,key){
   lastRecSid=sid;lastRecKey=key;
   var rec=(s.payments||{})[key]||{};
   if(!rec.receiptId){rec.receiptId='DNS-'+Math.floor(100000+Math.random()*900000);saveDB();}
-  var amt=getAmt(s,rec);
   var cy=getCycles(s).find(function(c){return c.key===key;});
+  var amt=getAmt(s,rec,key);
   document.getElementById('r-id').textContent=rec.receiptId||'—';
   document.getElementById('r-date').textContent=rec.paidOn?fmtD(rec.paidOn):fmtD(new Date().toISOString());
   document.getElementById('r-name').textContent=_studentDisplayName(s,true);
@@ -6223,8 +6234,8 @@ function sendRecImg(){
 function sendRecText(){
   var s=db.students.find(function(x){return x.id===lastRecSid;});if(!s)return;
   var ph=phones(s);if(!ph.length||!ph[0].number){showToast('No phone number',true);return;}
-  var rec=(s.payments||{})[lastRecKey]||{},amt=getAmt(s,rec);
   var cy=getCycles(s).find(function(c){return c.key===lastRecKey;});
+  var rec=(s.payments||{})[lastRecKey]||{},amt=getAmt(s,rec,lastRecKey);
   var rPts=lastRecKey.split('-'),rYr=parseInt(rPts[0]),rMo=parseInt(rPts[1])-2;
   if(rMo<0){rMo=11;rYr--;}
   var rAst=getAttendStats(s,rYr,rMo,null),rMN=MO[rMo]+' '+rYr;
@@ -6295,12 +6306,12 @@ function openMR(sid){
   var cycles=getCycles(s);
   var paid=cycles.filter(function(c){return !!(s.payments||{})[c.key];});
   var unpaid=cycles.filter(function(c){return !(s.payments||{})[c.key];});
-  var tPaid=paid.reduce(function(sum,c){return sum+getAmt(s,(s.payments||{})[c.key]);},0);
-  var tPend=unpaid.reduce(function(sum,c){return sum+Number(s.fees||0);},0);
+  var tPaid=paid.reduce(function(sum,c){return sum+getAmt(s,(s.payments||{})[c.key],c.key);},0);
+  var tPend=unpaid.reduce(function(sum,c){return sum+_feeForCycle(s,c.key);},0);
   var mrNo='DNS-M-'+Math.floor(100000+Math.random()*900000);
   var today=fmtD(new Date().toISOString());
-  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),isC=rec.customAmount&&Number(rec.customAmount)!==Number(s.fees),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+('#15803d')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 2px;font-size:10px;text-align:center">'+mE+'</td><td style="padding:5px 2px;font-size:9px;color:#64748b;white-space:nowrap">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
-  var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+Number(s.fees).toLocaleString()+'</td><td style="padding:5px 2px;font-size:9px;color:#94a3b8">\u2014</td></tr>';}).join('');
+  var pRows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec,c.key),isC=rec.customAmount&&Number(rec.customAmount)!==_feeForCycle(s,c.key),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return '<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;white-space:nowrap">'+(rec.paidOn?fmtD(rec.paidOn):'N/A')+'</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+('#15803d')+';font-weight:bold;white-space:nowrap">\u20b9'+amt.toLocaleString()+(isC?' *':'')+'</td><td style="padding:5px 2px;font-size:10px;text-align:center">'+mE+'</td><td style="padding:5px 2px;font-size:9px;color:#64748b;white-space:nowrap">'+(rec.receiptId||'\u2014')+'</td></tr>';}).join('');
+  var uRows=unpaid.map(function(c,i){return '<tr style="border-bottom:1px solid #fee2e2"><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+(i+1)+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">'+c.label+'</td><td style="padding:5px 2px;font-size:10px;color:'+(isDark?'#f87171':'#ef4444')+';white-space:nowrap">Unpaid</td><td style="padding:5px 2px;font-size:10px;text-align:right;color:'+(isDark?'#f87171':'#ef4444')+';font-weight:bold;white-space:nowrap">\u20b9'+_feeForCycle(s,c.key).toLocaleString()+'</td><td style="padding:5px 2px;font-size:9px;color:#94a3b8">\u2014</td></tr>';}).join('');
   document.getElementById('mrprint').innerHTML=
     '<div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px">'+
     '<div style="display:flex;align-items:center;justify-content:center;gap:8px"><img src="'+LOGO_DATA+'" style="height:26px;width:26px;object-fit:contain"><div style="font-size:17px;font-weight:bold;color:#0f172a;letter-spacing:2px">DNS CLASSES</div></div>'+
@@ -6367,9 +6378,9 @@ function sendMRText(){
   var cycles=getCycles(s);
   var paid=cycles.filter(function(c){return !!(s.payments||{})[c.key];});
   var unpaid=cycles.filter(function(c){return !(s.payments||{})[c.key];});
-  var tPaid=paid.reduce(function(sum,c){return sum+getAmt(s,(s.payments||{})[c.key]);},0);
-  var tPend=unpaid.reduce(function(sum,c){return sum+Number(s.fees||0);},0);
-  var rows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return (i+1)+'. '+c.label+' '+mE+' \u20b9'+amt.toLocaleString()+(rec.paidOn?' on '+fmtD(rec.paidOn):'')+(rec.receiptId?' ('+rec.receiptId+')':'');}).join('\n');
+  var tPaid=paid.reduce(function(sum,c){return sum+getAmt(s,(s.payments||{})[c.key],c.key);},0);
+  var tPend=unpaid.reduce(function(sum,c){return sum+_feeForCycle(s,c.key);},0);
+  var rows=paid.map(function(c,i){var rec=s.payments[c.key]||{},amt=getAmt(s,rec,c.key),mE=(rec.mode||'cash')==='online'?'\ud83d\udcf1':'\ud83d\udcb5';return (i+1)+'. '+c.label+' '+mE+' \u20b9'+amt.toLocaleString()+(rec.paidOn?' on '+fmtD(rec.paidOn):'')+(rec.receiptId?' ('+rec.receiptId+')':'');}).join('\n');
   var mts=getTotalAttendStats(s);
   var mAtt=mts.total>0?'\n\n\ud83d\udcca *ATTENDANCE SUMMARY*\nYour attendance till '+fmtD(new Date().toISOString())+':'
     +'\n\u2705 Present: '+mts.present+'\n\u274c Absent: '+mts.absent+'\n\ud83d\udfe1 Late: '+mts.late+'\n\ud83d\udcca Attendance %: '+mts.pct+'%':'';
@@ -7374,7 +7385,24 @@ function saveForm(){
         if(_clash){showToast('Admission #'+admNoVal+' is already used by '+_clash.name,true);return;}
         payload.admissionNo=admNoVal;
       }
-      db.students=db.students.map(function(x){return x.id===_eid?Object.assign({},x,payload):x;});editId=null;_addFormDirty=false;saveDB();if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();showToast('Student updated!');_refreshAllStudentDropdowns();openProf(_eid);
+      db.students=db.students.map(function(x){
+        if(x.id!==_eid)return x;
+        var nextFee=Number(payload.fees)||0,oldFee=Number(x.fees)||0;
+        var feeHistory=_feeHistoryFor(x,oldFee);
+        var payments=Object.assign({},x.payments||{});
+        Object.keys(payments).forEach(function(k){
+          var rec=payments[k];
+          if(rec&&!Object.prototype.hasOwnProperty.call(rec,'customAmount'))payments[k]=Object.assign({},rec,{customAmount:_feeForCycle(Object.assign({},x,{feeHistory:feeHistory}),k)});
+        });
+        var currentMonth=_todayStr().slice(0,7);
+        if(oldFee!==nextFee){
+          var currentEntry=null;
+          for(var hi=0;hi<feeHistory.length;hi++){if(feeHistory[hi]&&feeHistory[hi].from===currentMonth){currentEntry=feeHistory[hi];break;}}
+          if(currentEntry)currentEntry.amount=nextFee;else feeHistory.push({from:currentMonth,amount:nextFee});
+          feeHistory.sort(function(a,b){return a.from.localeCompare(b.from);});
+        }
+        return Object.assign({},x,payload,{feeHistory:feeHistory,payments:payments});
+      });editId=null;_addFormDirty=false;saveDB();if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();showToast('Student updated!');_refreshAllStudentDropdowns();openProf(_eid);
     }
     else{
       var _dup=db.students.find(function(x){
@@ -7394,7 +7422,7 @@ function saveForm(){
       } else {
         _finalAdmNo=_getNextAdmissionNo();
       }
-      var _nid=Date.now();var _newSessId=(_sessMode&&curSession)?curSession:undefined;db.students.push(Object.assign({},payload,{id:_nid,admissionNo:_finalAdmNo,payments:{},attendance:{},status:'active',history:[],excludedMonths:[]},_newSessId?{sessionId:_newSessId}:{}));editId=null;_addFormDirty=false;saveDB();if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();showToast('Student added!');_refreshAllStudentDropdowns();openProf(_nid);
+      var _nid=Date.now();var _newSessId=(_sessMode&&curSession)?curSession:undefined;db.students.push(Object.assign({},payload,{id:_nid,admissionNo:_finalAdmNo,payments:{},attendance:{},status:'active',history:[],excludedMonths:[],feeHistory:[{from:String(jd).slice(0,7),amount:Number(fees)||0}]},_newSessId?{sessionId:_newSessId}:{}));editId=null;_addFormDirty=false;saveDB();if(typeof _updateDashSmallCards==='function')_updateDashSmallCards();showToast('Student added!');_refreshAllStudentDropdowns();openProf(_nid);
     }
   }catch(e){showToast('Save error: '+e.message,true);console.error(e);}
 }
@@ -7746,13 +7774,13 @@ function runGlobalSearch(){
     getCycles(s).forEach(function(cy){
       var rec=(s.payments||{})[cy.key];if(!rec)return;
       var rid=(rec.receiptId||'').toLowerCase(),mon=fmtMo(cy.key).toLowerCase(),
-          amt=String(getAmt(s,rec)),mode=(rec.mode||'cash').toLowerCase(),
+          amt=String(getAmt(s,rec,cy.key)),mode=(rec.mode||'cash').toLowerCase(),
           pdon=rec.paidOn?fmtD(rec.paidOn).toLowerCase():'';
       var cyParts=cy.key.split('-'),cyMoIdx=cyParts.length>1?parseInt(cyParts[1])-1:0;
       var fullMonName=MO[cyMoIdx]?MO[cyMoIdx].toLowerCase():'';
       if(rid.indexOf(q)>=0||mon.indexOf(q)>=0||fullMonName.indexOf(q)>=0||amt.indexOf(q)>=0||mode.indexOf(q)>=0||pdon.indexOf(q)>=0){
         payCards.push('<div onclick="_gsPushCheckpoint();closeGlobalSearch();openProf('+s.id+')" style="background:var(--card);border:1px solid var(--ibdr);border-radius:14px;padding:11px 13px;margin-bottom:6px;cursor:pointer">'+
-          '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(_studentDisplayName(s))+'</div><div style="font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+'">\u20b9'+getAmt(s,rec).toLocaleString()+'</div></div>'+
+          '<div style="display:flex;justify-content:space-between"><div style="font-weight:bold;font-size:14px;color:var(--txt)">'+esc(_studentDisplayName(s))+'</div><div style="font-weight:bold;color:'+(isDark?'#4ade80':'#16a34a')+'">\u20b9'+getAmt(s,rec,cy.key).toLocaleString()+'</div></div>'+
           '<div style="font-size:12px;color:var(--sub);margin-top:2px">'+esc(cy.label)+(rec.receiptId?' \u2022 Receipt #'+esc(rec.receiptId):'')+(rec.paidOn?' \u2022 '+esc(fmtD(rec.paidOn)):'')+'</div>'+
           '</div>');
       }
@@ -7886,13 +7914,13 @@ function runSearch(){
     getCycles(s).forEach(function(cy){
       var rec=(s.payments||{})[cy.key];if(!rec)return;
       var rid=(rec.receiptId||'').toLowerCase(),mon=fmtMo(cy.key).toLowerCase(),
-          amt=String(getAmt(s,rec)),mode=(rec.mode||'cash').toLowerCase(),
+          amt=String(getAmt(s,rec,cy.key)),mode=(rec.mode||'cash').toLowerCase(),
           pdon=rec.paidOn?fmtD(rec.paidOn).toLowerCase():'';
       // Also match full month name (e.g. 'june' matches June payments)
       var cyParts=cy.key.split('-'),cyMoIdx=cyParts.length>1?parseInt(cyParts[1])-1:0;
       var fullMonName=MO[cyMoIdx]?MO[cyMoIdx].toLowerCase():'';
       if(rid.indexOf(q)>=0||mon.indexOf(q)>=0||fullMonName.indexOf(q)>=0||amt.indexOf(q)>=0||mode.indexOf(q)>=0||pdon.indexOf(q)>=0)
-        payMatches.push({cycle:cy,rec:rec,amt:getAmt(s,rec)});
+        payMatches.push({cycle:cy,rec:rec,amt:getAmt(s,rec,cy.key)});
     });
     if(textMatch||pmatch||payMatches.length)results.push({s:s,payMatches:payMatches});
   });
@@ -7989,15 +8017,15 @@ function exportData(){
   var h1=['S.No','Name','Class','Subjects','Location','Address','Joining Date','Monthly Fees','Status','Phone','Total Paid','Total Pending','Notes'];
   var rows1=sorted.map(function(s,i){
     var cy=getCycles(s);
-    var tP=cy.reduce(function(sum,cy2){var r=(s.payments||{})[cy2.key];return r?sum+getAmt(s,r):sum;},0);
-    var tPe=cy.reduce(function(sum,cy2){var r=(s.payments||{})[cy2.key];return r?sum:sum+getAmt(s,null);},0);
+    var tP=cy.reduce(function(sum,cy2){var r=(s.payments||{})[cy2.key];return r?sum+getAmt(s,r,cy2.key):sum;},0);
+    var tPe=cy.reduce(function(sum,cy2){var r=(s.payments||{})[cy2.key];return r?sum:sum+_feeForCycle(s,cy2.key);},0);
     return [i+1,s.name,s.grade||'',getSubjects(s),s.location||'Home',s.address||'',s.joiningDate||'',Number(s.fees)||0,s.status||'active',(s.phones||[]).map(function(p){return p.number;}).join(', '),tP,tPe,s.notes||''];
   });
   var h2=['S.No','Name','Class','Location','Period','Paid On','Amount (Rs)','Mode','Receipt #'];
   var rows2=[];var sno=1;
   sorted.forEach(function(s){
     getCycles(s).filter(function(cy2){return (s.payments||{})[cy2.key];}).forEach(function(cy2){
-      var rec=s.payments[cy2.key],amt=getAmt(s,rec);
+      var rec=s.payments[cy2.key],amt=getAmt(s,rec,cy2.key);
       rows2.push([sno++,s.name,s.grade||'',s.location||'Home',cy2.label,rec.paidOn?new Date(rec.paidOn).toLocaleDateString('en-IN'):'',amt,rec.mode||'cash',rec.receiptId||'']);
     });
   });
@@ -9556,7 +9584,7 @@ function getDashCollections(monthly,selVal){
         var prefix2=yr+'-'+('0'+(mo+1)).slice(-2);
         if(key.indexOf(prefix2)!==0)return;
       }
-      var amt=getAmt(s,rec);
+      var amt=getAmt(s,rec,key)
       if((rec.mode||'cash')==='online')bucket.online+=amt;
       else bucket.cash+=amt;
     });
@@ -9584,7 +9612,7 @@ function renderIncomeGraph(){
       var loc=(s.location||'Home');
       Object.keys(s.payments||{}).forEach(function(key){
         if(key.indexOf(prefix)===0){
-          var amt=getAmt(s,s.payments[key]);
+          var amt=getAmt(s,s.payments[key],key);
           if(loc==='City')city+=amt; else home+=amt;
         }
       });
@@ -9704,7 +9732,7 @@ function renderDailyCollection(){
           id:s.id,
           name:s.name,
           grade:s.grade||'',
-          amount:getAmt(s,rec),
+          amount:getAmt(s,rec,key),
           mode:rec.mode||'Cash',
           receipt:rec.receiptId||''
         });
@@ -11379,7 +11407,7 @@ function getMgrTuitionIncome(yr,mo){
   var total=0;
   db.students.forEach(function(s){
     Object.keys(s.payments||{}).forEach(function(key){
-      if(key.indexOf(prefix)===0)total+=getAmt(s,s.payments[key]);
+      if(key.indexOf(prefix)===0)total+=getAmt(s,s.payments[key],key);
     });
   });
   return total;
@@ -13865,12 +13893,13 @@ function mockRankingsClassChanged(){
   (db.students||[]).filter(function(s){return !grade||String(s.grade||'')===String(grade);}).forEach(function(stu){
     ((db.mockExams&&db.mockExams[stu.id])||[]).filter(_mockIsCompleted).forEach(function(e){
       var label=String(e.name||'Mock Exam').trim()||'Mock Exam',key=label.toLowerCase();
-      if(!groups[key])groups[key]=label;
+      var latest=String(e.dateGiven||e.dateChecked||e.startedAt||'');
+      if(!groups[key]||latest>groups[key].latest||(latest===groups[key].latest&&Number(e.id||0)>groups[key].id))groups[key]={label:label,latest:latest,id:Number(e.id)||0};
     });
   });
   var old=name.value;
-  name.innerHTML='<option value="">Select mock...</option>'+Object.keys(groups).sort(function(a,b){return groups[a].localeCompare(groups[b]);}).map(function(k){return '<option value="'+esc(groups[k])+'">'+esc(groups[k])+'</option>';}).join('');
-  if(old&&groups[old.toLowerCase()])name.value=groups[old.toLowerCase()];
+  name.innerHTML='<option value="">Select mock...</option>'+Object.keys(groups).sort(function(a,b){return groups[b].latest.localeCompare(groups[a].latest)||groups[b].id-groups[a].id||groups[a].label.localeCompare(groups[b].label);}).map(function(k){return '<option value="'+esc(groups[k].label)+'">'+esc(groups[k].label)+'</option>';}).join('');
+  if(old&&groups[old.toLowerCase()])name.value=groups[old.toLowerCase()].label;
   _gpSync('mock-rank-name','mock-rank-name-btn');
   renderMockRankings();
 }
