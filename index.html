@@ -331,7 +331,8 @@ body.light .m3-search-bar .material-symbols-outlined{color:#64748B}
   <div id="dash-session-banner"></div>
   <div id="dash-mock-timer-alerts" style="margin:8px 0"></div>
     <div id="stats-grid">
-      <div id="fc-stu" class="m3-card m3-fade" style="padding:16px;margin-bottom:12px">
+      <div id="fc-stu" class="m3-card m3-fade" style="padding:16px;margin-bottom:12px;position:relative">
+        <button type="button" onclick="toggleDashStudentCounts(event)" aria-label="Show student counts" title="Show or hide student counts" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border:0;border-radius:50%;background:var(--ibg);color:var(--sub);font-size:13px;font-weight:bold;line-height:26px;padding:0;cursor:pointer;z-index:2"><span id="dash-student-count-eye" class="material-symbols-outlined" style="font-size:16px;line-height:26px;vertical-align:-4px">visibility_off</span></button>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <span class="material-symbols-outlined" style="color:var(--m3-blue);font-size:20px">school</span>
           <div style="font-size:12px;font-weight:700;color:var(--m3-sub);letter-spacing:0.02em">STUDENTS</div>
@@ -2017,7 +2018,7 @@ var SUBJS=['Maths','Science','English','Hindi','Sanskrit','Urdu','SST','Physics'
 var PTAGS=['Personal','Mother','Father','Brother','Sister','Guardian','Other'];
 var db={students:[]},curView='dash',profId=null,editId=null,dashFilter=null,isDark=true,pitchBlack=false;
 var _viewStack=[]; // Independent back-stack for edge-swipe-back, doesn't rely on native browser history
-var undoStack=[],redoStack=[],lastRecSid=null,lastRecKey=null,lastMRecSid=null,waBtnMsgs={},bcLocFilter='all';
+var undoStack=[],redoStack=[],lastRecSid=null,lastRecKey=null,lastMRecSid=null,waBtnMsgs={},bcLocFilter='all',dashStudentCountsVisible=false;
 
 // ═══ DB ═══
 function loadDB(){
@@ -3552,9 +3553,10 @@ function _updateDashSmallCards(){
     if(e.date&&e.date.indexOf(prefix)===0)manualInc+=Number(e.amount||0);
   });
   var elC=document.getElementById('s-dash-collect');
-  if(elC)elC.innerHTML='<div>₹'+Math.round(collectThisMonth).toLocaleString()+'</div><div style="font-size:10px;color:var(--sub);font-weight:600;margin-top:3px">/₹'+Math.round(expectedThisMonth).toLocaleString()+'</div>';
+  if(elC){elC.dataset.current=String(Math.round(collectThisMonth));elC.dataset.expected=String(Math.round(expectedThisMonth));}
   var elD=document.getElementById('s-dash-daily');
-  if(elD)elD.textContent='\u20b9'+Math.round(collectToday).toLocaleString();
+  if(elD)elD.dataset.value=String(Math.round(collectToday));
+  updateDashStudentCountDisplay();
 
   var admCount=(db.students||[]).filter(function(s){return s.joiningDate&&s.joiningDate.indexOf(prefix)===0;}).length;
   var elA=document.getElementById('s-dash-admissions');
@@ -3643,7 +3645,8 @@ function _updateDashSmallCards(){
   _updateDashHwCount();
   _updateDashTestsBadge();
   var pendingCard=document.getElementById('fc-pending');
-  var pendingText=(document.getElementById('s-pending')||{}).textContent||'\u20b90';
+  var pendingEl=document.getElementById('s-pending');
+  var pendingText=(pendingEl&&pendingEl.dataset.value!==undefined)?'\u20b9'+pendingEl.dataset.value:((pendingEl||{}).textContent||'\u20b90');
   var pendingNum=parseFloat(pendingText.replace(/[^\d.]/g,''))||0;
   var _pendRatio=parseFloat((pendingCard&&pendingCard.dataset.pendingRatio)||'0');
   _applyCardFlash(pendingCard,pendingNum>0&&_pendRatio>0.2,'s-pending',(pendingCard&&pendingCard.dataset.severityRgb)||'160,32,32',true);
@@ -3900,6 +3903,32 @@ function renderBirthdayAndClassCount(){
     cc.innerHTML='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:4px">'+chips+'</div>';
   }
 }
+function toggleDashStudentCounts(ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  dashStudentCountsVisible=!dashStudentCountsVisible;
+  updateDashStudentCountDisplay();
+}
+function updateDashStudentCountDisplay(){
+  ['s-active','s-inactive','s-total-stu'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    el.textContent=dashStudentCountsVisible?(el.dataset.value||'0'):'•••';
+  });
+  var collect=document.getElementById('s-dash-collect');
+  if(collect){
+    var cur=collect.dataset.current||'0',expected=collect.dataset.expected||'0';
+    collect.innerHTML=dashStudentCountsVisible
+      ?'<div>₹'+Number(cur).toLocaleString()+'</div><div style="font-size:10px;color:var(--sub);font-weight:600;margin-top:3px">/₹'+Number(expected).toLocaleString()+'</div>'
+      :'<div>•••</div><div style="font-size:10px;color:var(--sub);font-weight:600;margin-top:3px">/•••</div>';
+  }
+  var daily=document.getElementById('s-dash-daily');
+  if(daily)daily.textContent=dashStudentCountsVisible?'₹'+Number(daily.dataset.value||0).toLocaleString():'•••';
+  var pending=document.getElementById('s-pending');
+  if(pending)pending.textContent=dashStudentCountsVisible?'₹'+Number(pending.dataset.value||0).toLocaleString():'•••';
+  var eye=document.getElementById('dash-student-count-eye');
+  if(eye)eye.textContent=dashStudentCountsVisible?'visibility':'visibility_off';
+  var btn=eye&&eye.parentElement;
+  if(btn)btn.setAttribute('aria-label',dashStudentCountsVisible?'Hide student counts':'Show student counts');
+}
 function renderDash(){
   var _st=_getSessionStudents();
   renderMockTimerAlerts();
@@ -3984,11 +4013,15 @@ function renderDash(){
   });
   contAbsentList.sort(function(a,b){return b.streak-a.streak;});
   highAbsentList.sort(function(a,b){return b.st.absent-a.st.absent;});
-  document.getElementById('s-active').textContent=active.length;
-  document.getElementById('s-inactive').textContent=inactive.length;
-  document.getElementById('s-total-stu').textContent=_st.length;
+  var _dashActive=document.getElementById('s-active'),_dashInactive=document.getElementById('s-inactive'),_dashTotal=document.getElementById('s-total-stu');
+  if(_dashActive)_dashActive.dataset.value=active.length;
+  if(_dashInactive)_dashInactive.dataset.value=inactive.length;
+  if(_dashTotal)_dashTotal.dataset.value=_st.length;
+  updateDashStudentCountDisplay();
   document.getElementById('s-due').textContent=dueToday.length;
-  document.getElementById('s-pending').textContent='\u20b9'+totalPending.toLocaleString();
+  var _pendingStat=document.getElementById('s-pending');
+  if(_pendingStat)_pendingStat.dataset.value=String(totalPending);
+  updateDashStudentCountDisplay();
   var totalExpectedThisCycle=active.reduce(function(sum,s){var _cc=getCycles(s),_last=_cc.length?_cc[_cc.length-1]:null;return sum+(_last?_feeForCycle(s,_last.key):0);},0);
   var pendingRatio=totalExpectedThisCycle>0?Math.min(1,totalPending/totalExpectedThisCycle):0;
   var pendCard=document.getElementById('fc-pending');
