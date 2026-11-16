@@ -11459,6 +11459,18 @@ function getMgrMonthExpenses(yr,mo){
   return (db.manager.expenses||[]).filter(function(e){return e.date&&e.date.indexOf(prefix)===0;});
 }
 
+// ── Savings-category expenses for a month ──
+// The category is resolved by name so the graph continues to work if the
+// user-created category has a different internal id.
+function getMgrMonthSavings(yr,mo){
+  var savingsIds=(db.manager.categories||[]).filter(function(c){
+    return String(c.name||'').trim().toLowerCase()==='savings';
+  }).map(function(c){return c.id;});
+  if(!savingsIds.length)return 0;
+  return getMgrMonthExpenses(yr,mo).filter(function(e){return savingsIds.indexOf(e.categoryId)>=0;})
+    .reduce(function(s,e){return s+Number(e.amount||0);},0);
+}
+
 function fmt(n){return '₹'+Number(n).toLocaleString('en-IN');}
 
 function buildMgrMonthly(){
@@ -11685,7 +11697,7 @@ function mgrCard(icon,label,val,col){
 // ── YEARLY VIEW ──
 function buildMgrYearly(){
   var MO_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var totalInc=0,totalExp=0;
+  var totalInc=0,totalExp=0,totalSavings=0;
   var monthData=[];
   for(var m=0;m<12;m++){
     var tuition=getMgrTuitionIncome(mgrYear,m);
@@ -11693,8 +11705,9 @@ function buildMgrYearly(){
     var inc=tuition+manual;
     var exps=getMgrMonthExpenses(mgrYear,m);
     var exp=exps.reduce(function(s,e){return s+Number(e.amount||0);},0);
-    totalInc+=inc;totalExp+=exp;
-    monthData.push({m:m,inc:inc,exp:exp,sav:inc-exp});
+    var savings=getMgrMonthSavings(mgrYear,m);
+    totalInc+=inc;totalExp+=exp;totalSavings+=savings;
+    monthData.push({m:m,inc:inc,exp:exp,savings:savings,sav:inc-exp});
   }
   var totalSav=totalInc-totalExp;
   var savCol=totalSav>=0?'#22c55e':'#ef4444';
@@ -11708,7 +11721,7 @@ function buildMgrYearly(){
   // Monthly bar chart
   var maxVal=Math.max.apply(null,monthData.map(function(d){return Math.max(d.inc,d.exp);}));
   if(!maxVal)maxVal=1;
-  var barH=110,svgW=monthData.length*68;
+  var barH=110,svgW=monthData.length*78;
   var PAD_TOP=28;// space above tallest bar for label
   var svgH=barH+PAD_TOP+55;// total svg height
   html+='<div style="background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid var(--bdr)">';
@@ -11716,29 +11729,42 @@ function buildMgrYearly(){
   html+='<div data-no-swipe="1" style="overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;padding-bottom:4px">';
   html+='<svg width="'+svgW+'" height="'+svgH+'" style="display:block;min-width:'+svgW+'px">';
   monthData.forEach(function(d,i){
-    var x=i*68;
+    var x=i*78;
     var iH=Math.max(d.inc>0?6:0,Math.round(d.inc/maxVal*barH));
     var eH=Math.max(d.exp>0?6:0,Math.round(d.exp/maxVal*barH));
+    // Keep even small Savings portions visible enough for their label to fit
+    // inside the blue overlay instead of placing text above the chart.
+    var sH=Math.max(d.savings>0?18:0,Math.round(d.savings/maxVal*barH));
     var baseY=PAD_TOP+barH;
     if(d.inc>0){
-      html+='<rect x="'+(x+4)+'" y="'+(baseY-iH)+'" width="28" height="'+iH+'" rx="5" fill="#22c55e"/>';
+      html+='<rect x="'+(x+6)+'" y="'+(baseY-iH)+'" width="30" height="'+iH+'" rx="5" fill="#16a34a"/>';
       var lbl=d.inc>=1000?(d.inc/1000).toFixed(d.inc%1000===0?0:1)+'k':String(d.inc);
-      html+='<text x="'+(x+18)+'" y="'+(baseY-iH-6)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#22c55e">'+lbl+'</text>';
+      html+='<text x="'+(x+21)+'" y="'+(baseY-iH-6)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#16a34a">'+lbl+'</text>';
     }
     if(d.exp>0){
-      html+='<rect x="'+(x+38)+'" y="'+(baseY-eH)+'" width="28" height="'+eH+'" rx="5" fill="#ef4444"/>';
+      // Savings is part of Expense, so draw it inside the red Expense bar
+      // rather than as a separate adjacent bar.
+      html+='<rect x="'+(x+40)+'" y="'+(baseY-eH)+'" width="30" height="'+eH+'" rx="5" fill="#dc2626"/>';
       var lbl2=d.exp>=1000?(d.exp/1000).toFixed(d.exp%1000===0?0:1)+'k':String(d.exp);
-      html+='<text x="'+(x+52)+'" y="'+(baseY-eH-6)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#ef4444">'+lbl2+'</text>';
+      html+='<text x="'+(x+55)+'" y="'+(baseY-eH-6)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#dc2626">'+lbl2+'</text>';
     }
-    html+='<text x="'+(x+34)+'" y="'+(baseY+18)+'" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--sub)">'+MO_SHORT[d.m]+'</text>';
+    if(d.savings>0){
+      // Overlay the Savings portion at the bottom of the Expense bar.
+      html+='<rect x="'+(x+40)+'" y="'+(baseY-sH)+'" width="30" height="'+sH+'" rx="5" fill="#1d4ed8"/>';
+      var lbl3=d.savings>=1000?(d.savings/1000).toFixed(d.savings%1000===0?0:1)+'k':String(d.savings);
+      // Always keep the Savings value inside the blue overlay.
+      html+='<text x="'+(x+55)+'" y="'+(baseY-Math.round(sH/2)+3)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">'+lbl3+'</text>';
+    }
+    html+='<text x="'+(x+39)+'" y="'+(baseY+18)+'" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--sub)">'+MO_SHORT[d.m]+'</text>';
     var sw=d.sav;var swc=sw>=0?'#22c55e':'#ef4444';
     if(sw!==0){
       var sl=(Math.abs(sw)>=1000?(sw>=0?'+':'-')+(Math.abs(sw)/1000).toFixed(1).replace(/\.0$/,'')+'k':(sw>0?'+':'')+sw);
-      html+='<text x="'+(x+34)+'" y="'+(baseY+33)+'" text-anchor="middle" font-size="10" fill="'+swc+'">'+sl+'</text>';
+      html+='<text x="'+(x+39)+'" y="'+(baseY+33)+'" text-anchor="middle" font-size="10" fill="'+swc+'">'+sl+'</text>';
     }
   });
-  html+='<text x="8" y="16" font-size="13" font-weight="bold" fill="#22c55e">■ Inc</text>';
-  html+='<text x="72" y="16" font-size="13" font-weight="bold" fill="#ef4444">■ Exp</text>';
+  html+='<text x="8" y="16" font-size="13" font-weight="bold" fill="#16a34a">■ Inc</text>';
+  html+='<text x="72" y="16" font-size="13" font-weight="bold" fill="#dc2626">■ Exp</text>';
+  html+='<text x="140" y="16" font-size="13" font-weight="bold" fill="#1d4ed8">■ Savings portion</text>';
   html+='</svg></div></div>';
 
   // Top spending categories this year
@@ -14003,7 +14029,7 @@ function renderMockRankings(){
   h+='<span class="material-symbols-outlined" style="font-size:30px;color:#f59e0b">emoji_events</span><div style="min-width:0;flex:1"><div style="font-size:10px;font-weight:900;color:'+(dark?'#fbbf24':'#b45309')+';letter-spacing:.7px">CLASS TOPPER</div><div style="font-size:17px;font-weight:900;color:var(--txt);overflow-wrap:anywhere">'+esc(_studentDisplayName(top.stu))+'</div></div><strong style="font-size:20px;color:'+(dark?'#fbbf24':'#b45309')+'">'+top.pct.toFixed(1)+'%</strong></div>';
   h+='<div style="display:flex;flex-direction:column;gap:7px">';
   rows.forEach(function(row,i){
-    var rank=i+1,medal=rank===1?'workspace_premium':rank===2?'military_tech':rank===3?'award':'',rankColor=rank===1?'#b45309':rank===2?'#64748b':rank===3?'#c2410c':(dark?'#cbd5e1':'#64748b'),pctColor=row.pct>=90?(dark?'#4ade80':'#15803d'):row.pct>=75?(dark?'#fbbf24':'#b45309'):row.pct>=60?(dark?'#7dd3fc':'#1d4ed8'):(dark?'#f87171':'#dc2626');
+    var rank=i+1,medal=rank===1?'\ud83e\udd47':rank===2?'\ud83e\udd48':rank===3?'\ud83e\udd49':'',rankColor=rank===1?'#b45309':rank===2?'#64748b':rank===3?'#c2410c':(dark?'#cbd5e1':'#64748b'),pctColor=row.pct>=90?(dark?'#4ade80':'#15803d'):row.pct>=75?(dark?'#fbbf24':'#b45309'):row.pct>=60?(dark?'#7dd3fc':'#1d4ed8'):(dark?'#f87171':'#dc2626');
     h+='<div style="display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:13px;background:var(--card);border:1px solid '+(rank<=3?(rank===1?'rgba(245,158,11,.55)':rank===2?'rgba(148,163,184,.55)':'rgba(194,65,12,.45)'):'var(--ibdr)')+'">';
     h+='<div style="width:29px;text-align:center;font-size:14px;font-weight:900;color:'+rankColor+'">#'+rank+'</div>';
     h+=medal?'<span class="material-symbols-outlined" style="font-size:23px;color:'+rankColor+'">'+medal+'</span>':'<span style="width:23px"></span>';
