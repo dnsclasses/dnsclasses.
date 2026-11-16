@@ -2530,10 +2530,10 @@ if(!source)return;
         [ab,np,ng,na].forEach(function(o){if(o){o.disabled=true;o.checked=false;if(o.parentElement){o.parentElement.style.opacity='0.35';o.parentElement.style.pointerEvents='none';}}});
       }
     });
-    // Existing tests use their saved date; new or legacy-undated tests stay blank
-    // until the user explicitly selects and saves a test date.
+    // Existing tests use their saved date; new or legacy-undated tests default
+    // to today's local date so the date is ready when marks are entered.
     if(_datePicker){
-      _datePicker.value=_savedDate||'';
+      _datePicker.value=_savedDate||_todayStr();
       _datePicker.dispatchEvent(new Event('input',{bubbles:true}));
       _datePicker.dispatchEvent(new Event('change',{bubbles:true}));
     }
