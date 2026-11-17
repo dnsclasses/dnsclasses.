@@ -11755,6 +11755,13 @@ function buildMgrYearly(){
       // Always keep the Savings value inside the blue overlay.
       html+='<text x="'+(x+55)+'" y="'+(baseY-Math.round(sH/2)+3)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">'+lbl3+'</text>';
     }
+    var remainingExp=Math.max(0,d.exp-d.savings);
+    if(d.savings>0&&remainingExp>0){
+      // Show the expense amount left after the Savings portion inside red.
+      var remainingH=Math.max(0,eH-sH);
+      var lbl4=remainingExp>=1000?(remainingExp/1000).toFixed(remainingExp%1000===0?0:1)+'k':String(remainingExp);
+      html+='<text x="'+(x+55)+'" y="'+(baseY-sH-Math.round(remainingH/2)+3)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">'+lbl4+'</text>';
+    }
     html+='<text x="'+(x+39)+'" y="'+(baseY+18)+'" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--sub)">'+MO_SHORT[d.m]+'</text>';
     var sw=d.sav;var swc=sw>=0?'#22c55e':'#ef4444';
     if(sw!==0){
