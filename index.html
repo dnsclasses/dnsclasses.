@@ -253,6 +253,7 @@ body.light input[type="date"],body.light input[type="month"],body.light input[ty
   #hw-table-live, #rprint table{width:100%!important;table-layout:fixed!important}
 }
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes mgrCategoryFlash{0%,100%{border-color:var(--bdr);box-shadow:none}18%,58%{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 25%,transparent)}}
 
 /* ── M3 Header ── */
 .m3hdr{background:#151B29;border-bottom:1px solid #242D3D;padding:10px 14px 8px;position:sticky;top:0;z-index:200;transition:background .3s,border-color .3s}
@@ -748,7 +749,7 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
         </div>
       </div>
       <div style="margin-bottom:10px"><label class="flabel">TIMER DURATION (MINUTES) <span style="font-weight:400;opacity:0.7">(for ongoing mock)</span></label>
-        <input id="mock-duration" type="number" min="1" step="1" value="60" placeholder="e.g. 60" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
+        <input id="mock-duration" type="number" min="1" step="1" value="180" placeholder="e.g. 180" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--ibdr);background:var(--ibg);color:var(--txt);font-size:14px;box-sizing:border-box">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div><label class="flabel">DATE GIVEN <span style="font-weight:400;opacity:0.7">(today by default)</span></label>
@@ -8310,8 +8311,13 @@ function sendBulkAbsentStudentsNow(){
   var dateInput=document.getElementById('bulk-att-absent-date');
   var dateStr=(dateInput&&dateInput.value)||_todayStr();
   var students=_bulkAttBaseStudents();
-  var dateObj=_dnsCalParse(dateStr),dateLabel=dateObj?_dnsCalLabel(dateObj):dateStr;
-  var lines=['📊 *ATTENDANCE REPORT*','_Absent Students • '+dateLabel+'_',''];
+  var dateObj=_dnsCalParse(dateStr),dateLabel=dateStr,weekday='';
+  if(dateObj){
+    var dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    dateLabel=('0'+dateObj.getDate()).slice(-2)+'-'+MO[dateObj.getMonth()]+'-'+dateObj.getFullYear();
+    weekday=dayNames[dateObj.getDay()];
+  }
+  var lines=['📊 *TODAY\'S Absent*','  *'+dateLabel+'*, '+weekday,''];
   selected.slice().sort(_bulkAttSortGrades).forEach(function(grade,gradeIndex){
     if(gradeIndex>0)lines.push('');
     var classStudents=students.filter(function(s){return String(s.grade||'Other')===grade&&!(s.joiningDate&&dateStr<s.joiningDate);});
@@ -10163,6 +10169,14 @@ function _edgeSwipeBack(){
   if(!_viewStack.length){history.back();return;} // nothing tracked yet — fall back to native
   var item=_viewStack.pop();
   _updateBackBtn();
+  if(item&&typeof item==='object'&&item.__mgrYearReturn){
+    mgrYear=Number(item.year);
+    mgrTab=item.tab||'yearly';
+    mgrCatOpen=false;
+    mgrCategoryFlash=false;
+    renderManager();
+    return;
+  }
   if(item&&typeof item==='object'&&item.__searchReturn){
     openGlobalSearch();
     var inp=document.getElementById('gsearch-input');
@@ -11359,7 +11373,7 @@ var MGR_DEFAULT_CATS=[
 var mgrTab='monthly';
 var mgrYear=new Date().getFullYear();
 var mgrMonth=new Date().getMonth();
-var mgrCatOpen=false;
+var mgrCatOpen=false,mgrCategoryFlash=false;
 
 var _MGR_DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var _MGR_MOS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -11402,8 +11416,31 @@ function setMgrTab(tab){
   renderManager();
 }
 
+function openMgrMonthCategoryView(yr,mo){
+  var returnYear=mgrYear,returnTab=mgrTab;
+  _viewStack.push({__mgrYearReturn:true,year:returnYear,tab:returnTab});
+  _updateBackBtn();
+  mgrYear=Number(yr);
+  mgrMonth=Number(mo);
+  mgrTab='monthly';
+  mgrCatOpen=true;
+  mgrCategoryFlash=true;
+  var mt=document.getElementById('mgr-tab-month'),yt=document.getElementById('mgr-tab-year');
+  if(mt)mt.classList.add('on');
+  if(yt)yt.classList.remove('on');
+  renderManager();
+  setTimeout(function(){
+    var section=document.getElementById('mgr-category-section');
+    if(!section)return;
+    var top=window.pageYOffset+section.getBoundingClientRect().top-180;
+    window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  },80);
+  setTimeout(function(){mgrCategoryFlash=false;},1000);
+}
+
 function toggleMgrCatSection(){
   mgrCatOpen=!mgrCatOpen;
+  mgrCategoryFlash=false;
   renderManager();
 }
 function mgrChangePeriod(d){
@@ -11567,7 +11604,7 @@ function buildMgrMonthly(){
   var catList=cats.filter(function(c){return catTotals[c.id]>0;}).sort(function(a,b){return catTotals[b.id]-catTotals[a.id];});
 
     // Category section — collapsible toggle
-  html+='<div style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid var(--bdr);overflow:hidden">';
+  html+='<div id="mgr-category-section" style="background:var(--card);border-radius:12px;margin-bottom:12px;border:1px solid var(--bdr);animation:'+(mgrCategoryFlash?'mgrCategoryFlash 1s ease-out':'none')+';overflow:hidden">';
   html+='<div onclick="toggleMgrCatSection()" style="display:flex;justify-content:space-between;align-items:center;padding:12px;cursor:pointer">';
   html+='<div style="font-weight:bold;font-size:13px;color:'+(isDark?'#f87171':'#ef4444')+'"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;margin-right:4px">trending_down</span>BY CATEGORY '+(catList.length?'('+catList.length+')':'')+'</div>';
   html+='<div style="display:flex;align-items:center;gap:8px">';
@@ -11744,13 +11781,13 @@ function buildMgrYearly(){
     if(d.exp>0){
       // Savings is part of Expense, so draw it inside the red Expense bar
       // rather than as a separate adjacent bar.
-      html+='<rect x="'+(x+40)+'" y="'+(baseY-eH)+'" width="30" height="'+eH+'" rx="5" fill="#dc2626"/>';
+      html+='<rect x="'+(x+40)+'" y="'+(baseY-eH)+'" width="30" height="'+eH+'" rx="5" fill="#dc2626" style="cursor:pointer" onclick="openMgrMonthCategoryView('+mgrYear+','+d.m+')" title="View '+MO_SHORT[d.m]+' expense categories"/>';
       var lbl2=d.exp>=1000?(d.exp/1000).toFixed(d.exp%1000===0?0:1)+'k':String(d.exp);
       html+='<text x="'+(x+55)+'" y="'+(baseY-eH-6)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#dc2626">'+lbl2+'</text>';
     }
     if(d.savings>0){
       // Overlay the Savings portion at the bottom of the Expense bar.
-      html+='<rect x="'+(x+40)+'" y="'+(baseY-sH)+'" width="30" height="'+sH+'" rx="5" fill="#1d4ed8"/>';
+      html+='<rect x="'+(x+40)+'" y="'+(baseY-sH)+'" width="30" height="'+sH+'" rx="5" fill="#1d4ed8" style="cursor:pointer" onclick="openMgrMonthCategoryView('+mgrYear+','+d.m+')" title="View '+MO_SHORT[d.m]+' expense categories"/>';
       var lbl3=d.savings>=1000?(d.savings/1000).toFixed(d.savings%1000===0?0:1)+'k':String(d.savings);
       // Always keep the Savings value inside the blue overlay.
       html+='<text x="'+(x+55)+'" y="'+(baseY-Math.round(sH/2)+3)+'" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff">'+lbl3+'</text>';
@@ -13703,7 +13740,7 @@ function _mockPlayAlarm(key){
   }catch(err){console.warn('Mock timer alarm unavailable:',err);}
 }
 function _mockTimerMarkup(sid,e){
-  var left=_mockRemainingSeconds(e),mins=Math.max(1,Number(e.durationMinutes)||60),total=mins*60;
+  var left=_mockRemainingSeconds(e),mins=Math.max(1,Number(e.durationMinutes)||180),total=mins*60;
   if(left===null)return '<button onclick="mockStartTimer('+sid+','+e.id+')" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;padding:10px 15px;min-height:38px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 8px rgba(245,158,11,.3)">▶ START TIMER</button>';
   var darkTimer=typeof isDark!=='undefined'&&isDark;
   var expired=left===0,paused=e.timerState==='paused',pct=Math.max(0,Math.min(100,Math.round(left/total*100))),color=expired?(darkTimer?'#f87171':'#dc2626'):paused?(darkTimer?'#fbbf24':'#92400e'):(darkTimer?'#4ade80':'#15803d'),border=expired?(darkTimer?'rgba(248,113,113,.65)':'rgba(239,68,68,.5)'):paused?(darkTimer?'rgba(245,158,11,.65)':'rgba(217,119,6,.55)'):(darkTimer?'rgba(34,197,94,.65)':'rgba(34,197,94,.48)'),bg=expired?(darkTimer?'rgba(239,68,68,.20)':'rgba(239,68,68,.12)'):paused?(darkTimer?'rgba(245,158,11,.22)':'rgba(245,158,11,.16)'):(darkTimer?'rgba(34,197,94,.20)':'rgba(34,197,94,.12)');
@@ -13719,10 +13756,10 @@ function mockHoldStop(){if(_mockHoldTimeout){clearTimeout(_mockHoldTimeout);_moc
 function mockHoldClick(btn,sid,id,delta){if(_mockHoldRepeated){_mockHoldRepeated=false;return false;}mockAdjustTimer(sid,id,delta);return false;}
 function _mockTimerBtnStyle(c){var darkBtn=typeof isDark!=='undefined'&&isDark;if(darkBtn&&c==='#64748b')c='#cbd5e1';return 'padding:8px 12px;min-height:34px;border-radius:9px;border:1px solid '+c+'66;background:'+c+'18;color:'+c+';font-size:12px;font-weight:800;cursor:pointer';}
 function _mockGet(sid,id){return ((db.mockExams&&db.mockExams[sid])||[]).find(function(x){return Number(x.id)===Number(id);});}
-function mockStartTimer(sid,id){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var mins=parseInt(e.durationMinutes,10);if(isNaN(mins)||mins<1)mins=60;e.durationMinutes=mins;e.startedAt=Date.now();e.endsAt=Date.now()+mins*60000;e.timerState='running';delete e.remainingSeconds;delete e.dashboardHidden;delete _mockAlarmPlayed[sid+'-'+id];saveDB();renderAllOngoingMocks();renderMockTimerAlerts();showToast('Timer started for '+mins+' minutes');}
+function mockStartTimer(sid,id){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var mins=parseInt(e.durationMinutes,10);if(isNaN(mins)||mins<1)mins=180;e.durationMinutes=mins;e.startedAt=Date.now();e.endsAt=Date.now()+mins*60000;e.timerState='running';delete e.remainingSeconds;delete e.dashboardHidden;delete _mockAlarmPlayed[sid+'-'+id];saveDB();renderAllOngoingMocks();renderMockTimerAlerts();showToast('Timer started for '+mins+' minutes');}
 function mockPauseTimer(sid,id){var e=_mockGet(sid,id);if(!e||(!e.startedAt&&!e.endsAt))return;e.remainingSeconds=_mockRemainingSeconds(e);e.timerState='paused';delete e.startedAt;delete e.endsAt;saveDB();renderAllOngoingMocks();renderMockTimerAlerts();}
 function mockResumeTimer(sid,id){var e=_mockGet(sid,id);if(!e||e.timerState!=='paused')return;var left=Math.max(0,Number(e.remainingSeconds)||0);e.startedAt=Date.now();e.endsAt=Date.now()+left*1000;e.timerState='running';delete e.remainingSeconds;delete e.dashboardHidden;saveDB();renderAllOngoingMocks();renderMockTimerAlerts();}
-function mockResetTimer(sid,id){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var mins=Math.max(1,Number(e.durationMinutes)||60);e.startedAt=Date.now();e.endsAt=Date.now()+mins*60000;e.timerState='running';delete e.remainingSeconds;delete e.dashboardHidden;delete _mockAlarmPlayed[sid+'-'+id];saveDB();renderAllOngoingMocks();renderMockTimerAlerts();showToast('Timer reset');}
+function mockResetTimer(sid,id){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var mins=Math.max(1,Number(e.durationMinutes)||180);e.startedAt=Date.now();e.endsAt=Date.now()+mins*60000;e.timerState='running';delete e.remainingSeconds;delete e.dashboardHidden;delete _mockAlarmPlayed[sid+'-'+id];saveDB();renderAllOngoingMocks();renderMockTimerAlerts();showToast('Timer reset');}
 function mockAdjustTimer(sid,id,delta){var e=_mockGet(sid,id);if(!e||_mockIsCompleted(e))return;var left=_mockRemainingSeconds(e);if(left===null){e.durationMinutes=Math.max(1,(Number(e.durationMinutes)||60)+delta);saveDB();renderAllOngoingMocks();renderMockTimerAlerts();return;}var next=Math.max(60,left+delta*60);if(e.timerState==='paused'){e.remainingSeconds=next;}else{e.endsAt=Date.now()+next*1000;e.startedAt=Date.now();}saveDB();renderAllOngoingMocks();renderMockTimerAlerts();}
 function _mockRefreshTimers(){document.querySelectorAll('[data-mock-timer]').forEach(function(el){var parts=el.getAttribute('data-mock-timer').split('-'),sid=Number(parts[0]),id=Number(parts[1]),e=_mockGet(sid,id);if(!e)return;var left=_mockRemainingSeconds(e);if(left===null)return;var total=Math.max(60,(Number(e.durationMinutes)||60)*60),expired=left===0,paused=e.timerState==='paused',time=el.querySelector('[data-mock-time]'),progress=el.querySelector('[data-mock-progress]'),ribbon=el.closest('[data-mock-ribbon]');if(time)time.textContent=_mockFormatTime(left);if(progress){progress.style.width=Math.max(0,Math.min(100,left/total*100))+'%';if(expired)progress.style.background=(typeof isDark!=='undefined'&&isDark?'#f87171':'#dc2626');}if(ribbon)ribbon.style.animation=expired?'mockExpiredBlink 1s infinite':'';if(expired){el.querySelectorAll('button')[0].textContent='↻ Reset';if(!paused)_mockPlayAlarm(sid+'-'+id);}});renderMockTimerAlerts();}
 function _mockEnsureTimerInterval(){if(_mockTimerInterval)return;_mockTimerInterval=setInterval(_mockRefreshTimers,1000);}
@@ -13852,7 +13889,7 @@ function mockAddExam(){
   saveDB();
   marksEl.value='';
   if(mmEl)mmEl.value='80';
-  if(durationEl)durationEl.value='60';
+  if(durationEl)durationEl.value='180';
   if(nameEl)nameEl.value='';
   dateCheckedEl.value='';
   dateCheckedEl.dispatchEvent(new Event('input',{bubbles:true}));
@@ -13886,7 +13923,7 @@ function mockEditExam(sid,id){
   document.getElementById('mock-name').value=e.name||'';
   document.getElementById('mock-marks').value=_mockIsCompleted(e)?e.marks:'';
   document.getElementById('mock-mm').value=e.total||80;
-  document.getElementById('mock-duration').value=e.durationMinutes||60;
+  document.getElementById('mock-duration').value=e.durationMinutes||180;
   _mockSyncMarksMax();
   document.getElementById('mock-date-checked').value=e.dateChecked||'';
   document.getElementById('mock-date-checked').dispatchEvent(new Event('input',{bubbles:true}));
@@ -13897,6 +13934,7 @@ function mockEditExam(sid,id){
   var cancelBtn=document.getElementById('mock-cancel-btn');
   if(btn){btn.textContent='\ud83d\udcbe Update Mock Exam';btn.style.background='linear-gradient(135deg,#f59e0b,#d97706)';}
   if(cancelBtn)cancelBtn.style.display='';
+  renderMockList(sid);
   document.getElementById('mock-add-form').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function mockCancelEdit(){
@@ -13908,7 +13946,7 @@ function mockCancelEdit(){
   var mmEl=document.getElementById('mock-mm');
   if(mmEl)mmEl.value='80';
   var durationEl=document.getElementById('mock-duration');
-  if(durationEl)durationEl.value='60';
+  if(durationEl)durationEl.value='180';
   _mockSyncGivenDate();
   _mockResetButton();
 }
@@ -14132,7 +14170,7 @@ function renderMockList(sid){
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--txt)">'+(e.name?esc(e.name):'Mock #'+idx)+'</div>';
       h+='<div style="font-size:11px;color:var(--sub)">'+fmtD(e.dateGiven)+' &middot; Checked: '+fmtD(e.dateChecked)+'</div></div>';
       h+='<div style="font-size:20px">'+medal+'</div>';
-      h+='<div style="font-size:16px;font-weight:800;color:'+col+'">'+e.marks+'/'+e.total+'</div>';
+      h+='<div style="text-align:right;white-space:nowrap"><div style="font-size:16px;font-weight:800;color:'+col+'">'+e.marks+'/'+e.total+'</div><div style="font-size:12px;font-weight:800;color:'+col+'">'+pct+'%</div></div>';
       h+='<button onclick="mockEditExam('+sid+','+e.id+')" style="background:rgba(99,102,241,.15);color:#6366f1;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\u270f\ufe0f</button>';
       h+='<button onclick="mockDeleteExam('+sid+','+e.id+')" style="background:rgba(239,68,68,.15);color:'+(isDark?'#f87171':'#ef4444')+';border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\u2715</button>';
       h+='</div>';
