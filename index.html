@@ -13695,6 +13695,46 @@ var _mockTimerInterval=null;
 var _mockAlarmPlayed={};
 function _mockFormatTime(sec){sec=Math.max(0,Math.floor(Number(sec)||0));var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return(h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
 function _mockRemainingSeconds(e){if(!e||!e.durationMinutes)return null;if(e.timerState==='paused')return Math.max(0,Number(e.remainingSeconds)||0);if(e.endsAt)return Math.max(0,Math.ceil((Number(e.endsAt)-Date.now())/1000));if(!e.startedAt)return null;return Math.max(0,Number(e.durationMinutes)*60-Math.floor((Date.now()-Number(e.startedAt))/1000));}
+function pauseAllMockTimers(){
+  var count=0;
+  (db.students||[]).forEach(function(stu){
+    ((db.mockExams&&db.mockExams[stu.id])||[]).forEach(function(e){
+      if(_mockIsCompleted(e)||e.timerState==='paused'||!e.startedAt)return;
+      var left=_mockRemainingSeconds(e);
+      if(left===null||left<=0)return;
+      e.remainingSeconds=left;
+      e.timerState='paused';
+      delete e.startedAt;
+      delete e.endsAt;
+      count++;
+    });
+  });
+  if(!count){showToast('No running mock timers to pause',true);return;}
+  saveDB();
+  renderAllOngoingMocks();
+  renderMockTimerAlerts();
+  showToast(count+' mock timer'+(count===1?'':'s')+' paused');
+}
+function resumeAllMockTimers(){
+  var count=0;
+  (db.students||[]).forEach(function(stu){
+    ((db.mockExams&&db.mockExams[stu.id])||[]).forEach(function(e){
+      if(_mockIsCompleted(e)||e.timerState!=='paused')return;
+      var left=Math.max(0,Number(e.remainingSeconds)||0);
+      if(left<=0)return;
+      e.startedAt=Date.now();
+      e.endsAt=Date.now()+left*1000;
+      e.timerState='running';
+      delete e.remainingSeconds;
+      count++;
+    });
+  });
+  if(!count){showToast('No paused mock timers to resume',true);return;}
+  saveDB();
+  renderAllOngoingMocks();
+  renderMockTimerAlerts();
+  showToast(count+' mock timer'+(count===1?'':'s')+' resumed');
+}
 function renderMockTimerAlerts(){
   var wrap=document.getElementById('dash-mock-timer-alerts');
   if(!wrap)return;
@@ -13717,8 +13757,8 @@ function renderMockTimerAlerts(){
       var isPaused=row.e.timerState==='paused';
       var rowColor=isPaused?dashYellow:dashGreen,rowBorder=isPaused?(darkDash?'rgba(245,158,11,.6)':'rgba(217,119,6,.55)'):'rgba(34,197,94,.35)',rowBg=isPaused?(darkDash?'rgba(245,158,11,.22)':'rgba(245,158,11,.20)'):'transparent';
       out+='<div data-dash-mock-row="'+row.stu.id+'-'+row.e.id+'" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 7px;border-top:1px solid '+rowBorder+';background:'+rowBg+';border-radius:8px"><div style="min-width:0"><div onclick="openDashboardMock('+row.stu.id+','+row.e.id+')" title="Open mock details" style="font-weight:800;color:var(--txt);overflow-wrap:anywhere;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">'+esc(_studentDisplayName(row.stu))+'</div><div style="font-size:11px;color:'+rowColor+';font-weight:800">'+(row.e.name?esc(row.e.name):'Mock')+' · '+(isPaused?'PAUSED':'RUNNING')+'</div></div><strong data-dash-mock-time="'+row.stu.id+'-'+row.e.id+'" style="font-size:17px;color:'+rowColor+';white-space:nowrap">'+_mockFormatTime(left)+'</strong>'+(isPaused?'<button onclick="mockResumeTimer('+row.stu.id+','+row.e.id+')" style="padding:10px 14px;min-height:38px;border-radius:9px;border:2px solid '+dashYellowBorder+';background:'+dashYellowBg+';color:'+dashYellow+';font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer">▶ RESUME</button>':'<button onclick="mockPauseTimer('+row.stu.id+','+row.e.id+')" style="padding:10px 14px;min-height:38px;border-radius:9px;border:1px solid #16a34a;background:rgba(34,197,94,.18);color:'+dashGreen+';font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer">Ⅱ PAUSE</button>')+'<button aria-label="Remove dashboard timer" title="Remove from dashboard" onclick="mockDismissDashboardTimer('+row.stu.id+','+row.e.id+')" style="width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(148,163,184,.5);background:var(--ibg);color:var(--sub);font-size:19px;line-height:24px;cursor:pointer">×</button></div>';});return out;}
-  if(running.length){h+='<div style="padding:12px;border-radius:16px;background:'+dashGreenBg+';border:2px solid '+dashGreenBorder+'"><div style="display:flex;align-items:center;gap:7px;color:'+dashGreen+';font-size:14px;font-weight:900;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:20px">timer</span>RUNNING MOCK TIMERS ('+running.length+')</div>'+dashboardTimerRows(running)+'</div>';}
-  if(paused.length){h+='<div style="margin-top:'+(running.length?'8px':'0')+';padding:12px;border-radius:16px;background:'+dashYellowBg+';border:2px solid '+dashYellowBorder+'"><div style="display:flex;align-items:center;gap:7px;color:'+dashYellow+';font-size:14px;font-weight:900;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:20px">pause_circle</span>PAUSED MOCK TIMERS ('+paused.length+')</div>'+dashboardTimerRows(paused)+'</div>';}
+  if(running.length){h+='<div style="padding:12px;border-radius:16px;background:'+dashGreenBg+';border:2px solid '+dashGreenBorder+'"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:7px;color:'+dashGreen+';font-size:14px;font-weight:900"><span class="material-symbols-outlined" style="font-size:20px">timer</span>RUNNING MOCK TIMERS ('+running.length+')</div><button onclick="pauseAllMockTimers()" style="padding:8px 11px;min-height:34px;border-radius:9px;border:1px solid '+dashGreenBorder+';background:rgba(34,197,94,.18);color:'+dashGreen+';font-size:11px;font-weight:900;white-space:nowrap;cursor:pointer">Ⅱ PAUSE ALL</button></div>'+dashboardTimerRows(running)+'</div>';}
+  if(paused.length){h+='<div style="margin-top:'+(running.length?'8px':'0')+';padding:12px;border-radius:16px;background:'+dashYellowBg+';border:2px solid '+dashYellowBorder+'"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:7px;color:'+dashYellow+';font-size:14px;font-weight:900"><span class="material-symbols-outlined" style="font-size:20px">pause_circle</span>PAUSED MOCK TIMERS ('+paused.length+')</div>'+(!running.length?'<button onclick="resumeAllMockTimers()" style="padding:8px 11px;min-height:34px;border-radius:9px;border:2px solid '+dashYellowBorder+';background:'+dashYellowBg+';color:'+dashYellow+';font-size:11px;font-weight:900;white-space:nowrap;cursor:pointer">▶ RESUME ALL</button>':'')+'</div>'+dashboardTimerRows(paused)+'</div>';}
   if(expired.length){
     h+='<div style="margin-top:'+(running.length||paused.length?'8px':'0')+';padding:12px;border-radius:16px;background:'+dashRedBg+';border:2px solid '+dashRedBorder+';animation:mockExpiredBlink 1s infinite">';
     h+='<div style="display:flex;align-items:center;gap:7px;color:'+dashRed+';font-size:14px;font-weight:900;margin-bottom:8px"><span class="material-symbols-outlined" style="font-size:20px">alarm</span>MOCK TIMER FINISHED ('+expired.length+')</div>';
@@ -13739,16 +13779,19 @@ function _mockPlayAlarm(key){
     setTimeout(function(){try{ctx.close();}catch(e){}},1400);
   }catch(err){console.warn('Mock timer alarm unavailable:',err);}
 }
-function _mockTimerMarkup(sid,e){
-  var left=_mockRemainingSeconds(e),mins=Math.max(1,Number(e.durationMinutes)||180),total=mins*60;
-  if(left===null)return '<button onclick="mockStartTimer('+sid+','+e.id+')" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;padding:10px 15px;min-height:38px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 8px rgba(245,158,11,.3)">▶ START TIMER</button>';
+function _mockTimerMarkup(sid,e,extraHtml){
+  extraHtml=extraHtml||'';
+  var left=_mockRemainingSeconds(e);
+  if(left===null)return '<button onclick="mockStartTimer('+sid+','+e.id+')" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:9px;padding:10px 14px;min-height:38px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">▶ START TIMER</button>';
   var darkTimer=typeof isDark!=='undefined'&&isDark;
-  var expired=left===0,paused=e.timerState==='paused',pct=Math.max(0,Math.min(100,Math.round(left/total*100))),color=expired?(darkTimer?'#f87171':'#dc2626'):paused?(darkTimer?'#fbbf24':'#92400e'):(darkTimer?'#4ade80':'#15803d'),border=expired?(darkTimer?'rgba(248,113,113,.65)':'rgba(239,68,68,.5)'):paused?(darkTimer?'rgba(245,158,11,.65)':'rgba(217,119,6,.55)'):(darkTimer?'rgba(34,197,94,.65)':'rgba(34,197,94,.48)'),bg=expired?(darkTimer?'rgba(239,68,68,.20)':'rgba(239,68,68,.12)'):paused?(darkTimer?'rgba(245,158,11,.22)':'rgba(245,158,11,.16)'):(darkTimer?'rgba(34,197,94,.20)':'rgba(34,197,94,.12)');
-  var controls=expired?'<button onclick="mockResetTimer('+sid+','+e.id+')" style="'+_mockTimerBtnStyle(darkTimer?'#f87171':'#dc2626')+'">↻ Reset</button>':'<button onclick="'+(paused?'mockResumeTimer':'mockPauseTimer')+'('+sid+','+e.id+')" style="'+_mockTimerBtnStyle(paused?(darkTimer?'#fbbf24':'#92400e'):(darkTimer?'#4ade80':'#15803d'))+'">'+(paused?'▶ Resume':'Ⅱ Pause')+'</button>';
-  return '<div data-mock-timer="'+sid+'-'+e.id+'" style="width:100%;max-width:none;box-sizing:border-box;padding:9px 10px;border-radius:13px;background:'+bg+';border:1px solid '+border+'">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px"><span style="font-size:10px;font-weight:900;letter-spacing:.6px;color:'+color+'">'+(expired?'TIME UP':paused?'PAUSED':'MOCK TIMER')+'</span><strong data-mock-time="'+sid+'-'+e.id+'" style="font-size:18px;line-height:1;color:'+color+'">'+_mockFormatTime(left)+'</strong></div>'+ 
-    '<div style="height:6px;border-radius:8px;background:'+(darkTimer?'rgba(226,232,240,.32)':'rgba(148,163,184,.28)')+';overflow:hidden;margin-bottom:8px"><div data-mock-progress="'+sid+'-'+e.id+'" style="height:100%;width:'+pct+'%;border-radius:8px;background:'+(expired?(darkTimer?'#f87171':'#dc2626'):paused?(darkTimer?'#fbbf24':'#d97706'):(darkTimer?'#4ade80':'#16a34a'))+';transition:width .8s linear"></div></div>'+ 
-    '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'+controls+'<button onpointerdown="mockHoldStart(event,this,'+sid+','+e.id+',-1)" onpointerup="mockHoldStop()" onpointercancel="mockHoldStop()" onclick="mockHoldClick(this,'+sid+','+e.id+',-1)" style="'+_mockTimerBtnStyle('#64748b')+';user-select:none;-webkit-user-select:none;touch-action:none" draggable="false">−1m</button><button onpointerdown="mockHoldStart(event,this,'+sid+','+e.id+',1)" onpointerup="mockHoldStop()" onpointercancel="mockHoldStop()" onclick="mockHoldClick(this,'+sid+','+e.id+',1)" style="'+_mockTimerBtnStyle('#64748b')+';user-select:none;-webkit-user-select:none;touch-action:none" draggable="false">+1m</button><button onclick="mockResetTimer('+sid+','+e.id+')" style="'+_mockTimerBtnStyle('#64748b')+';user-select:none;-webkit-user-select:none" draggable="false">↻</button></div></div>';
+  var expired=left===0,paused=e.timerState==='paused';
+  var color=expired?(darkTimer?'#f87171':'#dc2626'):paused?(darkTimer?'#fbbf24':'#92400e'):(darkTimer?'#4ade80':'#15803d');
+  var border=expired?(darkTimer?'rgba(248,113,113,.65)':'rgba(239,68,68,.5)'):paused?(darkTimer?'rgba(245,158,11,.65)':'rgba(217,119,6,.55)'):(darkTimer?'rgba(34,197,94,.65)':'rgba(34,197,94,.48)');
+  var bg=expired?(darkTimer?'rgba(239,68,68,.20)':'rgba(239,68,68,.12)'):paused?(darkTimer?'rgba(245,158,11,.22)':'rgba(245,158,11,.16)'):(darkTimer?'rgba(34,197,94,.20)':'rgba(34,197,94,.12)');
+  var action=expired?'':'<button onclick="'+(paused?'mockResumeTimer':'mockPauseTimer')+'('+sid+','+e.id+')" style="padding:5px 7px;min-height:28px;border-radius:7px;border:'+(paused?'1px':'1px')+' solid '+color+';background:'+bg+';color:'+color+';font-size:10px;font-weight:900;white-space:nowrap;cursor:pointer">'+(paused?'▶ RESUME':'Ⅱ PAUSE')+'</button>';
+  return '<div data-mock-timer="'+sid+'-'+e.id+'" style="width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:5px;min-width:0">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0"><span style="font-size:11px;font-weight:900;color:'+color+';white-space:nowrap">'+(expired?'TIME UP':paused?'PAUSED':'RUNNING')+'</span><strong data-mock-time="'+sid+'-'+e.id+'" style="font-size:17px;line-height:1;color:'+color+';white-space:nowrap;margin-left:auto">'+_mockFormatTime(left)+'</strong></div>'+ 
+    '<div style="display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:1px">'+action+'<button onclick="mockResetTimer('+sid+','+e.id+')" style="padding:5px 7px;min-height:28px;border-radius:7px;border:1px solid rgba(148,163,184,.55);background:var(--ibg);color:var(--sub);font-size:9px;font-weight:900;white-space:nowrap;cursor:pointer">↻ RESET</button><button onpointerdown="mockHoldStart(event,this,'+sid+','+e.id+',-1)" onpointerup="mockHoldStop()" onpointercancel="mockHoldStop()" onclick="mockHoldClick(this,'+sid+','+e.id+',-1)" style="padding:5px 7px;min-height:28px;border-radius:7px;border:1px solid rgba(148,163,184,.55);background:var(--ibg);color:var(--sub);font-size:9px;font-weight:900;white-space:nowrap;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none" draggable="false">−1m</button><button onpointerdown="mockHoldStart(event,this,'+sid+','+e.id+',1)" onpointerup="mockHoldStop()" onpointercancel="mockHoldStop()" onclick="mockHoldClick(this,'+sid+','+e.id+',1)" style="padding:5px 7px;min-height:28px;border-radius:7px;border:1px solid rgba(148,163,184,.55);background:var(--ibg);color:var(--sub);font-size:9px;font-weight:900;white-space:nowrap;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none" draggable="false">+1m</button>'+extraHtml+'</div></div>';
 }
 var _mockHoldTimeout=null,_mockHoldInterval=null,_mockHoldRepeated=false,_mockHoldDocBound=false;
 function mockHoldStart(ev,btn,sid,id,delta){if(ev&&ev.preventDefault)ev.preventDefault();mockHoldStop();_mockHoldRepeated=false;_mockHoldTimeout=setTimeout(function(){_mockHoldRepeated=true;mockAdjustTimer(sid,id,delta);_mockHoldInterval=setInterval(function(){mockAdjustTimer(sid,id,delta);},150);},450);if(!_mockHoldDocBound){_mockHoldDocBound=true;document.addEventListener('pointerup',mockHoldStop);document.addEventListener('pointercancel',mockHoldStop);}}
@@ -14108,14 +14151,9 @@ function renderAllOngoingMocks(){
     var ribbonColor=isRunning?(darkRibbon?'#4ade80':'#15803d'):isExpired?(darkRibbon?'#f87171':'#b91c1c'):(darkRibbon?'#fbbf24':'#92400e');
     var ribbonBorder=isRunning?(darkRibbon?'rgba(34,197,94,.65)':'rgba(34,197,94,.48)'):isExpired?(darkRibbon?'rgba(248,113,113,.65)':'rgba(185,28,28,.48)'):(darkRibbon?'rgba(245,158,11,.65)':'rgba(217,119,6,.55)');
     var ribbonBg=isRunning?(darkRibbon?'rgba(34,197,94,.20)':'rgba(34,197,94,.08)'):isExpired?(darkRibbon?'rgba(239,68,68,.20)':'rgba(239,68,68,.08)'):(darkRibbon?'rgba(245,158,11,.22)':'rgba(245,158,11,.16)');
-    h+='<div data-mock-ribbon="'+stu.id+'-'+e.id+'" style="display:flex;flex-direction:column;gap:9px;padding:12px;background:'+ribbonBg+';border-radius:12px;border:1px solid '+ribbonBorder+';min-width:0;'+(isExpired?'animation:mockExpiredBlink 1s infinite;':'')+'">';
-    h+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0"><div style="flex:1;min-width:0"><div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;overflow-wrap:anywhere"><span style="font-size:17px;font-weight:900;color:var(--txt)">'+esc(_studentDisplayName(stu))+'</span><span style="font-size:15px;font-weight:800;color:'+ribbonColor+'">· '+(e.name?esc(e.name):'Mock')+'</span></div>';
-    h+='<div style="font-size:11px;color:var(--sub)">Started: '+fmtD(e.dateGiven)+' &middot; Marks and check date pending</div></div>';
-    h+='<span style="font-size:10px;font-weight:900;color:'+ribbonColor+';white-space:nowrap;padding:5px 8px;border-radius:8px;background:'+(isRunning?(darkRibbon?'rgba(34,197,94,.28)':'rgba(34,197,94,.16)'):isExpired?(darkRibbon?'rgba(239,68,68,.28)':'rgba(239,68,68,.16)'):(darkRibbon?'rgba(245,158,11,.28)':'rgba(245,158,11,.20)'))+'">'+(isExpired?'TIME UP':isStopped?'STOPPED':'ONGOING')+'</span></div>';
-    h+='<div style="width:100%">'+_mockTimerMarkup(stu.id,e)+'</div>';
-    h+='<div style="display:flex;justify-content:flex-end;gap:7px;border-top:1px solid rgba(148,163,184,.18);padding-top:8px">';
-    h+='<button onclick="mockEditExam('+stu.id+','+e.id+')" style="background:rgba(245,158,11,.15);color:#f59e0b;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer">✏️ Edit</button>';
-    h+='<button onclick="mockDeleteExam('+stu.id+','+e.id+')" style="background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer">✕ Delete</button></div>';
+    h+='<div data-mock-ribbon="'+stu.id+'-'+e.id+'" style="display:flex;flex-direction:column;gap:5px;padding:7px 8px;background:'+ribbonBg+';border-radius:9px;border:1px solid '+ribbonBorder+';min-width:0;box-sizing:border-box;'+(isExpired?'animation:mockExpiredBlink 1s infinite;':'')+'">';
+    h+='<div style="width:100%;min-width:0"><div style="display:flex;align-items:baseline;gap:6px;overflow:hidden;white-space:nowrap"><span style="font-size:14px;font-weight:900;color:var(--txt);overflow:hidden;text-overflow:ellipsis">'+esc(_studentDisplayName(stu))+'</span><span style="font-size:12px;font-weight:800;color:'+ribbonColor+';overflow:hidden;text-overflow:ellipsis">· '+(e.name?esc(e.name):'Mock')+'</span></div><div style="font-size:10px;color:var(--sub);margin-top:2px">Started: '+fmtD(e.dateGiven)+'</div></div>';
+    h+='<div style="width:100%;min-width:0">'+_mockTimerMarkup(stu.id,e,'<button onclick="mockEditExam('+stu.id+','+e.id+')" style="padding:5px 7px;min-height:28px;border-radius:7px;border:1px solid rgba(245,158,11,.55);background:rgba(245,158,11,.15);color:#f59e0b;font-size:9px;font-weight:900;white-space:nowrap;cursor:pointer">✏️ EDIT</button><button onclick="mockDeleteExam('+stu.id+','+e.id+')" style="padding:5px 7px;min-height:28px;border-radius:7px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.12);color:'+(isDark?'#f87171':'#ef4444')+';font-size:9px;font-weight:900;white-space:nowrap;cursor:pointer">✕ DELETE</button>')+'</div>';
     h+='</div>';
   });
   h+='</div></div>';
