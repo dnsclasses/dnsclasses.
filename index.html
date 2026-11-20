@@ -1048,6 +1048,19 @@ body.light .tr-hdr .tr-sub,body.light .tr-hdr .tr-title{color:#fff}
   </div>
 </div></div>
 
+<div id="mock-finish-confirm-modal" class="modal hidden" onclick="closeM('mock-finish-confirm-modal')" style="z-index:350">
+<div class="mbox" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:24px">
+  <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:var(--m3-red);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+    <span class="material-symbols-outlined" style="font-size:32px">timer_off</span>
+  </div>
+  <div style="font-weight:800;font-size:18px;color:var(--txt);margin-bottom:8px">Finish Mock Timer?</div>
+  <div style="font-size:14px;color:var(--sub);margin-bottom:24px;line-height:1.5">Are you sure you want to finish this mock timer now?</div>
+  <div style="display:flex;gap:10px">
+    <button onclick="closeM('mock-finish-confirm-modal')" style="flex:1;padding:12px;border-radius:12px;background:var(--ibg);color:var(--txt);font-weight:bold;font-size:14px;border:1px solid var(--ibdr);cursor:pointer">Cancel</button>
+    <button id="mock-finish-confirm-btn" style="flex:1;padding:12px;border-radius:12px;background:#ef4444;color:#fff;font-weight:bold;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.2)">Finish</button>
+  </div>
+</div></div>
+
 <div id="hw-delete-modal" class="modal hidden" onclick="closeM('hw-delete-modal')" style="z-index:2100">
 <div class="mbox" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:24px">
   <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);color:var(--m3-red);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
@@ -10143,6 +10156,15 @@ function _showRestoreConfirm(text,onConfirm,title,btnText){
   };
   openM('restore-confirm-modal');
 }
+function showMockFinishConfirm(sid,eid){
+  var btn=document.getElementById('mock-finish-confirm-btn');
+  if(!btn)return;
+  btn.onclick=function(){
+    closeM('mock-finish-confirm-modal');
+    mockFinishTimer(sid,eid);
+  };
+  openM('mock-finish-confirm-modal');
+}
 function backupToFile(){var encoded=createBackupPayload();var now=new Date(),dd=String(now.getDate()).padStart(2,'0'),mm=String(now.getMonth()+1).padStart(2,'0'),yy=now.getFullYear();var fname=BACKUP_PREFIX+dd+'-'+mm+'-'+yy+'.dnsbak';var blob=new Blob([encoded],{type:'application/octet-stream'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1000);showToast('Backup saved: '+fname);}
 function restoreFromFile(input){
   var file=input.files[0];if(!file)return;
@@ -13740,6 +13762,20 @@ function resumeAllMockTimers(){
   renderMockTimerAlerts();
   showToast(count+' mock timer'+(count===1?'':'s')+' resumed');
 }
+function mockFinishTimer(sid,id){
+  var e=_mockGet(sid,id);
+  if(!e||_mockIsCompleted(e))return;
+  pushUndo();
+  e.timerState='running';
+  e.startedAt=e.startedAt||Date.now();
+  e.endsAt=Date.now()-1;
+  delete e.remainingSeconds;
+  delete e.dashboardHidden;
+  saveDB();
+  renderAllOngoingMocks();
+  renderMockTimerAlerts();
+  showToast('Mock timer finished');
+}
 function renderMockTimerAlerts(){
   var wrap=document.getElementById('dash-mock-timer-alerts');
   if(!wrap)return;
@@ -13761,7 +13797,7 @@ function renderMockTimerAlerts(){
       var left=_mockRemainingSeconds(row.e);
       var isPaused=row.e.timerState==='paused';
       var rowColor=isPaused?dashYellow:dashGreen,rowBorder=isPaused?(darkDash?'rgba(245,158,11,.6)':'rgba(217,119,6,.55)'):'rgba(34,197,94,.35)',rowBg=isPaused?(darkDash?'rgba(245,158,11,.22)':'rgba(245,158,11,.20)'):'transparent';
-      out+='<div data-dash-mock-row="'+row.stu.id+'-'+row.e.id+'" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 7px;border-top:1px solid '+rowBorder+';background:'+rowBg+';border-radius:8px"><div style="min-width:0"><div onclick="openDashboardMock('+row.stu.id+','+row.e.id+')" title="Open mock details" style="font-weight:800;color:var(--txt);overflow-wrap:anywhere;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">'+esc(_studentDisplayName(row.stu))+'</div><div style="font-size:11px;color:'+rowColor+';font-weight:800">'+(row.e.name?esc(row.e.name):'Mock')+' · '+(isPaused?'PAUSED':'RUNNING')+'</div></div><strong data-dash-mock-time="'+row.stu.id+'-'+row.e.id+'" style="font-size:17px;color:'+rowColor+';white-space:nowrap">'+_mockFormatTime(left)+'</strong>'+(isPaused?'<button onclick="mockResumeTimer('+row.stu.id+','+row.e.id+')" style="padding:10px 14px;min-height:38px;border-radius:9px;border:2px solid '+dashYellowBorder+';background:'+dashYellowBg+';color:'+dashYellow+';font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer">▶ RESUME</button>':'<button onclick="mockPauseTimer('+row.stu.id+','+row.e.id+')" style="padding:10px 14px;min-height:38px;border-radius:9px;border:1px solid #16a34a;background:rgba(34,197,94,.18);color:'+dashGreen+';font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer">Ⅱ PAUSE</button>')+'<button aria-label="Remove dashboard timer" title="Remove from dashboard" onclick="mockDismissDashboardTimer('+row.stu.id+','+row.e.id+')" style="width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(148,163,184,.5);background:var(--ibg);color:var(--sub);font-size:19px;line-height:24px;cursor:pointer">×</button></div>';});return out;}
+      out+='<div data-dash-mock-row="'+row.stu.id+'-'+row.e.id+'" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 7px;border-top:1px solid '+rowBorder+';background:'+rowBg+';border-radius:8px"><div style="min-width:0"><div onclick="openDashboardMock('+row.stu.id+','+row.e.id+')" title="Open mock details" style="font-weight:800;color:var(--txt);overflow-wrap:anywhere;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">'+esc(_studentDisplayName(row.stu))+'</div><div style="font-size:11px;color:'+rowColor+';font-weight:800">'+(row.e.name?esc(row.e.name):'Mock')+' · '+(isPaused?'PAUSED':'RUNNING')+'</div></div><strong data-dash-mock-time="'+row.stu.id+'-'+row.e.id+'" style="font-size:17px;color:'+rowColor+';white-space:nowrap">'+_mockFormatTime(left)+'</strong>'+(isPaused?'<button onclick="mockResumeTimer('+row.stu.id+','+row.e.id+')" style="padding:10px 14px;min-height:38px;border-radius:9px;border:2px solid '+dashYellowBorder+';background:'+dashYellowBg+';color:'+dashYellow+';font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer">▶ RESUME</button>':'<button onclick="mockPauseTimer('+row.stu.id+','+row.e.id+')" style="padding:10px 14px;min-height:38px;border-radius:9px;border:1px solid #16a34a;background:rgba(34,197,94,.18);color:'+dashGreen+';font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer">Ⅱ PAUSE</button>')+'<button onclick="showMockFinishConfirm('+row.stu.id+','+row.e.id+')" title="Finish timer now" aria-label="Finish timer now" style="width:28px;height:28px;padding:0;border-radius:7px;border:1px solid rgba(239,68,68,.55);background:rgba(239,68,68,.12);color:'+dashRed+';font-size:10px;font-weight:900;line-height:26px;white-space:nowrap;cursor:pointer">■</button><button aria-label="Remove dashboard timer" title="Remove from dashboard" onclick="mockDismissDashboardTimer('+row.stu.id+','+row.e.id+')" style="width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(148,163,184,.5);background:var(--ibg);color:var(--sub);font-size:19px;line-height:24px;cursor:pointer">×</button></div>';});return out;}
   if(running.length){h+='<div style="padding:12px;border-radius:16px;background:'+dashGreenBg+';border:2px solid '+dashGreenBorder+'"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:7px;color:'+dashGreen+';font-size:14px;font-weight:900"><span class="material-symbols-outlined" style="font-size:20px">timer</span>RUNNING MOCK TIMERS ('+running.length+')</div><button onclick="pauseAllMockTimers()" style="padding:8px 11px;min-height:34px;border-radius:9px;border:1px solid '+dashGreenBorder+';background:rgba(34,197,94,.18);color:'+dashGreen+';font-size:11px;font-weight:900;white-space:nowrap;cursor:pointer">Ⅱ PAUSE ALL</button></div>'+dashboardTimerRows(running)+'</div>';}
   if(paused.length){h+='<div style="margin-top:'+(running.length?'8px':'0')+';padding:12px;border-radius:16px;background:'+dashYellowBg+';border:2px solid '+dashYellowBorder+'"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:7px;color:'+dashYellow+';font-size:14px;font-weight:900"><span class="material-symbols-outlined" style="font-size:20px">pause_circle</span>PAUSED MOCK TIMERS ('+paused.length+')</div>'+(!running.length?'<button onclick="resumeAllMockTimers()" style="padding:8px 11px;min-height:34px;border-radius:9px;border:2px solid '+dashYellowBorder+';background:'+dashYellowBg+';color:'+dashYellow+';font-size:11px;font-weight:900;white-space:nowrap;cursor:pointer">▶ RESUME ALL</button>':'')+'</div>'+dashboardTimerRows(paused)+'</div>';}
   if(expired.length){
