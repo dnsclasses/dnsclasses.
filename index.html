@@ -13808,7 +13808,7 @@ function renderMockTimerAlerts(){
   }
   wrap.innerHTML=h;
 }
-function openExpiredMock(sid,id){go('poster');setTimeout(function(){pgSwitchView('mock');var stu=document.getElementById('mock-student');if(stu){var s=(db.students||[]).find(function(x){return Number(x.id)===Number(sid);});var cls=document.getElementById('mock-class');if(s&&cls){cls.value=s.grade||'';mockLoadStudents();stu.value=String(sid);_gpSync('mock-class','mock-class-btn');_gpSync('mock-student','mock-student-btn');mockShowList();}}},80);}
+function openExpiredMock(sid,id){go('poster');setTimeout(function(){pgSwitchView('mock');mockEditExam(sid,id);},80);}
 function openDashboardMock(sid,id){go('poster');setTimeout(function(){pgSwitchView('mock');mockEditExam(sid,id);},80);}
 function mockDismissDashboardTimer(sid,id){var e=_mockGet(sid,id);if(!e)return;e.dashboardHidden=true;saveDB();renderMockTimerAlerts();}
 function _mockPlayAlarm(key){
