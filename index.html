@@ -9541,8 +9541,8 @@ function openContAbsentWA(sid,streak){
   if(!ph.length){showToast('No phone number',true);return;}
   var now=new Date(),st=getAttendStats(s,now.getFullYear(),now.getMonth(),null);
   var msg='*URGENT ATTENDANCE ALERT*'+
-    '\nDear Parent,'+
-    '\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') has been absent *'+streak+' day'+(streak!==1?'s':'')+'* this month!'+
+    '\n\nDear Parent,'+
+    '\nYour ward *'+_studentDisplayName(s)+'* (Class '+(s.grade||'-')+') has been continuously absent from past *'+streak+' day'+(streak!==1?'s':'')+'* !!!'+
     '\n\nThis month so far:'+
     '\n✅ Present: '+st.present+
     '\n❌ Absent: '+st.absent+
